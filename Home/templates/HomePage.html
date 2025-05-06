@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Ace Game</title>
+    <link rel="stylesheet" href="{% static 'Home/homepage.css' %}">
+
+</head>
+
+<body>
+
+    <header>
+        Ace Game 🎴
+    </header>
+
+    <main>
+        <!-- Add an engaging background image for more flavor -->
+        <!-- <img src="https://images.unsplash.com/photo-1592671963770-8be0bce07c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60"
+            alt="Playing Cards" class="hero-image"> -->
+
+        <div class="welcome-text">Welcome to the World of Cards!</div>
+        <div class="username-text">Hi, {{ user.username }}</div>
+
+
+        <div class="description">
+            Get ready to experience the thrill of Ace Game. A world full of fun, rewards, and excitement. Challenge your
+            friends and climb the leaderboards. The game awaits you!
+        </div>
+
+
+        <div class="btn-group">
+            {% if user.is_authenticated %}
+            <a href="{% url 'playgame' %}" class="btn success">Play</a>
+            <a href="{% url 'logout' %}" class="btn">Logout</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn">Login</a>
+            <a href="{% url 'signup' %}" class="btn">Sign Up</a>
+            {% endif %}
+
+        </div>
+    </main>
+
+    <footer>
+        © 2025 Ace Game. All rights reserved.
+    </footer>
+
+</body>
+
+</html>
