@@ -7,7 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create User</title>
     <link rel="stylesheet" href="{% static 'Signup/signup.css' %}">
-
 </head>
 
 <body>
@@ -40,7 +39,7 @@
             {% for field in form %}
             <div class="formrow">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                <div>{{ field }}</div>
+                {{ field }}
 
                 <!-- Display Field-Specific Errors -->
                 {% if field.errors %}
