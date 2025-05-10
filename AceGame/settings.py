@@ -39,7 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Account',
     'Home',
+    'channels',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -68,8 +70,18 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'AceGame.wsgi.application'
+# WSGI_APPLICATION = 'AceGame.wsgi.application'
+ASGI_APPLICATION = 'AceGame.asgi.application'
 
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -166,3 +178,15 @@ EMAIL_ACCOUNTS = {
 
 #for staic folders :
 STATIC_URL = '/static/'
+
+
+# redis configuration
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # 1 is DB number, you can change it
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
