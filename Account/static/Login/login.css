@@ -135,9 +135,12 @@ button:hover {
 /* Responsive: Small screens */
 @media (max-width: 600px) {
     .formdiv {
-        padding: 20px;
+        padding: 40px;
         width: 100%;
     }
 
-
+    div input {
+        max-width: 100px;
+        min-width: 10px;
+    }
 }
