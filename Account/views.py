@@ -18,9 +18,6 @@ import random
 import string
 from Account.models import RoomTable
 
-import random
-import string
-
 def generate_unique_room_id(username):
     base = username[:5].lower()  # first 5 chars for better uniqueness
     while True:
