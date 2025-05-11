@@ -14,6 +14,21 @@ from .utils import send_email_with_fallback  # Import your fallback function
 
 User = get_user_model()
 
+import random
+import string
+from Account.models import RoomTable
+
+import random
+import string
+
+def generate_unique_room_id(username):
+    base = username[:5].lower()  # first 5 chars for better uniqueness
+    while True:
+        rand_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        room_id = f"{base}{rand_part}"  # e.g., "vinayA1Z9"
+        if not RoomTable.objects.filter(room_id=room_id).exists():
+            return room_id
+
 
 def SignUp(request):
     if request.method == 'POST':
@@ -27,6 +42,15 @@ def SignUp(request):
             user = form.save(commit=False)
             user.is_active = False
             user.save()
+
+            # initializing the room table entry for user
+            RoomTable.objects.create(
+                username=user.username,
+                email=user.email,
+                room_id=generate_unique_room_id(user.username),  # You can use a function or UUID here
+            )
+
+
 
             # Generate token and UID for verification link
             token = default_token_generator.make_token(user)
