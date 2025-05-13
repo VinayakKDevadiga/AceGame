@@ -1,13 +1,45 @@
-from django.shortcuts import render
-
+from django.shortcuts import render,redirect
+from django.contrib.auth.decorators import login_required
+from Account.models import RoomTable
+from django.contrib import messages
 # Create your views here.
 
 def Home(request):
     return render(request, 'HomePage.html')
 
 
+@login_required(login_url='login')
+def CreateRoom(request):
+    username = request.user.username
+
+    try:
+        room = RoomTable.objects.get(username=username)
+    except RoomTable.DoesNotExist:
+        messages.error(request, "Room not found for this user.")
+        return redirect('playgame')  # Or handle as needed
+
+    if request.method == 'POST':
+        new_password = request.POST.get('password')
+        if new_password:
+            room.password = new_password
+            room.save()
+            messages.success(request, "Room password updated successfully!")
+        return redirect('waitforplayers')  # Refresh after update
+
+    return render(request, 'Room/createroom.html', {
+        'room_id': room.room_id,
+        'password': room.password
+    })
+
+# Starts the websocket
+@login_required(login_url='login')
+def Waitforplayers(request):
+    return render(request,'Room/waitforplayers.html')
+
+
+
+
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 
 @login_required(login_url='login')
 def Playgame(request):
