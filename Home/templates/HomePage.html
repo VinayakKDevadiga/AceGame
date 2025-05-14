@@ -47,6 +47,13 @@
         © 2025 Ace Game. All rights reserved.
     </footer>
 
+    {% if user.is_authenticated %}
+    <script>
+        // Store the username in localStorage
+        localStorage.setItem("username", "{{ user.username|escapejs }}");
+    </script>
+    {% endif %}
+
 </body>
 
 </html>

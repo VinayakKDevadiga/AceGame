@@ -36,6 +36,23 @@ def CreateRoom(request):
 def Waitforplayers(request):
     return render(request,'Room/waitforplayers.html')
 
+@login_required(login_url='login')
+def join_room(request):
+    if request.method == "POST":
+        room_id = request.POST['room_id']
+        password = request.POST['password']
+
+        try:
+            room = RoomTable.objects.get(room_id=room_id)
+            if room.password == password:
+                # Save user to room or mark as joined
+                return redirect('waitforplayers')  # or wherever needed
+            else:
+                messages.error(request, "Incorrect password.")
+        except RoomTable.DoesNotExist:
+            messages.error(request, "Room does not exist.")
+    
+    return render(request, 'Room/joinroom.html')
 
 
 
@@ -73,3 +90,5 @@ def get_all_players_in_room(room_id):
     all_data = redis_conn.hgetall(key)
     # Decode JSON and bytes
     return {player.decode(): json.loads(cards) for player, cards in all_data.items()}
+
+

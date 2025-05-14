@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Create Room</title>
+    <title>Join Room</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
@@ -51,17 +51,13 @@
             margin-bottom: 15px;
         }
 
-        input[type="text"] {
+        input[type="text"],
+        input[type="password"] {
             padding: 10px;
             font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 6px;
             width: 100%;
-        }
-
-        input[readonly] {
-            background-color: #f0f0f0;
-            color: #666;
         }
 
         button {
@@ -73,20 +69,15 @@
             font-size: 15px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            flex-shrink: 0;
         }
 
         button:hover {
             background-color: #2980b9;
         }
 
-        .copied {
-            background-color: #2ecc71 !important;
-        }
-
         ul {
             padding-left: 20px;
-            color: green;
+            color: red;
         }
 
         @media screen and (max-width: 480px) {
@@ -99,7 +90,8 @@
                 padding: 8px;
             }
 
-            input[type="text"] {
+            input[type="text"],
+            input[type="password"] {
                 font-size: 15px;
             }
 
@@ -113,7 +105,7 @@
 
 <body>
     <div class="container">
-        <h2>Create Room</h2>
+        <h2>Join Room</h2>
 
         {% if messages %}
         <ul>
@@ -126,46 +118,25 @@
         <form method="post">
             {% csrf_token %}
 
-            <label>Room ID:</label>
+            <label for="room_id">Room ID:</label>
             <div class="field-group">
-                <input type="text" value="{{ room_id }}" readonly id="roomID">
-                <button type="button" onclick="copyToClipboard(this)">Copy</button>
+                <input type="text" id="room_id" name="room_id" required placeholder="Enter Room ID">
             </div>
 
-            <label>Password:</label>
+            <label for="password">Password:</label>
             <div class="field-group">
-                <input type="text" name="password" id="passwordField" value="{{ password }}" readonly>
-                <button type="button" onclick="enableEdit()">Edit</button>
+                <input type="password" id="password" name="password" required placeholder="Enter Password">
             </div>
 
-            <button type="submit">Next</button>
+            <button type="submit">Join Room</button>
         </form>
     </div>
 
     <script>
-        function copyToClipboard(btn) {
-            const roomID = document.getElementById("roomID");
-            navigator.clipboard.writeText(roomID.value).then(() => {
-                btn.classList.add("copied");
-                btn.innerText = "Copied!";
-                setTimeout(() => {
-                    btn.classList.remove("copied");
-                    btn.innerText = "Copy";
-                }, 1500);
-            });
-        }
-
-        function enableEdit() {
-            const passwordField = document.getElementById("passwordField");
-            passwordField.removeAttribute("readonly");
-            passwordField.focus();
-        }
-
         document.querySelector('form').addEventListener('submit', function () {
-            const roomID = document.getElementById("roomID").value;
+            const roomID = document.getElementById("room_id").value;
             localStorage.setItem("room_id", roomID);
         });
-
     </script>
 </body>
 
