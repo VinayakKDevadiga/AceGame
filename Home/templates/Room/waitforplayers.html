@@ -57,11 +57,29 @@
     <script>
         const roomId = localStorage.getItem("room_id");
         const username = localStorage.getItem("username");
+        const password = sessionStorage.getItem("password");
 
-        if (!roomId || !username) {
-            alert("Room ID or username not found in localStorage!");
+        let socket;  // 🔧 Declare at top scope
+
+        if (!roomId || !username || !password) {
+            alert("Please Login to continue!");
         } else {
-            const socket = new WebSocket(`ws://${window.location.host}/ws/wait/${roomId}/?username=${username}`);
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            socket = new WebSocket(
+                `${protocol}://${window.location.host}/ws/wait/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+            );
+
+            const ul = document.getElementById("playerList");
+
+            const updatePlayerList = (players) => {
+                ul.innerHTML = "";
+                players.forEach(player => {
+                    console.log('player', player);
+                    const li = document.createElement("li");
+                    li.textContent = player;
+                    ul.appendChild(li);
+                });
+            };
 
             socket.onopen = () => {
                 console.log("WebSocket connected.");
@@ -71,13 +89,8 @@
                 const data = JSON.parse(event.data);
                 console.log("Received:", data);
 
-                const ul = document.getElementById("playerList");
-
-                // Avoid duplicate names
-                if (![...ul.children].some(li => li.textContent === data.username)) {
-                    const li = document.createElement("li");
-                    li.textContent = data.username;
-                    ul.appendChild(li);
+                if (data.type === "players_update" && Array.isArray(data.players)) {
+                    updatePlayerList(data.players);
                 }
             };
 
@@ -85,11 +98,18 @@
                 console.error("WebSocket error:", error);
             };
 
-            socket.onclose = function () {
-                console.log("WebSocket closed.");
+            socket.onclose = function (event) {
+                console.log("WebSocket closed:", event.code, event.reason);
             };
         }
+
+        window.addEventListener("beforeunload", function () {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();  // ✅ safe close
+            }
+        });
     </script>
+
 </body>
 
 </html>

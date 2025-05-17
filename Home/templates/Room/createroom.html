@@ -163,9 +163,12 @@
 
         document.querySelector('form').addEventListener('submit', function () {
             const roomID = document.getElementById("roomID").value;
-            localStorage.setItem("room_id", roomID);
-        });
+            const password = document.getElementById("passwordField").value;
 
+            localStorage.setItem("room_id", roomID);            // still OK
+            sessionStorage.setItem("password", password);       // switched to sessionStorage
+            localStorage.setItem("admin", "true");
+        });
     </script>
 </body>
 
