@@ -37,7 +37,7 @@ def Waitforplayers(request):
     return render(request,'Room/waitforplayers.html')
 
 @login_required(login_url='login')
-def join_room(request):
+def Join_room(request):
     if request.method == "POST":
         room_id = request.POST['room_id']
         password = request.POST['password']
@@ -54,7 +54,10 @@ def join_room(request):
     
     return render(request, 'Room/joinroom.html')
 
-
+@login_required(login_url='login')
+def Gamepage(request):
+    return render(request, 'Room/gamepage.html')
+    
 
 from django.shortcuts import render
 

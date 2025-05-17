@@ -7,8 +7,10 @@ urlpatterns = [
 
     # Rom page urls
     path('createroom/', views.CreateRoom, name='createroom'),
-    path('joinroom/', views.join_room, name='join_room'),
+    path('joinroom/', views.Join_room, name='join_room'),
     path('waitforplayers/', views.Waitforplayers, name='waitforplayers'),
 
+    # Game page
+    path('gamepage/', views.Gamepage, name='gamepage'),
 
 ]

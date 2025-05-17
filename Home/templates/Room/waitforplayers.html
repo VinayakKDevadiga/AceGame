@@ -81,6 +81,14 @@
         <h2>Players in Room</h2>
         <h1 id="error" style="color: red; font-size: 16px;"></h1>
         <ul id="playerList"></ul>
+        <button id="startGameBtn"
+            style="display: none; margin-top: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">
+            Start Game
+        </button>
+        <h2 id="countdown"
+            style="display: none; text-align: center; font-size: 28px; color: #4CAF50; margin-top: 20px;"></h2>
+
+
     </div>
 
     <script>
@@ -90,11 +98,33 @@
             }
         });
 
+
         const roomId = sessionStorage.getItem("room_id");
         const username = sessionStorage.getItem("username");
         const password = sessionStorage.getItem("password");
 
         let socket;  //  Declare at top scope
+
+        function startCountdown() {
+            let counter = 3;
+            countdownElement.style.display = "block";
+            countdownElement.textContent = counter;
+
+            const interval = setInterval(() => {
+                counter--;
+                countdownElement.textContent = counter;
+                if (counter === 0) {
+                    clearInterval(interval);
+
+                    // Only non-admin users should auto-redirect
+                    const owner = sessionStorage.getItem("owner");
+                    if (username !== owner) {
+                        socket.close()
+                        window.location.href = gamePageURL;
+                    }
+                }
+            }, 1000);
+        }
 
         if (!roomId || !username || !password) {
             const loginUrl = "{% url 'login' %}";
@@ -137,6 +167,20 @@
                     errorelement.innerText = data.error
                     console.error("WebSocket error:", data.error);
                 }
+                if (data.owner) {
+                    sessionStorage.setItem('owner', data.owner);
+
+                    // Show Start Game button only if current user is the owner
+                    if (username === data.owner) {
+                        document.getElementById("startGameBtn").style.display = "block";
+                    } else {
+                        document.getElementById("startGameBtn").style.display = "none";
+                    }
+                }
+                if (data.type === "game_started") {
+                    startCountdown();
+                }
+
             };
 
             socket.onclose = function (event) {
@@ -154,6 +198,25 @@
                 socket.close();
             }
         });
+
+        const countdownElement = document.getElementById("countdown");
+        const gamePageURL = "{% url 'gamepage' %}";  // Change this to your real game URL
+
+        document.getElementById("startGameBtn").addEventListener("click", function () {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                // Notify others to start countdown
+                socket.send(JSON.stringify({
+                    type: "start_game",
+                    room_id: roomId,
+                    username: username
+                }));
+
+                // Admin is redirected immediately
+                socket.close()
+                window.location.href = gamePageURL;
+            }
+        });
+
 
     </script>
 

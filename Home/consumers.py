@@ -16,30 +16,25 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         self.group_name = f"room_{self.room_id}"
         self.redis_key = f"gamedata:{self.room_id}"
 
-        # Extract username and password from query params
         query_string = self.scope['query_string'].decode()
         query_params = parse_qs(query_string)
         self.username = query_params.get('username', ['Anonymous'])[0]
         self.password = query_params.get('password', [''])[0]
 
-        # Connect to Redis
         self.redis = redis.Redis()
 
-        # Fetch room from DB
         try:
             room = await sync_to_async(RoomTable.objects.get)(room_id=self.room_id)
         except RoomTable.DoesNotExist:
-            await self.close(code=4001)  # Invalid room
+            await self.close(code=4001)
             return
 
-        room_owner = room.username  # Ensure this field exists in RoomTable
+        self.room_owner = room.username  # Save owner in self for later use
 
-        # Check if game status exists in Redis
         status = await self.redis.hget(self.redis_key, "status")
 
         if not status:
-            if self.username == room_owner:
-                # Owner joins first - create initial game data
+            if self.username == self.room_owner:
                 initial_data = {
                     "status": "waiting",
                     "owner": self.username,
@@ -50,15 +45,13 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 }
                 await self.redis.hset(self.redis_key, mapping=initial_data)
             else:
-                # Room not yet initialized by owner
                 await self.accept()
                 await self.send(text_data=json.dumps({
-                    "error": f"The room is closed. Please contact admin: {room_owner}"
+                    "error": f"The room is closed. Please contact admin: {self.room_owner}"
                 }))
                 await self.close(code=4002)
                 return
         else:
-            # Room already active, add player if new
             players_json = await self.redis.hget(self.redis_key, "players")
             players = json.loads(players_json) if players_json else []
 
@@ -66,11 +59,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 players.append(self.username)
                 await self.redis.hset(self.redis_key, "players", json.dumps(players))
 
-        # WebSocket group setup
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
-
-        
 
         await self.channel_layer.group_send(
             self.group_name,
@@ -78,6 +68,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 "type": "players_update",
             }
         )
+
     async def disconnect_gracefully(self):
         try:
             logger.info(f"Graceful disconnect for {self.username}")
@@ -89,15 +80,24 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 players = json.loads(players_json)
                 if self.username in players:
                     players.remove(self.username)
-                    await self.redis.hset(self.redis_key, 'players', json.dumps(players))
-                    await self.channel_layer.group_send(
-                        self.group_name,
-                        {
-                            "type": "players_update",
-                        }
-                    )
+
+                    if players:
+                        # Still some players left
+                        await self.redis.hset(self.redis_key, 'players', json.dumps(players))
+                        await self.channel_layer.group_send(
+                            self.group_name,
+                            {
+                                "type": "players_update",
+                            }
+                        )
+                    else:
+                        # No players left, clean up Redis
+                        await self.redis.delete(self.redis_key)
+                        logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
+
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
             logger.info(f"User {self.username} removed and left the group.")
+
         except Exception as e:
             logger.error(f"Error during graceful disconnect: {e}")
 
@@ -105,14 +105,11 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.disconnect_gracefully()
 
-
     async def players_update(self, event):
         players_json = await self.redis.hget(self.redis_key, "players")
         players = json.loads(players_json.decode()) if players_json else []
-        
         owner = (await self.redis.hget(self.redis_key, "owner")).decode() if await self.redis.hexists(self.redis_key, "owner") else None
-        
-        logging.info("done done done done")
+
         await self.send(text_data=json.dumps({
             "type": "players_update",
             "players": players,
@@ -121,9 +118,33 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        if data.get("type") == "leave":
+        msg_type = data.get("type")
+
+        if msg_type == "leave":
             logger.info(f"Received leave message from {data.get('username')}")
             await self.disconnect_gracefully()
 
-    
+        elif msg_type == "start_game":
+            # Only owner can start the game
+            redis_owner = await self.redis.hget(self.redis_key, "owner")
+            if redis_owner and redis_owner.decode() == self.username:
+                logger.info(f"Game started by owner: {self.username}")
+                await self.redis.hset(self.redis_key, "status", "started")
 
+                # Notify all players to start game
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type": "game_started",
+                    }
+                )
+            else:
+                logger.warning(f"Unauthorized game start attempt by {self.username}")
+                await self.send(text_data=json.dumps({
+                    "error": "Only the room owner can start the game."
+                }))
+
+    async def game_started(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "game_started"
+        }))
