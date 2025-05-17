@@ -70,11 +70,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        # Notify all in room about updated players list
-        # players_json = await self.redis.hget(self.redis_key, "players")
-        # players = json.loads(players_json.decode()) if players_json else []
-
-        # logger.debug(f"Current players in room {self.room_id}: {players}")
+        
 
         await self.channel_layer.group_send(
             self.group_name,

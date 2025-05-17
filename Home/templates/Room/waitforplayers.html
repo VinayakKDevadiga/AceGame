@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -96,7 +97,9 @@
         let socket;  //  Declare at top scope
 
         if (!roomId || !username || !password) {
-            alert("Please Login to continue!");
+            const loginUrl = "{% url 'login' %}";
+
+            window.location.href = loginUrl;
         } else {
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
             socket = new WebSocket(

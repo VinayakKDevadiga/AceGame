@@ -243,3 +243,15 @@ LOGGING = {
         },
     },
 }
+
+
+# Login session expiry time (default is 2 weeks)
+SESSION_COOKIE_AGE = 86400  # in seconds → 1 day
+
+# Optional: expire session when browser is closed
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # set to True if you want it to expire on browser close
+
+# Optional: save session on every request (resets expiry timer)
+SESSION_SAVE_EVERY_REQUEST = False
+
+
