@@ -7,6 +7,8 @@ from Account.models import RoomTable
 from asgiref.sync import sync_to_async
 
 logger = logging.getLogger(__name__)
+logger.debug("WebSocket connected")
+
 
 class WaitRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -49,8 +51,9 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 await self.redis.hset(self.redis_key, mapping=initial_data)
             else:
                 # Room not yet initialized by owner
+                await self.accept()
                 await self.send(text_data=json.dumps({
-                    "error": "Room not yet created by the owner."
+                    "error": f"The room is closed. Please contact admin: {room_owner}"
                 }))
                 await self.close(code=4002)
                 return
@@ -79,10 +82,12 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 "type": "players_update",
             }
         )
-
-    async def disconnect(self, close_code):
+    async def disconnect_gracefully(self):
         try:
-            logger.info(f"DISCONNECT CALLED for {self.username}")
+            logger.info(f"Graceful disconnect for {self.username}")
+            self.room_id = self.scope['url_route']['kwargs']['room_id']
+            self.redis_key = f"gamedata:{self.room_id}"
+
             players_json = await self.redis.hget(self.redis_key, 'players')
             if players_json:
                 players = json.loads(players_json)
@@ -96,15 +101,33 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                         }
                     )
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
+            logger.info(f"User {self.username} removed and left the group.")
         except Exception as e:
-            print(f"Error in disconnect(): {e}")
+            logger.error(f"Error during graceful disconnect: {e}")
+
+
+    async def disconnect(self, close_code):
+        await self.disconnect_gracefully()
 
 
     async def players_update(self, event):
         players_json = await self.redis.hget(self.redis_key, "players")
         players = json.loads(players_json.decode()) if players_json else []
         
+        owner = (await self.redis.hget(self.redis_key, "owner")).decode() if await self.redis.hexists(self.redis_key, "owner") else None
+        
+        logging.info("done done done done")
         await self.send(text_data=json.dumps({
             "type": "players_update",
-            "players": players
+            "players": players,
+            "owner": owner,
         }))
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        if data.get("type") == "leave":
+            logger.info(f"Received leave message from {data.get('username')}")
+            await self.disconnect_gracefully()
+
+    
+

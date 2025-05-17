@@ -49,8 +49,8 @@
 
     {% if user.is_authenticated %}
     <script>
-        // Store the username in localStorage
-        localStorage.setItem("username", "{{ user.username|escapejs }}");
+        // Store the username in sessionStorage
+        sessionStorage.setItem("username", "{{ user.username|escapejs }}");
     </script>
     {% endif %}
 

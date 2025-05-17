@@ -199,23 +199,47 @@ STATIC_URL = '/static/'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '[{levelname}] {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',  # Use 'simple' if you prefer less detail
         },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',  # Show everything from DEBUG level and above
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'channels': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
         'daphne': {
             'handlers': ['console'],
             'level': 'DEBUG',
+            'propagate': False,
         },
+        # Optional: If you use logging in your own code (__main__ or other modules)
         '__main__': {
             'handlers': ['console'],
             'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
