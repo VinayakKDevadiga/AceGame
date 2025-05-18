@@ -58,6 +58,10 @@ def Join_room(request):
 def Gamepage(request):
     return render(request, 'Room/gamepage.html')
     
+@login_required(login_url='login')
+def Rulepage(request):
+    return render(request, 'Room/rules.html')
+    
 
 from django.shortcuts import render
 

@@ -4,6 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
 import redis.asyncio as redis
 from Account.models import RoomTable
+from .models import GameTable
 from asgiref.sync import sync_to_async
 
 logger = logging.getLogger(__name__)
@@ -24,19 +25,22 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         self.redis = redis.Redis()
 
         try:
-            room = await sync_to_async(RoomTable.objects.get)(room_id=self.room_id)
+            self.room = await sync_to_async(RoomTable.objects.get)(room_id=self.room_id)
         except RoomTable.DoesNotExist:
             await self.close(code=4001)
             return
 
-        self.room_owner = room.username  # Save owner in self for later use
+        self.room_owner = self.room.username  # Save owner in self for later use
 
         status = await self.redis.hget(self.redis_key, "status")
 
         if not status:
             if self.username == self.room_owner:
+                self.gameslist = await sync_to_async(list)(GameTable.objects.values_list('gamename', flat=True))
                 initial_data = {
                     "status": "waiting",
+                    "gamelist": json.dumps(self.gameslist),
+                    "selected_game": "",
                     "owner": self.username,
                     "players": json.dumps([self.username]),
                     "cardList": json.dumps({}),
@@ -106,14 +110,18 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         await self.disconnect_gracefully()
 
     async def players_update(self, event):
-        players_json = await self.redis.hget(self.redis_key, "players")
-        players = json.loads(players_json.decode()) if players_json else []
-        owner = (await self.redis.hget(self.redis_key, "owner")).decode() if await self.redis.hexists(self.redis_key, "owner") else None
+        self.players_json = await self.redis.hget(self.redis_key, "players")
+        self.players = json.loads(self.players_json.decode()) if self.players_json else []
+        self.owner = (await self.redis.hget(self.redis_key, "owner")).decode() if await self.redis.hexists(self.redis_key, "owner") else None
+        
+        self.gamelist_json = await self.redis.hget(self.redis_key, "gamelist")
+        self.gamelist = json.loads(self.gamelist_json.decode()) if self.gamelist_json else []
 
         await self.send(text_data=json.dumps({
             "type": "players_update",
-            "players": players,
-            "owner": owner,
+            "players": self.players,
+            "owner": self.owner,
+            "gamelist":self.gamelist,
         }))
 
     async def receive(self, text_data):
@@ -144,7 +152,35 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     "error": "Only the room owner can start the game."
                 }))
 
+        elif msg_type == "game_selected":
+            logger.info(f"by server: {data.room_id}")
+            self.selected_game = data.get("selected_game")
+            if self.selected_game:
+                logger.info(f"Card selected: {self.selected_game} by {self.username}")
+
+                # Save the selected card to Redis under 'selected_game'
+                await self.redis.hset(self.redis_key, "selected_game", self.selected_game)
+
+                # Notify the group about the game selection
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type": "game_selected",
+                    }
+                )
+            else:
+                logger.warning("card_selected message received without 'card' field.")
+                await self.send(text_data=json.dumps({
+                    "error": "No card provided in card_selected message."
+                }))
+
     async def game_started(self, event):
         await self.send(text_data=json.dumps({
             "type": "game_started"
+        }))
+    async def game_selected(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "game_selected",
+            "selected_game": self.selected_game,
+            "selected_by": self.username
         }))

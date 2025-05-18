@@ -12,5 +12,7 @@ urlpatterns = [
 
     # Game page
     path('gamepage/', views.Gamepage, name='gamepage'),
+    path('rulepage/', views.Rulepage, name='rulepage'),
+
 
 ]

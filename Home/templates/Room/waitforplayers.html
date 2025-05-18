@@ -72,6 +72,38 @@
         ul#playerList li:hover {
             transform: scale(1.03);
         }
+
+
+        .game-cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .game-card {
+            background: linear-gradient(to right, #ffecd2, #fcb69f);
+            color: #222;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            border: 2px solid transparent;
+        }
+
+        .game-card:hover {
+            transform: scale(1.05);
+        }
+
+        .game-card.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
     </style>
 
 </head>
@@ -81,6 +113,8 @@
         <h2>Players in Room</h2>
         <h1 id="error" style="color: red; font-size: 16px;"></h1>
         <ul id="playerList"></ul>
+        <h2>Select Your Game </h2>
+        <div id="gameListContainer" class="game-cards-container"></div>
         <button id="startGameBtn"
             style="display: none; margin-top: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">
             Start Game
@@ -102,8 +136,11 @@
         const roomId = sessionStorage.getItem("room_id");
         const username = sessionStorage.getItem("username");
         const password = sessionStorage.getItem("password");
+        let isadminpage_updated = false;
+        let selectedgamecard = null;
 
         let socket;  //  Declare at top scope
+
 
         function startCountdown() {
             let counter = 3;
@@ -152,6 +189,42 @@
                 console.log("WebSocket connected.");
             };
 
+            const gameListContainer = document.getElementById("gameListContainer");
+            function updateGameList(games) {
+                gameListContainer.innerHTML = "";
+                const owner = sessionStorage.getItem("owner");
+
+                games.forEach(game => {
+                    const card = document.createElement("div");
+                    card.classList.add("game-card");
+                    card.textContent = game;
+
+                    if (username === owner) {
+                        card.addEventListener("click", () => {
+                            // Remove previous selection
+                            document.querySelectorAll(".game-card").forEach(c => c.classList.remove("selected"));
+                            card.classList.add("selected");
+                            selectedgamecard = game;
+                            console.log("Selected game card:", selectedgamecard);
+
+                            // ✅ Send selected card to server via WebSocket
+                            if (socket && socket.readyState === WebSocket.OPEN) {
+                                socket.send(JSON.stringify({
+                                    type: "game_selected",
+                                    room_id: roomId,
+                                    username: username,
+                                    selected_game: selectedgamecard
+                                }));
+                            }
+                        });
+
+                    }
+
+                    gameListContainer.appendChild(card);
+                });
+            }
+
+
             socket.onmessage = function (event) {
                 const data = JSON.parse(event.data);
                 console.log("Received:", data);
@@ -179,6 +252,22 @@
                 }
                 if (data.type === "game_started") {
                     startCountdown();
+                }
+                if (data.gamelist) {
+                    if (data.owner == (sessionStorage.getItem("username"))) {
+                        if (!isadminpage_updated && Array.isArray(data.gamelist)) {
+                            updateGameList(data.gamelist);
+                            isadminpage_updated = true;
+                        }
+                    }
+                    else {
+                        updateGameList(data.gamelist);
+                    }
+
+                }
+                if (data.game_selected) {
+                    console.log(data.selected_game);
+
                 }
 
             };
