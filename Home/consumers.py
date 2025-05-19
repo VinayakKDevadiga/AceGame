@@ -127,6 +127,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         msg_type = data.get("type")
+        logger.info(f"recieved {msg_type}")
 
         if msg_type == "leave":
             logger.info(f"Received leave message from {data.get('username')}")
@@ -153,10 +154,9 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 }))
 
         elif msg_type == "game_selected":
-            logger.info(f"by server: {data.room_id}")
             self.selected_game = data.get("selected_game")
             if self.selected_game:
-                logger.info(f"Card selected: {self.selected_game} by {self.username}")
+                logger.info(f"Game Card selected: {self.selected_game} by {self.username}")
 
                 # Save the selected card to Redis under 'selected_game'
                 await self.redis.hset(self.redis_key, "selected_game", self.selected_game)
@@ -169,18 +169,23 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     }
                 )
             else:
-                logger.warning("card_selected message received without 'card' field.")
+                logger.warning("game selected message received without 'game' field.")
                 await self.send(text_data=json.dumps({
-                    "error": "No card provided in card_selected message."
+                    "error": "No game provided in game_selected message."
                 }))
 
     async def game_started(self, event):
         await self.send(text_data=json.dumps({
             "type": "game_started"
         }))
+
     async def game_selected(self, event):
+        selected_game = await self.redis.hget(self.redis_key, "selected_game")
+        selected_game = selected_game.decode() if selected_game else None
+
         await self.send(text_data=json.dumps({
             "type": "game_selected",
-            "selected_game": self.selected_game,
+            "selected_game": selected_game,
             "selected_by": self.username
         }))
+

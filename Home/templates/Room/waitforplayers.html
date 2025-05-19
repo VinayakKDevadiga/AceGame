@@ -265,10 +265,24 @@
                     }
 
                 }
-                if (data.game_selected) {
-                    console.log(data.selected_game);
+                if (data.selected_game) {
+                    const selectedGame = data.selected_game;
+                    const owner = sessionStorage.getItem("owner");
 
+                    // Only non-owners should highlight based on owner's selection
+                    if (username !== owner) {
+                        document.querySelectorAll(".game-card").forEach(c => {
+                            if (c.textContent === selectedGame) {
+                                c.classList.add("selected");
+                            } else {
+                                c.classList.remove("selected");
+                            }
+                        });
+                    }
+
+                    console.log("Game selected by admin:", selectedGame);
                 }
+
 
             };
 
@@ -297,14 +311,12 @@
                 socket.send(JSON.stringify({
                     type: "start_game",
                     room_id: roomId,
-                    username: username
+                    username: username,
+                    selected_game: selectedgamecard  // Ensure the selected game is included
                 }));
-
-                // Admin is redirected immediately
-                socket.close()
-                window.location.href = gamePageURL;
             }
         });
+
 
 
     </script>
