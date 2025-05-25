@@ -84,8 +84,26 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 players = json.loads(players_json)
                 if self.username in players:
                     players.remove(self.username)
+                    
+                    owner = await self.redis.hget(self.redis_key, 'owner')
+                    if self.username == owner.decode():
+                        players=[]
+                        await self.redis.hset(self.redis_key, 'players', json.dumps(players))
+                        await self.channel_layer.group_send(
+                            self.group_name,
+                            {
+                                "type": "players_update",
+                            }
+                        )
+                        await self.channel_layer.group_send(text_data=json.dumps({
+                            "error": f"The room is closed. Please contact admin: {self.room_owner}"
+                        }))
+                        await self.close(code=4002)
+                        await self.redis.delete(self.redis_key)
+                        logger.info(f"Room {self.room_id} Owner left the room.Game closed")
 
-                    if players:
+
+                    elif players:
                         # Still some players left
                         await self.redis.hset(self.redis_key, 'players', json.dumps(players))
                         await self.channel_layer.group_send(

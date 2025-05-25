@@ -195,21 +195,27 @@
             const gamePageURL = "{% url 'gamepage' %}";
 
             function startCountdown() {
+                const owner = sessionStorage.getItem("owner");
                 let counter = 3;
                 countdownElement.style.display = "block";
                 countdownElement.textContent = counter;
-                const interval = setInterval(() => {
-                    counter--;
-                    countdownElement.textContent = counter;
-                    if (counter === 0) {
-                        clearInterval(interval);
-                        const owner = sessionStorage.getItem("owner");
-                        if (username !== owner) {
+                if (username == owner) {
+                    socket.close();
+                    window.location.href = gamePageURL;
+                } else {
+                    const interval = setInterval(() => {
+                        counter--;
+                        countdownElement.textContent = counter;
+                        if (counter === 0) {
+                            clearInterval(interval);
                             socket.close();
                             window.location.href = gamePageURL;
+
                         }
-                    }
-                }, 1000);
+                    }, 1000);
+                }
+
+
             }
 
             if (!roomId || !username || !password) {
