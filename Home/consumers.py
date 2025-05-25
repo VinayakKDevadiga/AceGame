@@ -95,9 +95,12 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                                 "type": "players_update",
                             }
                         )
-                        await self.channel_layer.group_send(text_data=json.dumps({
-                            "error": f"The room is closed. Please contact admin: {self.room_owner}"
-                        }))
+                        await self.channel_layer.group_send(self.group_name,
+                            {
+                                "type": "send_error_message",
+                                "message": "Room Owner left the game, game closed"
+                            }
+                        )
                         await self.close(code=4002)
                         await self.redis.delete(self.redis_key)
                         logger.info(f"Room {self.room_id} Owner left the room.Game closed")
@@ -206,4 +209,12 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
             "selected_game": selected_game,
             "selected_by": self.username
         }))
+
+    async def send_error_message(self, event):
+        await self.send(text_data=json.dumps({
+            "error": event["message"]
+        }))
+
+
+    # Sokkatte
 

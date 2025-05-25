@@ -5,7 +5,7 @@ from channels.auth import AuthMiddlewareStack
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'AceGame.settings')  # adjust if project name is different
 django.setup()  
 
-import Home.routing  # Make sure this file exists and has `websocket_urlpatterns`
+import AceGame.routing  # Make sure this file exists and has `websocket_urlpatterns`
 
 from channels.sessions import SessionMiddlewareStack
 
@@ -13,7 +13,7 @@ application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter(
-            Home.routing.websocket_urlpatterns
+            AceGame.routing.websocket_urlpatterns
         )
     ),
 })
