@@ -14,5 +14,7 @@ urlpatterns = [
     path('gamepage/', views.Gamepage, name='gamepage'),
     path('rulepage/', views.Rulepage, name='rulepage'),
 
+    # jwt get user
+    path("getuser/", views.get_user, name="current_user"),
 
 ]

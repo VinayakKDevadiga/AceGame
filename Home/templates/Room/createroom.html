@@ -6,10 +6,13 @@
     <title>Create Room</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
             margin: 0;
             padding: 0;
             display: flex;
@@ -19,94 +22,72 @@
         }
 
         .container {
-            background-color: #ffffff;
-            color: #333;
-            padding: 30px 25px;
+            background: white;
+            padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             width: 90%;
             max-width: 400px;
         }
 
         h2 {
-            text-align: center;
+            margin-top: 0;
             margin-bottom: 20px;
-            color: #222;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
+            text-align: center;
+            color: #333;
         }
 
         label {
-            margin: 10px 0 5px;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
             font-weight: bold;
+            color: #444;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
         }
 
         .field-group {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            width: 100%;
-        }
-
-        input[readonly] {
-            background-color: #f0f0f0;
-            color: #666;
         }
 
         button {
-            padding: 10px 12px;
-            background-color: #3498db;
+            padding: 10px 14px;
+            background-color: #4f46e5;
             color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 15px;
+            border-radius: 8px;
+            font-size: 14px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            flex-shrink: 0;
+            transition: background-color 0.2s ease;
         }
 
         button:hover {
-            background-color: #2980b9;
+            background-color: #4338ca;
         }
 
-        .copied {
-            background-color: #2ecc71 !important;
+        button.copied {
+            background-color: #10b981;
         }
 
-        ul {
-            padding-left: 20px;
-            color: green;
+        #message {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 14px;
         }
 
-        @media screen and (max-width: 480px) {
-            .container {
-                padding: 20px 15px;
-            }
-
-            button {
-                font-size: 14px;
-                padding: 8px;
-            }
-
-            input[type="text"] {
-                font-size: 15px;
-            }
-
-            .field-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
+        form button[type="submit"] {
+            margin-top: 25px;
+            width: 100%;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -115,15 +96,9 @@
     <div class="container">
         <h2>Create Room</h2>
 
-        {% if messages %}
-        <ul>
-            {% for message in messages %}
-            <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
+        <div id="message" style="color: red;"></div>
 
-        <form method="post">
+        <form id="createRoomForm">
             {% csrf_token %}
 
             <label>Room ID:</label>
@@ -134,7 +109,7 @@
 
             <label>Password:</label>
             <div class="field-group">
-                <input type="text" name="password" id="passwordField" value="{{ password }}" readonly>
+                <input type="text" id="passwordField" value="{{ password }}" readonly>
                 <button type="button" onclick="enableEdit()">Edit</button>
             </div>
 
@@ -161,12 +136,48 @@
             passwordField.focus();
         }
 
-        document.querySelector('form').addEventListener('submit', function () {
+        function getCookie(name) {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [key, value] = cookie.trim().split('=');
+                if (key === name) {
+                    return decodeURIComponent(value);
+                }
+            }
+            return null;
+        }
+
+        document.getElementById("createRoomForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
             const roomID = document.getElementById("roomID").value;
             const password = document.getElementById("passwordField").value;
+            const jwtToken = getCookie("jwt");
 
-            sessionStorage.setItem("room_id", roomID);            // still OK
-            sessionStorage.setItem("password", password);       // switched to sessionStorage
+            try {
+                const response = await fetch("{% url 'createroom' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ room_id: roomID, password: password }),
+                    credentials: "include"
+                });
+
+                if (response.ok) {
+                    sessionStorage.setItem("room_id", roomID);
+                    sessionStorage.setItem("password", password);
+                    window.location.href = "{% url 'waitforplayers' %}";
+                } else {
+                    const result = await response.json();
+                    document.getElementById("message").innerText = result.detail || "Failed to create room.";
+                }
+            } catch (error) {
+                console.error("Request error:", error);
+                document.getElementById("message").innerText = "Failed to create room.";
+            }
         });
     </script>
 </body>

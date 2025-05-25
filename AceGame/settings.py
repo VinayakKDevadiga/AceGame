@@ -255,3 +255,25 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # set to True if you want it to expire o
 SESSION_SAVE_EVERY_REQUEST = False
 
 
+# integration of jwt
+import datetime
+
+JWT_SECRET_KEY='my_secre_key'
+JWT_ALGORITHM='HS256'
+JWT_EXP_DELTA_SECONDS=3600
+
+
+from datetime import timedelta
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
+
+# settings.py
+LOGIN_REDIRECT_URL = 'home'  # this should match a named URL pattern

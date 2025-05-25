@@ -2,41 +2,98 @@ from django.shortcuts import render,redirect
 from django.contrib.auth.decorators import login_required
 from Account.models import RoomTable
 from django.contrib import messages
+
+# jwt
+from Account.utils import jwt_required, decode_jwt
+from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 # Create your views here.
+from django.contrib.auth import get_user_model
+from django.views.decorators.csrf import csrf_exempt
+
+User = get_user_model()
+import logging
+logger = logging.getLogger('myapp')  # must match logger name in settings
 
 def Home(request):
-    return render(request, 'HomePage.html')
+
+    token = request.COOKIES.get('jwt')
+    username = None
+    if token:
+        payload = decode_jwt(token)
+        if payload:
+            username = payload.get('username')
+            logger.info(f" Home  request{username}")
+
+    return render(request, 'Homepage.html', {'username': username})
 
 
-@login_required(login_url='login')
+@csrf_exempt
+def get_user(request):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return JsonResponse({'detail': 'Authorization header missing or invalid'}, status=401)
+
+    token = auth_header.split(' ')[1]
+
+    try:
+        payload = decode_jwt(token)
+        username = payload.get('username')
+        logger.info(f"Received getuser request for: {username}")
+
+        return JsonResponse({'username': username})
+
+    except Exception as e:
+        return JsonResponse({'detail': 'Invalid token', 'error': str(e)}, status=401)
+
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+
+@jwt_required
 def CreateRoom(request):
-    username = request.user.username
-
+    token = request.COOKIES.get('jwt')
+    username = None
+    if token:
+        payload = decode_jwt(token)
+        if payload:
+            username = payload.get('username')
+            
     try:
         room = RoomTable.objects.get(username=username)
     except RoomTable.DoesNotExist:
-        messages.error(request, "Room not found for this user.")
-        return redirect('playgame')  # Or handle as needed
+        return JsonResponse({'detail': 'Room not found for this user.'}, status=404)
 
-    if request.method == 'POST':
-        new_password = request.POST.get('password')
-        if new_password:
-            room.password = new_password
-            room.save()
-            messages.success(request, "Room password updated successfully!")
-        return redirect('waitforplayers')  # Refresh after update
+    if request.method == 'POST' and request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body)
+            new_password = data.get('password')
+            if new_password:
+                room.password = new_password
+                room.save()
+                return JsonResponse({'detail': 'Room password updated successfully!'}, status=200)
+            else:
+                return JsonResponse({'detail': 'Password required.'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'detail': 'Invalid JSON'}, status=400)
 
     return render(request, 'Room/createroom.html', {
         'room_id': room.room_id,
         'password': room.password
     })
 
+
 # Starts the websocket
-@login_required(login_url='login')
+@jwt_required
 def Waitforplayers(request):
     return render(request,'Room/waitforplayers.html')
 
-@login_required(login_url='login')
+@jwt_required
 def Join_room(request):
     if request.method == "POST":
         room_id = request.POST['room_id']
@@ -54,18 +111,15 @@ def Join_room(request):
     
     return render(request, 'Room/joinroom.html')
 
-@login_required(login_url='login')
+@jwt_required
 def Gamepage(request):
     return render(request, 'Room/gamepage.html')
     
-@login_required(login_url='login')
+@jwt_required
 def Rulepage(request):
     return render(request, 'Room/rules.html')
     
-
-from django.shortcuts import render
-
-@login_required(login_url='login')
+@jwt_required
 def Playgame(request):
     game_types = [
         {'id': 1, 'name': 'Poker'},

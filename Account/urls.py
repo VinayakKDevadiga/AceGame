@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from . import views
 from django.contrib.auth import views as auth_views
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 urlpatterns = [
     path('signup/', views.SignUp, name='signup'),
@@ -17,5 +18,7 @@ urlpatterns = [
     #login
     path('login/', views.Login, name='login'),
     path('logout/', views.Logout, name='logout'),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+
 
 ]
