@@ -6,6 +6,8 @@ import redis.asyncio as redis
 from Account.models import RoomTable
 from .models import GameTable
 from asgiref.sync import sync_to_async
+from AceGame.game_routes import GAME_ROUTES
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 logger.debug("WebSocket connected")
@@ -95,15 +97,19 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                                 "type": "players_update",
                             }
                         )
-                        await self.channel_layer.group_send(self.group_name,
-                            {
-                                "type": "send_error_message",
-                                "message": "Room Owner left the game, game closed"
-                            }
-                        )
-                        await self.close(code=4002)
-                        await self.redis.delete(self.redis_key)
-                        logger.info(f"Room {self.room_id} Owner left the room.Game closed")
+                        
+                        #to check whether game not started and owner left the room then, error
+                        game_status = await self.redis.hget(self.redis_key, 'status')
+                        if game_status.decode()!= 'started':
+                            await self.channel_layer.group_send(self.group_name,
+                                {
+                                    "type": "send_error_message",
+                                    "message": "Room Owner left the game, game closed"
+                                }
+                            )
+                            await self.close(code=4002)
+                            await self.redis.delete(self.redis_key)
+                            logger.info(f"Room {self.room_id} Owner left the room.Game closed")
 
 
                     elif players:
@@ -176,7 +182,12 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
 
         elif msg_type == "game_selected":
             self.selected_game = data.get("selected_game")
-            if self.selected_game:
+
+            # to check whether selected game valid
+            self.gamelist_json = await self.redis.hget(self.redis_key, "gamelist")
+            self.gamelist = json.loads(self.gamelist_json.decode()) if self.gamelist_json else []
+
+            if self.selected_game and self.selected_game in self.gamelist:
                 logger.info(f"Game Card selected: {self.selected_game} by {self.username}")
 
                 # Save the selected card to Redis under 'selected_game'
@@ -190,14 +201,28 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     }
                 )
             else:
-                logger.warning("game selected message received without 'game' field.")
+                logger.warning("game selected message received without 'game' field or You have modefied the game name.")
                 await self.send(text_data=json.dumps({
                     "error": "No game provided in game_selected message."
                 }))
 
     async def game_started(self, event):
+        self.selected_game = await self.redis.hget(self.redis_key, "selected_game")
+        
+        self.domain = getattr(settings, "SITE_DOMAIN", "http://localhost:8000")
+        self.full_url = f"{self.domain}{GAME_ROUTES[self.selected_game]['url']}"
+        
+
+        if not self.route_page_info or not self.route_page_info.get("allowed", False):
+            await self.send(text_data=json.dumps({
+                "type": "send_error_message",
+                "message": "The selected game is currently unavailable."
+            }))
+            return
+
         await self.send(text_data=json.dumps({
-            "type": "game_started"
+            "type": "game_started",
+            "redirect_url": self.full_url
         }))
 
     async def game_selected(self, event):
@@ -210,11 +235,24 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
             "selected_by": self.username
         }))
 
+    async def game_started(self, event):
+        selected_game = await self.redis.hget(self.redis_key, "selected_game")
+        selected_game = selected_game.decode() if selected_game else None
+
+        route_page_info = GAME_ROUTES[selected_game]  # Safe to assume it exists
+
+        await self.send(text_data=json.dumps({
+            "type": "game_started",
+            "redirect_url": route_page_info["url"]
+        }))
+   
+
     async def send_error_message(self, event):
         await self.send(text_data=json.dumps({
             "error": event["message"]
         }))
-
+    
 
     # Sokkatte
 
+    

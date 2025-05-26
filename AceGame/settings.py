@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'Account',
     'Home',
     'channels',
+    'Sokkatte',
 ]
 
 

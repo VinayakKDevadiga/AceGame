@@ -3,14 +3,16 @@ from Home import consumers
 # myproject/routing.py
 
 from django.urls import re_path
-from Home.consumers import WaitRoomConsumer
+from Home import consumers
 # from chat.consumers import ChatConsumer
-
+from Sokkatte import sokkatte_consumers  
 # websocket_urlpatterns = [
 #     re_path(r'ws/game/(?P<room_name>\w+)/$', GameConsumer.as_asgi()),
 #     re_path(r'ws/chat/(?P<room_name>\w+)/$', ChatConsumer.as_asgi()),
 # ]
 
 websocket_urlpatterns = [
-    re_path(r'ws/wait/(?P<room_id>\w+)/$', WaitRoomConsumer.as_asgi()),
+    re_path(r'ws/wait/(?P<room_id>\w+)/$', consumers.WaitRoomConsumer.as_asgi()),
+    re_path(r'ws/Sokkatte/(?P<room_id>\w+)/$', sokkatte_consumers.Sokkatte_consumer.as_asgi()),
 ]
+
