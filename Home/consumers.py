@@ -70,6 +70,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     "played_card_list": json.dumps([])
                 }
                 await self.redis.hset(self.redis_key, mapping=initial_data)
+                
             else:
                 await self.accept()
                 await self.send(text_data=json.dumps({
@@ -103,6 +104,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 "type": "players_update",
             }
         )
+        logger.info(f"Accepted and group msg sent")
+
 
     async def disconnect_gracefully(self):
         try:
@@ -116,36 +119,71 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 if self.username in players:
                     owner = await self.redis.hget(self.redis_key, 'owner')
 
-                    if self.username == owner.decode() and (await self.redis.hget(self.redis_key, "duplicate_owner_login")).decode>0 :
-                        duplicate_owner_login = (await self.redis.hget(self.redis_key, "duplicate_owner_login")).decode()
-                        await self.redis.hset(self.redis_key, "duplicate_owner_login", (int(duplicate_owner_login)-1))
-                    else:
-                        players.remove(self.username)
-                        if self.username == owner.decode():
-                            players=[]
-                            await self.redis.hset(self.redis_key, 'players', json.dumps(players))
+                    if self.username == owner.decode() :
+                        logger.info(f"{(await self.redis.hget(self.redis_key, 'duplicate_owner_login')).decode()} duplicate_owner_login")
+
+                        if int((await self.redis.hget(self.redis_key, "duplicate_owner_login")).decode())>0 :
+                            duplicate_owner_login = (await self.redis.hget(self.redis_key, "duplicate_owner_login")).decode()
+                            await self.redis.hset(self.redis_key, "duplicate_owner_login", (int(duplicate_owner_login)-1))
+                        else:
+                            game_status = (await self.redis.hget(self.redis_key, 'status')).decode()
+                            logger.info(f"Game started status {game_status}")
+
+                            
+                            await self.redis.delete(self.redis_key)
+                            logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
                             await self.channel_layer.group_send(
                                 self.group_name,
                                 {
                                     "type": "players_update",
                                 }
                             )
-                            
-                            #to check whether game not started and owner left the room then, error
-                            game_status = await self.redis.hget(self.redis_key, 'status')
-                            if game_status.decode()!= 'started':
-                                await self.channel_layer.group_send(self.group_name,
+                            if game_status=="started":
+                                await self.channel_layer.group_send(
+                                self.group_name,
+                                {
+                                    "type": "send_error_message",
+                                    "message": "Game Started by owner"
+
+                                }
+                            )
+                            else:
+                                await self.channel_layer.group_send(
+                                    self.group_name,
                                     {
                                         "type": "send_error_message",
                                         "message": "Room Owner left the game, game closed"
+
                                     }
                                 )
-                                await self.close(code=4002)
-                                await self.redis.delete(self.redis_key)
-                                logger.info(f"Room {self.room_id} Owner left the room.Game closed")
+
+                    else:
+                        players.remove(self.username)
+                        # if self.username == owner.decode():
+                        #     players=[]
+                        #     await self.redis.hset(self.redis_key, 'players', json.dumps(players))
+                        #     await self.channel_layer.group_send(
+                        #         self.group_name,
+                        #         {
+                        #             "type": "players_update",
+                        #         }
+                        #     )
+                            
+                            #to check whether game not started and owner left the room then, error
+                            # game_status = await self.redis.hget(self.redis_key, 'status')
+                            # if game_status.decode()!= 'started':
+                            #     await self.channel_layer.group_send(self.group_name,
+                            #         {
+                            #             "type": "send_error_message",
+                            #             "message": "Room Owner left the game, game closed"
+                            #         }
+                            #     )
+                            #     await self.close(code=4002)
+                            #     await self.redis.delete(self.redis_key)
+                            #     logger.info(f"Room {self.room_id} Owner left the room.Game closed")
                             
 
-                        elif players:
+                        if players:
                             # Still some players left
                             await self.redis.hset(self.redis_key, 'players', json.dumps(players))
                             await self.channel_layer.group_send(
@@ -177,11 +215,19 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         self.gamelist_json = await self.redis.hget(self.redis_key, "gamelist")
         self.gamelist = json.loads(self.gamelist_json.decode()) if self.gamelist_json else []
 
+        selected_game = (await self.redis.hget(self.redis_key, "selected_game"))
+        if selected_game:
+            self.selected_game = selected_game.decode()
+        else:
+            self.selected_game=self.gamelist[1]
+            await self.redis.hset(self.redis_key, "selected_game", self.selected_game)
+
         await self.send(text_data=json.dumps({
             "type": "players_update",
             "players": self.players,
             "owner": self.owner,
             "gamelist":self.gamelist,
+            "selected_game":self.selected_game
         }))
 
     async def receive(self, text_data):
@@ -251,7 +297,11 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
 
     async def game_started(self, event):
         self.selected_game = await self.redis.hget(self.redis_key, "selected_game")
-        
+        # if not self.selected_game:
+        #     await self.send(text_data=json.dumps({
+        #         "error": "Game not selected. Please select a game before starting."
+        #     }))
+        #     return
         self.domain = getattr(settings, "SITE_DOMAIN", "http://localhost:8000")
         self.full_url = f"{self.domain}{GAME_ROUTES[self.selected_game]['url']}"
         

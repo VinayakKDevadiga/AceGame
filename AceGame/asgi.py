@@ -9,11 +9,22 @@ import AceGame.routing  # Make sure this file exists and has `websocket_urlpatte
 
 from channels.sessions import SessionMiddlewareStack
 
+# application = ProtocolTypeRouter({
+#     "http": get_asgi_application(),
+#     "websocket": AuthMiddlewareStack(
+#         URLRouter(
+#             AceGame.routing.websocket_urlpatterns
+#         )
+#     ),
+# })
+
+from Account.utils import JWTAuthMiddleware
+
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
-        URLRouter(
-            AceGame.routing.websocket_urlpatterns
+    "websocket": JWTAuthMiddleware(
+        AuthMiddlewareStack(
+            URLRouter(AceGame.routing.websocket_urlpatterns)
         )
     ),
 })

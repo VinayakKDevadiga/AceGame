@@ -96,3 +96,39 @@ def jwt_required(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
+
+
+# for jt=wt middle ware for websocket
+import urllib.parse
+from channels.middleware import BaseMiddleware
+from django.contrib.auth.models import AnonymousUser
+from jwt import decode as jwt_decode
+from django.conf import settings
+from channels.db import database_sync_to_async
+
+class JWTAuthMiddleware(BaseMiddleware):
+    async def __call__(self, scope, receive, send):
+        headers = dict(scope["headers"])
+        cookies = headers.get(b"cookie", b"").decode()
+        cookies = dict(cookie.strip().split("=", 1) for cookie in cookies.split(";") if "=" in cookie)
+        
+        token = cookies.get("access_token")
+        if token:
+            try:
+                payload = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+                scope["user"] = await get_user(payload["user_id"])
+            except Exception:
+                scope["user"] = AnonymousUser()
+        else:
+            scope["user"] = AnonymousUser()
+
+        return await super().__call__(scope, receive, send)
+
+@database_sync_to_async
+def get_user(user_id):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    try:
+        return User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return AnonymousUser()
