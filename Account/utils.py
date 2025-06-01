@@ -96,39 +96,33 @@ def jwt_required(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
-
-
-# for jt=wt middle ware for websocket
-import urllib.parse
-from channels.middleware import BaseMiddleware
-from django.contrib.auth.models import AnonymousUser
-from jwt import decode as jwt_decode
+import jwt
 from django.conf import settings
+from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
+
+@database_sync_to_async
+def get_user(validated_token):
+    try:
+        user_id = validated_token.get('user_id')
+        return User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return None
 
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
-        headers = dict(scope["headers"])
-        cookies = headers.get(b"cookie", b"").decode()
-        cookies = dict(cookie.strip().split("=", 1) for cookie in cookies.split(";") if "=" in cookie)
-        
-        token = cookies.get("access_token")
-        if token:
+        jwt_token = scope["cookies"].get("jwt")  # 👈 Get JWT from cookie named 'jwt'
+
+        if jwt_token:
             try:
-                payload = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-                scope["user"] = await get_user(payload["user_id"])
-            except Exception:
-                scope["user"] = AnonymousUser()
+                validated_token = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=["HS256"])
+                user = await get_user(validated_token)
+                scope['user'] = user if user else None
+            except jwt.ExpiredSignatureError:
+                scope['user'] = None
+            except jwt.InvalidTokenError:
+                scope['user'] = None
         else:
-            scope["user"] = AnonymousUser()
+            scope['user'] = None
 
         return await super().__call__(scope, receive, send)
-
-@database_sync_to_async
-def get_user(user_id):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    try:
-        return User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return AnonymousUser()

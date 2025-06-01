@@ -19,12 +19,9 @@ from channels.sessions import SessionMiddlewareStack
 # })
 
 from Account.utils import JWTAuthMiddleware
-
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": JWTAuthMiddleware(
-        AuthMiddlewareStack(
-            URLRouter(AceGame.routing.websocket_urlpatterns)
-        )
+    "websocket": AuthMiddlewareStack(
+        URLRouter(AceGame.routing.websocket_urlpatterns)
     ),
 })

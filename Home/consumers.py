@@ -219,7 +219,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         if selected_game:
             self.selected_game = selected_game.decode()
         else:
-            self.selected_game=self.gamelist[1]
+            self.selected_game=self.selected_game = self.gamelist[1] if len(self.gamelist) > 1 else self.gamelist[0]
+
             await self.redis.hset(self.redis_key, "selected_game", self.selected_game)
 
         await self.send(text_data=json.dumps({
