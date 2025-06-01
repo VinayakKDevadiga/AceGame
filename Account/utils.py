@@ -99,40 +99,53 @@ def jwt_required(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
-import jwt
+
+
 from django.conf import settings
 from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
 from jwt import decode, ExpiredSignatureError, InvalidTokenError
+from urllib.parse import parse_qs
 
 @database_sync_to_async
 def get_user(validated_token):
     try:
-        user_id = validated_token.get('user_id')
-        return User.objects.get(id=user_id)
+        username = validated_token.get("username")
+        return User.objects.get(username=username)
     except User.DoesNotExist:
         return None
 
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
-        headers = dict(scope.get("headers", []))
-        cookie_header = headers.get(b"cookie", b"").decode()
-        
         jwt_token = None
-        for cookie in cookie_header.split(";"):
-            key, _, value = cookie.strip().partition("=")
-            if key == "jwt":
-                jwt_token = value
-                break
+        logger.debug("Came to middleware")
+
+        # Try reading from subprotocols (WebSocket headers)
+        subprotocols = scope.get("subprotocols", [])
+        if subprotocols:
+            jwt_token = subprotocols[0]
+            logger.debug("WebSocket detected")
+            logger.info(f"value of jwt{jwt_token}")
+
+
+
+        # Fallback to query param (optional)
 
         if jwt_token:
             try:
-                validated_token = decode(jwt_token, settings.SECRET_KEY, algorithms=["HS256"])
-                user = await get_user(validated_token)
-                scope["user"] = user if user else None
-            except (ExpiredSignatureError, InvalidTokenError):
-                scope["user"] = None
-        else:
-            scope["user"] = None
+                validated_payload = decode_jwt(jwt_token)
+                logger.debug(f"user detected")
+                user = await get_user(validated_payload)
+                logger.debug(f"user detected{user}")
 
-        return await super().__call__(scope, receive, send)
+                if user:
+                    scope["user"] = user
+                    return await super().__call__(scope, receive, send)
+            except (ExpiredSignatureError, InvalidTokenError):
+                pass  # invalid token
+
+        # Reject connection
+        await send({
+            "type": "websocket.close",
+            "code": 4401,  # 4401 = Unauthorized
+        })

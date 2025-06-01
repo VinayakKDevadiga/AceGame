@@ -224,9 +224,13 @@
                 window.location.href = "{% url 'login' %}";
             } else {
                 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-                socket = new WebSocket(
-                    `${protocol}://${window.location.host}/ws/wait/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                const token = getJWTToken();
+
+                const socket = new WebSocket(
+                    `${protocol}://${window.location.host}/ws/wait/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+                   [token]  // passed as a subprotocol (can be used like a header workaround)
                 );
+
 
                 const ul = document.getElementById("playerList");
 
