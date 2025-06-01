@@ -4,6 +4,9 @@ from django.core.mail import get_connection
 import jwt
 from django.shortcuts import redirect
 from datetime import datetime, timedelta
+import logging
+logger = logging.getLogger(__name__)
+logger.debug("WebSocket connected")
 
 def send_email_with_fallback(subject, message, recipient_list, html_message=None):
     accounts = settings.EMAIL_ACCOUNTS
@@ -100,6 +103,7 @@ import jwt
 from django.conf import settings
 from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
+from jwt import decode, ExpiredSignatureError, InvalidTokenError
 
 @database_sync_to_async
 def get_user(validated_token):
@@ -111,18 +115,24 @@ def get_user(validated_token):
 
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
-        jwt_token = scope["cookies"].get("jwt")  # 👈 Get JWT from cookie named 'jwt'
+        headers = dict(scope.get("headers", []))
+        cookie_header = headers.get(b"cookie", b"").decode()
+        
+        jwt_token = None
+        for cookie in cookie_header.split(";"):
+            key, _, value = cookie.strip().partition("=")
+            if key == "jwt":
+                jwt_token = value
+                break
 
         if jwt_token:
             try:
-                validated_token = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=["HS256"])
+                validated_token = decode(jwt_token, settings.SECRET_KEY, algorithms=["HS256"])
                 user = await get_user(validated_token)
-                scope['user'] = user if user else None
-            except jwt.ExpiredSignatureError:
-                scope['user'] = None
-            except jwt.InvalidTokenError:
-                scope['user'] = None
+                scope["user"] = user if user else None
+            except (ExpiredSignatureError, InvalidTokenError):
+                scope["user"] = None
         else:
-            scope['user'] = None
+            scope["user"] = None
 
         return await super().__call__(scope, receive, send)
