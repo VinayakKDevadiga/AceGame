@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Create Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 14px;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #4338ca;
+        }
+
+        button.copied {
+            background-color: #10b981;
+        }
+
+        #message {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        form button[type="submit"] {
+            margin-top: 25px;
+            width: 100%;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Create Room</h2>
+
+        <div id="message" style="color: red;"></div>
+
+        <form id="createRoomForm">
+            {% csrf_token %}
+
+            <label>Room ID:</label>
+            <div class="field-group">
+                <input type="text" value="{{ room_id }}" readonly id="roomID">
+                <button type="button" onclick="copyToClipboard(this)">Copy</button>
+            </div>
+
+            <label>Password:</label>
+            <div class="field-group">
+                <input type="text" id="passwordField" value="{{ password }}" readonly>
+                <button type="button" onclick="enableEdit()">Edit</button>
+            </div>
+
+            <button type="submit">Next</button>
+        </form>
+    </div>
+
+    <script>
+        function copyToClipboard(btn) {
+            const roomID = document.getElementById("roomID");
+            navigator.clipboard.writeText(roomID.value).then(() => {
+                btn.classList.add("copied");
+                btn.innerText = "Copied!";
+                setTimeout(() => {
+                    btn.classList.remove("copied");
+                    btn.innerText = "Copy";
+                }, 1500);
+            });
+        }
+
+        function enableEdit() {
+            const passwordField = document.getElementById("passwordField");
+            passwordField.removeAttribute("readonly");
+            passwordField.focus();
+        }
+
+        function getCookie(name) {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [key, value] = cookie.trim().split('=');
+                if (key === name) {
+                    return decodeURIComponent(value);
+                }
+            }
+            return null;
+        }
+
+        document.getElementById("createRoomForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const roomID = document.getElementById("roomID").value;
+            const password = document.getElementById("passwordField").value;
+            const jwtToken = getCookie("jwt");
+
+            try {
+                const response = await fetch("{% url 'createroom' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Authorization": `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ room_id: roomID, password: password }),
+                    credentials: "include"
+                });
+
+                if (response.ok) {
+                    sessionStorage.setItem("room_id", roomID);
+                    sessionStorage.setItem("password", password);
+                    window.location.href = "{% url 'waitforplayers' %}";
+                } else {
+                    const result = await response.json();
+                    document.getElementById("message").innerText = result.detail || "Failed to create room.";
+                }
+            } catch (error) {
+                console.error("Request error:", error);
+                document.getElementById("message").innerText = "Failed to create room.";
+            }
+        });
+    </script>
+</body>
+
+</html>

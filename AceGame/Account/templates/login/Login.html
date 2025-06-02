@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Ace Game</title>
+    <link rel="stylesheet" href="{% static 'Login/login.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+
+    <div class="formdiv">
+        <h2>Login to Ace Game</h2>
+
+        <div class="messages" id="messages"></div>
+
+        <form id="loginForm">
+            {% csrf_token %}
+            <div class="formrow">
+                <label for="username">Username</label>
+                <div><input type="text" id="username" name="username" required></div>
+            </div>
+
+            <div class="formrow">
+                <label for="password">Password</label>
+                <div><input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+            </div>
+
+            <div class="form-links">
+                <a href="{% url 'send_verification_code' %}">Forgot Password? Reset</a>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="form-links">
+            <a href="{% url 'signup' %}">Don't have an account? Sign Up</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messagesDiv = document.getElementById('messages');
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            axios.post("{% url 'login' %}", {
+                username: username,
+                password: password
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+                .then(function (response) {
+                    const token = response.data.token;
+                    // document.cookie = `jwt=${token}; path=/; samesite=Lax`;  // Use secure; in production
+                    messagesDiv.innerHTML = '<p style="color: green;">Login successful! Redirecting...</p>';
+                    setTimeout(() => {
+                        window.location.href = "{% url 'home' %}";
+                    }, 1500);
+                })
+                .catch(function (error) {
+                    if (error.response) {
+                        messagesDiv.innerHTML = `<p style="color: red;">${error.response.data.detail}</p>`;
+                    } else {
+                        messagesDiv.innerHTML = '<p style="color: red;">An error occurred. Please try again.</p>';
+                    }
+                });
+        });
+
+    </script>
+
+
+</body>
+
+</html>

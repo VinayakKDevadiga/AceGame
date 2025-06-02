@@ -1,0 +1,140 @@
+/* ✅ Reset everything */
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* ✅ Apply box-sizing globally */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* ✅ Main form container */
+.formdiv {
+    width: 100%;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    overflow: hidden;
+    /* prevent any overflow */
+}
+
+/* ✅ Headings */
+.formdiv h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+/* ✅ Each form row */
+.formrow {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+/* ✅ Labels */
+.formrow label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 16px;
+    word-wrap: break-word;
+    /* if label is too long */
+}
+
+/* ✅ Inputs, selects, textareas */
+.formrow input,
+.formrow select,
+.formrow textarea {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+/* ✅ Error messages */
+.error p {
+    color: red;
+    font-size: 14px;
+    margin: 5px 0 0 0;
+}
+
+/* ✅ Messages */
+.messages p {
+    background: #e0ffe0;
+    border: 1px solid #8bc34a;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* ✅ Submit button */
+button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #4caf50;
+    color: white;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background-color: #45a049;
+}
+
+/* ✅ Form link */
+.form-links {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.form-links a {
+    font-size: 14px;
+    color: #333;
+    text-decoration: none;
+}
+
+.form-links a:hover {
+    text-decoration: underline;
+}
+
+/* ✅ Responsive: fix for screens <600px */
+@media (max-width: 600px) {
+    .formdiv {
+        width: 90%;
+        padding: 15px;
+    }
+
+    .formrow label {
+        font-size: 14px;
+    }
+
+    .formrow input,
+    .formrow select,
+    .formrow textarea {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    button[type="submit"] {
+        font-size: 14px;
+        padding: 10px;
+    }
+}

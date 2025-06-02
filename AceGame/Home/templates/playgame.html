@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Ace Game</title>
+    <link rel="stylesheet" href="{% static 'Home/homepage.css' %}">
+
+    <style>
+        .btn {
+            padding: 18px 40px;
+            background-color: #1b1717;
+
+            color: white;
+            border: 5px solid white;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background-color: #f38b13;
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        Ace Game 🎴
+    </header>
+
+    <main>
+        <div class="welcome-text">Get ready to fight!</div>
+        <div class="username-text">The Great {{ user.username }}</div>
+
+        <div class="btn-group">
+            {% if not user.is_authenticated %}
+            <a href="{% url 'login' %}" class="btn">Login</a>
+            <a href="{% url 'signup' %}" class="btn">Sign Up</a>
+            {% else %}
+            <a href="{% url 'createroom' %}" class="btn">Create Room</a>
+            <a href="{% url 'join_room' %}" class="btn">Join Room</a>
+
+            {% endif %}
+        </div>
+
+        <!-- Game cards section -->
+        <!-- <div class="game-cards">
+            {% for game in game_types %}
+            <div class="card">
+                <h3>{{ game.name }}</h3>
+                <a href="#">Play {{ game.name }}</a>
+            </div>
+            {% endfor %}
+        </div> -->
+
+    </main>
+
+    <footer>
+        © 2025 Ace Game. All rights reserved.
+    </footer>
+
+</body>
+
+</html>
