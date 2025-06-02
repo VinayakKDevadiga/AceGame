@@ -226,10 +226,10 @@
                 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
                 const token = getJWTToken();
 
-                const socket = new WebSocket(
-                    `${protocol}://${window.location.host}/ws/wait/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
-                   [token]  // passed as a subprotocol (can be used like a header workaround)
+                socket = new WebSocket(
+                    `${protocol}://${window.location.host}/ws/wait/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`
                 );
+
 
 
                 const ul = document.getElementById("playerList");

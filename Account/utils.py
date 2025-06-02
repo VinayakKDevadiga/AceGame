@@ -106,7 +106,6 @@ from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
 from jwt import decode, ExpiredSignatureError, InvalidTokenError
 from urllib.parse import parse_qs
-
 @database_sync_to_async
 def get_user(validated_token):
     try:
@@ -117,35 +116,29 @@ def get_user(validated_token):
 
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
-        jwt_token = None
         logger.debug("Came to middleware")
 
-        # Try reading from subprotocols (WebSocket headers)
-        subprotocols = scope.get("subprotocols", [])
-        if subprotocols:
-            jwt_token = subprotocols[0]
-            logger.debug("WebSocket detected")
-            logger.info(f"value of jwt{jwt_token}")
-
-
-
-        # Fallback to query param (optional)
+        # Extract token from query string
+        query_string = scope.get("query_string", b"").decode()
+        query_params = parse_qs(query_string)
+        jwt_token_list = query_params.get("token", [])
+        jwt_token = jwt_token_list[0] if jwt_token_list else None
 
         if jwt_token:
             try:
                 validated_payload = decode_jwt(jwt_token)
-                logger.debug(f"user detected")
+                logger.debug("User detected")
                 user = await get_user(validated_payload)
-                logger.debug(f"user detected{user}")
+                logger.debug(f"User loaded: {user}")
 
                 if user:
                     scope["user"] = user
                     return await super().__call__(scope, receive, send)
-            except (ExpiredSignatureError, InvalidTokenError):
-                pass  # invalid token
+            except (ExpiredSignatureError, InvalidTokenError) as e:
+                logger.warning(f"JWT error: {e}")
 
-        # Reject connection
+        # Reject unauthorized connections
         await send({
             "type": "websocket.close",
-            "code": 4401,  # 4401 = Unauthorized
+            "code": 4401,
         })
