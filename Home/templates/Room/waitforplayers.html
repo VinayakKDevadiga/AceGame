@@ -279,7 +279,10 @@
                     const data = JSON.parse(event.data);
 
                     if (data.type === "players_update" && Array.isArray(data.players)) {
+                        console.log("players_lst:", data.players);
+
                         updatePlayerList(data.players);
+
                         if (data.error) {
                             document.getElementById("error").innerText = data.error;
                         }

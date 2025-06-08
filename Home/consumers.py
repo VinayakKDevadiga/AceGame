@@ -128,23 +128,23 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                         else:
                             game_status = (await self.redis.hget(self.redis_key, 'status')).decode()
                             logger.info(f"Game started status {game_status}")
-
                             
-                            await self.redis.delete(self.redis_key)
-                            logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
-                            await self.channel_layer.group_send(
-                                self.group_name,
-                                {
-                                    "type": "players_update",
-                                }
-                            )
+                            logger.info(f"Came to else part of disconnect-----The stage an his here now ")
+                       
+                            
+                            
+                            # await self.channel_layer.group_send( #no need to send this update as the owner deleted the room
+                            #     self.group_name,
+                            #     {
+                            #         "type": "players_update",
+                            #     }
+                            # )
                             if game_status=="started":
                                 await self.channel_layer.group_send(
                                 self.group_name,
                                 {
                                     "type": "send_error_message",
-                                    "message": "Game Started by owner"
-
+                                    "message": "Game Started by owner",        
                                 }
                             )
                             else:
@@ -152,10 +152,13 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                                     self.group_name,
                                     {
                                         "type": "send_error_message",
-                                        "message": "Room Owner left the game, game closed"
+                                        "message": "Room Owner left the game, game closed",
+                                        "delete":True
 
                                     }
                                 )
+                            # await self.redis.delete(self.redis_key)
+                            # logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
 
                     else:
                         players.remove(self.username)
@@ -215,12 +218,12 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         self.gamelist_json = await self.redis.hget(self.redis_key, "gamelist")
         self.gamelist = json.loads(self.gamelist_json.decode()) if self.gamelist_json else []
 
-        selected_game = (await self.redis.hget(self.redis_key, "selected_game"))
-        if selected_game:
-            self.selected_game = selected_game.decode()
-        else:
-            self.selected_game=self.selected_game = self.gamelist[1] if len(self.gamelist) > 1 else self.gamelist[0]
+        selected_game_raw = await self.redis.hget(self.redis_key, "selected_game")
+        self.selected_game = selected_game_raw.decode().strip() if selected_game_raw else None
 
+        
+        if self.selected_game==None:
+            self.selected_game=self.gamelist[1] if len(self.gamelist) > 1 else self.gamelist[0]
             await self.redis.hset(self.redis_key, "selected_game", self.selected_game)
 
         await self.send(text_data=json.dumps({
@@ -230,6 +233,9 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
             "gamelist":self.gamelist,
             "selected_game":self.selected_game
         }))
+
+
+
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -345,7 +351,20 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "error": event["message"]
         }))
-    
+
+        if event.get("delete"):
+            await self.send(text_data=json.dumps({
+                "type": "players_update",
+                "players": [],
+                "owner": self.owner,
+                "gamelist":[],
+                "selected_game":self.selected_game
+            }))
+            if await self.redis.exists(self.redis_key):
+                await self.redis.delete(self.redis_key)
+                logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
+            else:
+                logger.warning(f"Tried to delete Redis key {self.redis_key}, but it does not exist.")
 
     # Sokkatte
 
