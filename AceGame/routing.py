@@ -12,6 +12,6 @@ from Sokkatte import sokkatte_consumers
 
 websocket_urlpatterns = [
 re_path(r'ws/wait/(?P<room_id>[^/]+)/$', consumers.WaitRoomConsumer.as_asgi()),
-re_path(r'ws/Sokkatte/(?P<room_id>\w+)/$', sokkatte_consumers.Sokkatte_consumer.as_asgi()),
+re_path(r'ws/Sokkatte/(?P<room_id>[^/]+)/$', sokkatte_consumers.Sokkatte_consumer.as_asgi()),
 ]
 

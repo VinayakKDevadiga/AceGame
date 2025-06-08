@@ -2,13 +2,308 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sokkatte</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Round Table</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+
+        #table {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background-color: lightgreen;
+            border: 8px solid brown;
+            margin-top: 20px;
+        }
+
+        .person {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid black;
+            /* default, overwritten by JS */
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
 </head>
-<h1>Sokkatte</h1>
 
 <body>
+
+    <h2>Round Table Seating</h2>
+    <div id="table"></div>
+
+    <script>
+        // Dummy data: ID and assigned border color
+        const people = [
+            { id: 1, color: "#e74c3c" },   // red
+            { id: 2, color: "#3498db" },   // blue
+            { id: 3, color: "#2ecc71" },   // green
+            { id: 4, color: "#f1c40f" },   // yellow
+            { id: 5, color: "#9b59b6" },   // purple
+            { id: 6, color: "#e67e22" },   // orange
+            { id: 7, color: "#1abc9c" },   // turquoise
+            { id: 8, color: "#e84393" }    // pink
+        ];
+
+        const table = document.getElementById("table");
+        const radius = 130;
+        const centerX = table.clientWidth / 2;
+        const centerY = table.clientHeight / 2;
+        const total = people.length;
+
+        table.innerHTML = ''; // clear if redrawing
+
+        people.forEach((person, i) => {
+            const angle = (2 * Math.PI * i) / total;
+            const x = centerX + radius * Math.cos(angle) - 15;
+            const y = centerY + radius * Math.sin(angle) - 15;
+
+            const div = document.createElement("div");
+            div.className = "person";
+            div.style.left = `${x}px`;
+            div.style.top = `${y}px`;
+            div.style.borderColor = person.color;
+            div.textContent = person.id;
+
+            table.appendChild(div);
+        });
+
+
+
+        // Authentication
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) window.location.reload();
+        });
+
+
+
+        const roomId = sessionStorage.getItem("room_id");
+        let username = 'Guest';
+        const password = sessionStorage.getItem("password");
+        document.getElementById("roomIdDisplay").textContent = roomId || "N/A";
+
+        const urls = {
+            currentUserUrl: "{% url 'current_user' %}"  // replace with actual endpoint
+        };
+
+        function getJWTToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [key, value] = cookie.trim().split('=');
+                if (key === 'jwt') {
+                    return decodeURIComponent(value);
+                }
+            }
+            return null;
+        }
+
+
+        // check authentication
+        async function checkAuthAndInit() {
+            const token = getJWTToken();
+            if (!token) {
+                console.log("JWT not found in cookies.");
+                window.location.href = "{% url 'login' %}";
+                return;
+            }
+
+            try {
+                const response = await fetch(urls.currentUserUrl, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    username = data.username;
+                    initWebSocket();
+                } else {
+                    console.warn("Token invalid or expired");
+                    window.location.href = "{% url 'login' %}";
+                }
+            } catch (error) {
+                console.error("Auth check failed:", error);
+                window.location.href = "{% url 'login' %}";
+            }
+        }
+
+        checkAuthAndInit();
+
+
+        // logout
+        function logout() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [key] = cookie.trim().split('=');
+                document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+            }
+            location.reload();
+        }
+
+
+        // websocket
+        function initWebSocket() {
+            let isadminpage_updated = false;
+            let selectedgamecard = null;
+            let socket;
+            const countdownElement = document.getElementById("countdown");
+
+            if (!roomId || !username || !password) {
+                window.location.href = "{% url 'login' %}";
+            } else {
+                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const token = getJWTToken();
+
+                socket = new WebSocket(
+                    `${protocol}://${window.location.host}/ws/Sokkatte/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`
+                );
+
+
+
+                const ul = document.getElementById("playerList");
+
+                const updatePlayerList = (players) => {
+                    ul.innerHTML = "";
+                    players.forEach(player => {
+                        const li = document.createElement("li");
+                        li.textContent = player;
+                        ul.appendChild(li);
+                    });
+                };
+
+                const gameListContainer = document.getElementById("gameListContainer");
+
+                function updateGameList(games) {
+                    gameListContainer.innerHTML = "";
+                    const owner = sessionStorage.getItem("owner");
+
+                    games.forEach(game => {
+                        const card = document.createElement("div");
+                        card.classList.add("game-card");
+                        card.textContent = game;
+
+                        if (username === owner) {
+                            card.addEventListener("click", () => {
+                                document.querySelectorAll(".game-card").forEach(c => c.classList.remove("selected"));
+                                card.classList.add("selected");
+                                selectedgamecard = game;
+
+                                if (socket && socket.readyState === WebSocket.OPEN) {
+                                    socket.send(JSON.stringify({
+                                        type: "game_selected",
+                                        room_id: roomId,
+                                        username: username,
+                                        selected_game: selectedgamecard
+                                    }));
+                                }
+                            });
+                        }
+
+                        gameListContainer.appendChild(card);
+                    });
+                }
+
+                socket.onmessage = function (event) {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === "players_update" && Array.isArray(data.players)) {
+                        console.log("players_lst:", data.players);
+
+                        updatePlayerList(data.players);
+
+                        if (data.error) {
+                            document.getElementById("error").innerText = data.error;
+                        }
+                        if (data.owner) {
+                            sessionStorage.setItem('owner', data.owner);
+                        }
+                        if (data.selected_game) {
+                            const selectedGame = data.selected_game;
+                            const owner = sessionStorage.getItem("owner");
+
+                            setTimeout(() => {
+                                document.querySelectorAll(".game-card").forEach(c => {
+                                    c.classList.toggle("selected", c.textContent.trim().toLowerCase() === selectedGame.toLowerCase());
+                                    selectedgamecard = selectedGame;
+                                });
+                            }, 100); // delay in ms
+                        }
+
+                    }
+
+                    if (data.error) {
+                        document.getElementById("error").innerText = data.error;
+                    }
+
+                    if (data.owner) {
+                        sessionStorage.setItem('owner', data.owner);
+                        document.getElementById("startGameBtn").style.display =
+                            username === data.owner ? "block" : "none";
+                    }
+
+
+                    if (data.type === "game_started") {
+                        startCountdown(data);
+                    }
+
+                    if (data.gamelist) {
+                        updateGameList(data.gamelist);
+                        if (data.owner === username && !isadminpage_updated) {
+                            isadminpage_updated = true;
+                        }
+                    }
+
+                    if (data.selected_game) {
+                        const selectedGame = data.selected_game;
+                        const owner = sessionStorage.getItem("owner");
+
+                        if (username !== owner) {
+                            document.querySelectorAll(".game-card").forEach(c => {
+                                c.classList.toggle("selected", c.textContent === selectedGame);
+                            });
+                        }
+                    }
+                };
+
+                socket.onopen = () => console.log("WebSocket connected.");
+                socket.onclose = (event) => {
+                    console.warn("WebSocket closed:", event);
+                    // Optional: handle reconnection logic here
+                };
+
+                document.getElementById("startGameBtn").addEventListener("click", () => {
+                    if (selectedgamecard) {
+                        socket.send(JSON.stringify({
+                            type: "start_game",
+                            room_id: roomId,
+                            selected_game: selectedgamecard
+                        }));
+                    } else {
+                        document.getElementById("error").innerText = "Please select a game to start.";
+                    }
+                });
+            }
+
+        }
+    </script>
 
 </body>
 

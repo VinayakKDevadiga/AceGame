@@ -67,6 +67,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     "players": json.dumps([self.username]),
                     "cardList": json.dumps({}),
                     "current_round": json.dumps({}),
+                    "players_connected_list": json.dumps({}),
                     "played_card_list": json.dumps([])
                 }
                 await self.redis.hset(self.redis_key, mapping=initial_data)
@@ -161,7 +162,23 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                             # logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
 
                     else:
-                        players.remove(self.username)
+                        game_status = (await self.redis.hget(self.redis_key, 'status')).decode()
+
+                        if game_status=="started":
+                                await self.channel_layer.group_send(
+                                self.group_name,
+                                {
+                                    "type": "send_error_message",
+                                    "message": "Game Started by owner",        
+                                }
+                            )
+                        else:  #waiting
+                            players.remove(self.username)
+                            await self.redis.hset(self.redis_key, 'players', json.dumps(players))
+                            await self.close(code=4002)
+                            
+                        
+
                         # if self.username == owner.decode():
                         #     players=[]
                         #     await self.redis.hset(self.redis_key, 'players', json.dumps(players))
@@ -195,6 +212,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                                     "type": "players_update",
                                 }
                             )
+                            
                         else:
                             # No players left, clean up Redis
                             await self.redis.delete(self.redis_key)
@@ -366,6 +384,5 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
             else:
                 logger.warning(f"Tried to delete Redis key {self.redis_key}, but it does not exist.")
 
-    # Sokkatte
 
     
