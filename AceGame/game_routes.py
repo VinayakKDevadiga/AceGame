@@ -6,14 +6,14 @@ GAME_ROUTES = {
         "url": "/Sokkatte/",
         "allowed": True,
     },
-    "chess": {
-        "app": "chess_app",
-        "url": "/game/chess/",
-        "allowed": True,
-    },
-    "demo": {
-        "app": "demo_app",
-        "url": "/game/demo/",
-        "allowed": False,  # example of deactivated game
-    }
+    # "chess": {
+    #     "app": "chess_app",
+    #     "url": "/game/chess/",
+    #     "allowed": True,
+    # },
+    # "demo": {
+    #     "app": "demo_app",
+    #     "url": "/game/demo/",
+    #     "allowed": False,  # example of deactivated game
+    # }
 }

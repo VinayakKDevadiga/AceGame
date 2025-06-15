@@ -68,7 +68,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     "cardList": json.dumps({}),
                     "current_round": json.dumps({}),
                     "players_connected_list": json.dumps({}),
-                    "played_card_list": json.dumps([])
+                    "played_card_list": json.dumps([]),
                 }
                 await self.redis.hset(self.redis_key, mapping=initial_data)
                 
@@ -366,10 +366,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
    
 
     async def send_error_message(self, event):
-        await self.send(text_data=json.dumps({
-            "error": event["message"]
-        }))
-
+        
         if event.get("delete"):
             await self.send(text_data=json.dumps({
                 "type": "players_update",
@@ -383,6 +380,10 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
             else:
                 logger.warning(f"Tried to delete Redis key {self.redis_key}, but it does not exist.")
+        
+        await self.send(text_data=json.dumps({
+            "error": event["message"]
+        }))
 
 
     

@@ -73,6 +73,9 @@
             const radius = baseRadius + (personSize / 2);  // push players outside the circle
 
             players.forEach((player, i) => {
+                // Save each player's color in sessionStorage
+                sessionStorage.setItem(`player_color_${player.username}`, player.color || "gray");
+
                 const angle = (2 * Math.PI * i) / total;
                 const x = centerX + radius * Math.cos(angle);
                 const y = centerY + radius * Math.sin(angle);
@@ -88,7 +91,6 @@
 
                 table.appendChild(div);
             });
-
 
 
         }
@@ -138,6 +140,8 @@
                 if (response.ok) {
                     const data = await response.json();
                     username = data.username;
+                    console.log('calling initWebSocket');
+
                     initWebSocket();
                 } else {
                     console.warn("Token invalid or expired");
@@ -155,6 +159,7 @@
 
             let socket;
             if (!roomId || !username || !password) {
+
                 window.location.href = "{% url 'login' %}";
             } else {
                 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -170,8 +175,8 @@
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
 
-                    if (data.type === "user_joined" && data.connected_dict) {
-                        console.log('user_joined', data.connected_dict);
+                    if (data.type === "players_update" && data.connected_dict) {
+                        console.log('players_update', data.connected_dict);
 
                         const players = Object.entries(data.connected_dict).map(([username, color]) => ({
                             username,
@@ -180,6 +185,23 @@
 
                         drawTable(players);
                     }
+                    if (data.type == "start_card_distribution") {
+                        console.log("card distribution will start now");
+                        // send message to the server
+                        if (socket && socket.readyState === WebSocket.OPEN) {
+                            socket.send(JSON.stringify({
+                                type: "get_my_cards_req",
+                            }));
+                        }
+
+                    }
+                    if (data.type == "cards_distributed") {
+                        console.log("card distributino done");
+                        console.log('cards you got', data.player_cards);
+
+
+                    }
+
                 };
 
                 socket.onerror = (error) => {
@@ -188,11 +210,19 @@
 
                 socket.onclose = (e) => {
                     console.log("Socket closed:", e);
-                    if (e.code !== 1000) {
-                        // Only redirect on abnormal close
-                        window.location.href = "/login/";
-                    }
+                    console.log("Closed:", e.code, e.reason);
+
+                    // if (e.code !== 1000) {
+                    //     // Only redirect on abnormal close
+                    //     window.location.href = "{% url 'login' %}";
+                    // }
                 };
+                setInterval(() => {
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: "ping" }));
+                    }
+                }, 30000); // every 30 sec
+
             }
 
         }

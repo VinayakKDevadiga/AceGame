@@ -1,7 +1,8 @@
 import json
 import logging
 from urllib.parse import parse_qs
-
+import random
+import aioredis.lock
 import redis.asyncio as redis
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
@@ -84,12 +85,31 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             connected_dict[self.username] = assigned_color
             await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(connected_dict))
             logger.info(f"Assigned color '{assigned_color}' to user '{self.username}'")
+            
+            # check for all users connected_or not:
+            # if so start eh card distribution
+            all_connected = all(player in connected_dict for player in players)
+            if all_connected:
+                logger.info("All players connected. Cards distributed.")
+                # Broadcast 
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type": "everyone_joined",
+                    }
+                )
+                # distribute the cards
+                await self.distribute_cards()
+            else:
+                logger.info("Waiting for more players to connect.")
+
+
 
         # Optional: Broadcast connected player info
         await self.channel_layer.group_send(
             self.group_name,
             {
-                "type": "user_joined",
+                "type": "players_update",
                 "connected_dict": connected_dict
             }
         )
@@ -97,9 +117,155 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
         logger.info(f"User '{self.username}' disconnected from room '{self.room_id}'")
+        
+        # Remove user from Redis player-connected list
+        connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+        if connected_raw:
+            connected_dict = json.loads(connected_raw.decode())
 
-    async def user_joined(self, event):
+            if self.username in connected_dict:
+                del connected_dict[self.username]
+                await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(connected_dict))
+                logger.info(f"Removed '{self.username}' from players_connected_list")
+
+                # Send unified update to all players
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type": "players_update",
+                        "connected_dict": connected_dict
+                    }
+                )
+
+
+    async def players_update(self, event):
         await self.send(text_data=json.dumps({
-            "type": "user_joined",
+            "type": "players_update",
             "connected_dict": event["connected_dict"]
         }))
+
+    async def everyone_joined(self, event):
+        logger.info(f"Cards sent{ self.username}")
+
+        await self.send(text_data=json.dumps({
+            "type": "start_card_distribution",
+        }))
+
+
+    # distribute cards | initialize cards
+    async def initialize_deck(self):
+        SUITS = ['F', 'S', 'H', 'D']
+        RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+        FULL_DECK = [f"{suit}{rank}" for suit in SUITS for rank in RANKS]
+        await self.redis.hset(self.redis_key, "cardList", json.dumps(FULL_DECK))
+
+
+    async def distribute_cards(self):
+        await self.initialize_deck()  # Ensure deck is initialized
+
+        logger.info("Attempting to acquire lock for card distribution...")
+        
+        try:
+            # Check if cards are already distributed
+            logger.info("Card distribution flag")
+
+            logger.info("Distributing cards now...")
+
+            await self.redis.hset(self.redis_key, "card_distributed_flag", "1")
+
+            # Create full deck
+            SUITS = ['F', 'S', 'H', 'D']
+            RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+            FULL_DECK = [f"{suit}{rank}" for suit in SUITS for rank in RANKS]
+            card_list = FULL_DECK.copy()
+
+            # Get players list from Redis
+            raw_data = await self.redis.hgetall(self.redis_key)
+            data = {k.decode('utf-8'): v.decode('utf-8') for k, v in raw_data.items()}
+
+            try:
+                players_connected = json.loads(data.get("players", "[]"))
+                
+                if not isinstance(players_connected, list):
+                    raise ValueError("Invalid format for 'players'")
+            except Exception as e:
+                logger.error(f"Failed to decode 'players': {e}", exc_info=True)
+                await self.send(text_data=json.dumps({"error": "Invalid player data"}))
+                return
+
+            # Distribute 4 cards per player
+            distributed_card_dict = {}
+            for player in players_connected:
+                distributed_card_dict[player] = []
+                for _ in range(4):
+                    if not card_list:
+                        break
+                    card = random.choice(card_list)
+                    card_list.remove(card)
+                    distributed_card_dict[player].append(card)
+
+            # Save to Redis
+            try:
+                await self.redis.hset(self.redis_key, mapping={
+                    "cardList": json.dumps(card_list),
+                    "players_card_list": json.dumps(distributed_card_dict)
+                })
+                logger.info(f"Cards successfully distributed to players: {distributed_card_dict}")
+            except Exception as e:
+                logger.error(f"Error storing distributed cards: {e}", exc_info=True)
+
+        except Exception as e:
+            logger.error(f"Error in distribute_cards: {e}", exc_info=True)
+            await self.send(text_data=json.dumps({"error": "Card distribution failed"}))
+
+        
+
+    async def get_player_card(self):
+        try:
+            # Add retry logic or small wait if needed
+            for attempt in range(3):
+                card_data = await self.redis.hget(self.redis_key, "players_card_list")
+                if card_data:
+                    break
+                await asyncio.sleep(0.1)  # wait a bit for cards to be set
+            else:
+                logger.warning("Card data not available after retries")
+                card_data = None
+
+            if card_data:
+                distributed_card_dict = json.loads(card_data)
+                await self.send(text_data=json.dumps({
+                    "type": "cards_distributed",
+                    "player_cards": distributed_card_dict.get(self.username, [])
+                }))
+            else:
+                await self.send(text_data=json.dumps({
+                    "type": "cards_distributed",
+                    "player_cards": []
+                }))
+        except Exception as e:
+            logger.error(f"Failed to send cards to {self.username}: {e}", exc_info=True)
+            await self.send(text_data=json.dumps({
+                "type": "error",
+                "message": "Failed to retrieve your cards"
+            }))
+
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+            msg_type = data.get("type")
+            logger.info(f"Received message type: {msg_type}")
+
+            if msg_type == "get_my_cards_req":
+                # Instead of distributing again, just fetch and send
+                await self.get_player_card()
+            elif msg_type == "ping":
+                await self.send(text_data=json.dumps({"type": "error", "message": "Server error"}))
+
+            else:
+                logger.warning(f"Unhandled message type: {msg_type}")
+        except Exception as e:
+            logger.error(f"Error handling receive: {e}", exc_info=True)
+            await self.send(text_data=json.dumps({"type": "error", "message": "Server error"}))
+    
