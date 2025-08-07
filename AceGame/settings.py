@@ -189,7 +189,7 @@ STATIC_URL = '/static/'
 # CACHES = {
 #     "default": {
 #         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1",  # 1 is DB number, you can change it
+#         "LOCATION": "redis://127.0.0.1:6379/0",  # 1 is DB number, you can change it
 #         "OPTIONS": {
 #             "CLIENT_CLASS": "django_redis.client.DefaultClient",
 #         }

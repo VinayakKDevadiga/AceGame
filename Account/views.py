@@ -18,7 +18,7 @@ import random
 import string
 from Account.models import RoomTable
 
-# for jwt 
+# for jwt
 from .utils import generate_jwt
 from django.http import JsonResponse
 

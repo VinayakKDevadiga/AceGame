@@ -15,6 +15,8 @@ logger.debug("WebSocket connected")
 
 class WaitRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        logger.info(f"Connect req came to connect consumer")
+
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.group_name = f"room_{self.room_id}"
         self.redis_key = f"gamedata:{self.room_id}"
@@ -24,7 +26,10 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         self.username = query_params.get('username', ['Anonymous'])[0]
         self.password = query_params.get('password', [''])[0]
 
-        self.redis = redis.Redis()
+        self.redis = redis.Redis(host="127.0.0.1", port=6379, db=0) 
+
+        logger.info(f"connected to redis { self.username}, {self.password}")
+
 
         try:
             self.room = await sync_to_async(RoomTable.objects.get)(room_id=self.room_id)
@@ -33,24 +38,39 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
             return
 
         self.room_owner = self.room.username  # Save owner in self for later use
+        logger.info(f"Querying status {self.room_owner} {self.redis_key}")
 
-        status = await self.redis.hget(self.redis_key, "status")
+        try:
+            await self.accept()
+            status = await self.redis.hget(self.redis_key, "status")
 
-        if status and (status.decode()=='waiting' or status.decode()=='started') and self.username==self.room_owner:
-                    await self.accept()
+        except redis.TimeoutError:
+            logger.error(f"Redis hget timed out.")
+            # status = None  # ← this is critical
+
+        if status and self.username==self.room_owner:
                     duplicate_owner_login = (await self.redis.hget(self.redis_key, "duplicate_owner_login")).decode()
                     await self.redis.hset(self.redis_key, "duplicate_owner_login", (int(duplicate_owner_login)+1))
-                    await self.send(text_data=json.dumps({
-                        "error": "You are already in room with other device or browser, Log off there and continue"
-                    }))
-                    await self.close(code=4002)
-                    return
+
+                    if status.decode()=='started':
+                        await self.send(text_data=json.dumps({
+                            "error": "Game Already started in other browser with your userid"
+                            }))
+                        await self.close(code=4002)
+                        return
+                    elif status.decode()=='waiting':
+                        # await self.accept()
+                        await self.send(text_data=json.dumps({
+                            "error": "You are already in room with other device or browser, Log off there and continue"
+                        }))
+                        await self.close(code=4002)
+                        return
         
         if not status:
             if self.username == self.room_owner :
-
+                
                 if status and (status.decode()=='waiting' or status.decode()=='started'):
-                    await self.accept()
+                    # await self.accept()
                     await self.send(text_data=json.dumps({
                         "error": "You are already in room with other device or browser, Log off there and continue"
                     }))
@@ -58,6 +78,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     return
                 # else
                 self.gameslist = await sync_to_async(list)(GameTable.objects.values_list('gamename', flat=True))
+                logger.info(f"IN Above STATUS PART and ")
+
                 initial_data = {
                     "status": "waiting",
                     "gamelist": json.dumps(self.gameslist),
@@ -70,10 +92,14 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     "players_connected_list": json.dumps({}),
                     "played_card_list": json.dumps([]),
                 }
+                logger.info(f"IN NOT STATUS PART and {initial_data}")
+                await self.redis.hset("test_key", mapping={"foo": "bar"})
+
+
                 await self.redis.hset(self.redis_key, mapping=initial_data)
-                
+               
             else:
-                await self.accept()
+                # await self.accept()
                 await self.send(text_data=json.dumps({
                     "error": f"The room is closed. Please contact admin: {self.room_owner}"
                 }))
@@ -89,7 +115,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 await self.redis.hset(self.redis_key, "players", json.dumps(players))
 
             else:
-                await self.accept()
+                # await self.accept()
                 await self.send(text_data=json.dumps({
                     "error": "You are already in room with other device or browser, Log off there and continue"
                 }))
@@ -97,7 +123,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 return
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
-        await self.accept()
+        # await self.accept()
 
         await self.channel_layer.group_send(
             self.group_name,
@@ -127,6 +153,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                             duplicate_owner_login = (await self.redis.hget(self.redis_key, "duplicate_owner_login")).decode()
                             await self.redis.hset(self.redis_key, "duplicate_owner_login", (int(duplicate_owner_login)-1))
                         else:
+                            
                             game_status = (await self.redis.hget(self.redis_key, 'status')).decode()
                             logger.info(f"Game started status {game_status}")
                             
@@ -158,8 +185,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
 
                                     }
                                 )
-                            # await self.redis.delete(self.redis_key)
-                            # logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
+                                await self.redis.delete(self.redis_key)
+                                logger.info(f"Room {self.room_id} is now empty. Redis game data deleted.")
 
                     else:
                         game_status = (await self.redis.hget(self.redis_key, 'status')).decode()
@@ -176,6 +203,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                             players.remove(self.username)
                             await self.redis.hset(self.redis_key, 'players', json.dumps(players))
                             await self.close(code=4002)
+                            logger.info(f"Redis data deleted")
+
                             
                         
 
@@ -331,7 +360,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         self.full_url = f"{self.domain}{GAME_ROUTES[self.selected_game]['url']}"
         
 
-        if not self.route_page_info or not self.route_page_info.get("allowed", False):
+        if not self.full_url or not self.full_url.get("allowed", False):
             await self.send(text_data=json.dumps({
                 "type": "send_error_message",
                 "message": "The selected game is currently unavailable."
@@ -353,16 +382,16 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
             "selected_by": self.username
         }))
 
-    async def game_started(self, event):
-        selected_game = await self.redis.hget(self.redis_key, "selected_game")
-        selected_game = selected_game.decode() if selected_game else None
+    # async def game_started(self, event):
+    #     selected_game = await self.redis.hget(self.redis_key, "selected_game")
+    #     selected_game = selected_game.decode() if selected_game else None
 
-        route_page_info = GAME_ROUTES[selected_game]  # Safe to assume it exists
+    #     route_page_info = GAME_ROUTES[selected_game]  # Safe to assume it exists
 
-        await self.send(text_data=json.dumps({
-            "type": "game_started",
-            "redirect_url": route_page_info["url"]
-        }))
+    #     await self.send(text_data=json.dumps({
+    #         "type": "game_started",
+    #         "redirect_url": route_page_info["url"]
+    #     }))
    
 
     async def send_error_message(self, event):
