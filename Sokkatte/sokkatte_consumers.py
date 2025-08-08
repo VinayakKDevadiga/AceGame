@@ -2,13 +2,16 @@ import json
 import logging
 from urllib.parse import parse_qs
 import random
-import aioredis.lock
+# import aioredis.lock
 import redis.asyncio as redis
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from Account.models import RoomTable
-
+from redis.asyncio.lock import Lock
+import asyncio
 logger = logging.getLogger(__name__)
+from redis.asyncio.lock import Lock
+
 
 COLOR_CODES = [
     "#e6194b", "#3cb44b", "#ffe119", "#0082c8", "#f58231", "#911eb4", "#46f0f0", "#f032e6",
@@ -21,6 +24,7 @@ COLOR_CODES = [
 ]
 
 class Sokkatte_consumer(AsyncWebsocketConsumer):
+    
     async def connect(self):
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.group_name = f"room_{self.room_id}"
@@ -33,7 +37,12 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
         logger.info(f"WebSocket connect attempt: user={self.username}, room={self.room_id}")
 
-        self.redis = redis.Redis()
+        self.redis = redis.Redis(host="127.0.0.1", port=6379, db=0)
+        # self.lock_manager = Aioredlock([{"host": "localhost", "port": 6379}])
+        # lock = await self.lock_manager.lock(self.redis_key + "_lock")
+
+    
+        
 
         try:
             self.room = await sync_to_async(RoomTable.objects.get)(room_id=self.room_id)
@@ -60,59 +69,77 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             await self.close(code=4003)
             return
 
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        
         logger.info(f"User '{self.username}' connected successfully to room '{self.room_id}'")
 
         # Fetch current color mapping
-        connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
-        connected_dict = json.loads(connected_raw.decode()) if connected_raw else {}
+        # connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+        # connected_dict = json.loads(connected_raw.decode()) if connected_raw else {}
+        
+        # Fetch again here inside lock
+        # connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+        # connected_dict = json.loads(connected_raw.decode()) if connected_raw else {}
+        
+        lock = Lock(self.redis, "my_lock_name", timeout=10)
+        
+        async with lock:
+            connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+            connected_dict = json.loads(connected_raw.decode()) if connected_raw else {}
+        
+        # Safe update
+    
+            if self.username not in connected_dict:
+                # Assign unused color
+                assigned_colors = set(connected_dict.values())
+                available_colors = [c for c in COLOR_CODES if c not in assigned_colors]
 
-        if self.username not in connected_dict:
-            # Assign unused color
-            assigned_colors = set(connected_dict.values())
-            available_colors = [c for c in COLOR_CODES if c not in assigned_colors]
+                if not available_colors:
+                    logger.warning("No more unique colors available.")
+                    await self.send(text_data=json.dumps({
+                        "error": "All player slots are full — try again later."
+                    }))
+                    await self.close(code=4004)
+                    return
 
-            if not available_colors:
-                logger.warning("No more unique colors available.")
-                await self.send(text_data=json.dumps({
-                    "error": "All player slots are full — try again later."
-                }))
-                await self.close(code=4004)
-                return
+                assigned_color = available_colors[0]
+                connected_dict[self.username] = assigned_color
+                # await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(connected_dict))
+                
+                await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(connected_dict))
+                
+                    
+                logger.info(f"Assigned color '{assigned_color}' to user '{self.username}'")
 
-            assigned_color = available_colors[0]
-            connected_dict[self.username] = assigned_color
-            await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(connected_dict))
-            logger.info(f"Assigned color '{assigned_color}' to user '{self.username}'")
-            
-            # check for all users connected_or not:
-            # if so start eh card distribution
-            all_connected = all(player in connected_dict for player in players)
-            if all_connected:
-                logger.info("All players connected. Cards distributed.")
-                # Broadcast 
+                # Broadcast connected player info
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
-                        "type": "everyone_joined",
+                        "type": "players_update",
+                        "connected_dict": connected_dict
                     }
                 )
-                # distribute the cards
-                await self.distribute_cards()
-            else:
-                logger.info("Waiting for more players to connect.")
+                await asyncio.sleep(random.uniform(2, 5.3))  # tiny randomized delay                # check for all users connected_or not:
+                # if so start eh card distribution
+                all_connected = all(player in connected_dict for player in players)
+                if all_connected:
+                    logger.info("All players connected. Cards distributed.")
+                    # Broadcast 
+                    await self.channel_layer.group_send(
+                        self.group_name,
+                        {
+                            "type": "everyone_joined",
+                        }
+                    )
+                    # distribute the cards
+                    await self.distribute_cards()
+                else:
+                    logger.info("Waiting for more players to connect.")
 
 
 
-        # Optional: Broadcast connected player info
-        await self.channel_layer.group_send(
-            self.group_name,
-            {
-                "type": "players_update",
-                "connected_dict": connected_dict
-            }
-        )
+        
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)

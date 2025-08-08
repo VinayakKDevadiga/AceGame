@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
-from .views import StartGame
+from Sokkatte.views import StartGame
 urlpatterns = [
     path('', StartGame ,name='Sokkatte'),
+    # http://localhost:8000/Sokkatte/test168SW
 
 ]

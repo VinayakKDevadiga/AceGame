@@ -82,6 +82,7 @@ User = get_user_model()
 
 def jwt_required(view_func):
     def _wrapped_view(request, *args, **kwargs):
+        logger.info(f"came to jwt required: {request}")
         token = request.COOKIES.get('jwt')
         if not token:
             return redirect('login')
@@ -93,6 +94,7 @@ def jwt_required(view_func):
         try:
             user = get_user_model().objects.get(username=payload.get('username'))
             request.user = user  # Attach full user instance
+            logger.info("jwt verified")
         except User.DoesNotExist:
             return redirect('login')
 

@@ -351,16 +351,17 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
 
     async def game_started(self, event):
         self.selected_game = await self.redis.hget(self.redis_key, "selected_game")
-        # if not self.selected_game:
-        #     await self.send(text_data=json.dumps({
-        #         "error": "Game not selected. Please select a game before starting."
-        #     }))
-        #     return
+        selected_game = await self.redis.hget(self.redis_key, "selected_game")
+        logger.info(f"selected game found: {selected_game}")
+
+        self.selected_game = self.selected_game.decode() if self.selected_game else None
+        
         self.domain = getattr(settings, "SITE_DOMAIN", "http://localhost:8000")
         self.full_url = f"{self.domain}{GAME_ROUTES[self.selected_game]['url']}"
+        logger.info(f"ful_url: {self.full_url}")
         
 
-        if not self.full_url or not self.full_url.get("allowed", False):
+        if not self.full_url or not GAME_ROUTES[self.selected_game].get("allowed", False):
             await self.send(text_data=json.dumps({
                 "type": "send_error_message",
                 "message": "The selected game is currently unavailable."
@@ -382,16 +383,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
             "selected_by": self.username
         }))
 
-    # async def game_started(self, event):
-    #     selected_game = await self.redis.hget(self.redis_key, "selected_game")
-    #     selected_game = selected_game.decode() if selected_game else None
 
-    #     route_page_info = GAME_ROUTES[selected_game]  # Safe to assume it exists
-
-    #     await self.send(text_data=json.dumps({
-    #         "type": "game_started",
-    #         "redirect_url": route_page_info["url"]
-    #     }))
    
 
     async def send_error_message(self, event):

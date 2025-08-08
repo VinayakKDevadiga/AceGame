@@ -203,6 +203,12 @@
                 sessionStorage.setItem("gamePageURL", gamePageURL);
                 if (username == owner) {
                     socket.close();
+                    console.log("gamePageURL",gamePageURL)
+                    document.cookie = `jwt=${getJWTToken()}; path=/; samesite=Lax`;
+                    setTimeout(() => {
+                        window.location.href = gamePageURL;
+                    }, 200);  // 200ms delay helps the browser commit the cookie
+
                     window.location.href = gamePageURL;
                 } else {
                     const interval = setInterval(() => {
@@ -211,7 +217,10 @@
                         if (counter === 0) {
                             clearInterval(interval);
                             socket.close();
-                            window.location.href = gamePageURL;
+                            document.cookie = `jwt=${getJWTToken()}; path=/; samesite=Lax`;
+                            setTimeout(() => {
+                                window.location.href = gamePageURL;
+                            }, 200);  // 200ms delay helps the browser commit the cookie
 
                         }
                     }, 1000);
