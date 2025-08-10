@@ -1,0 +1,146 @@
+/* Prevent horizontal scroll on the entire page */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Body styling */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0 15px;
+    /* Small side padding to avoid edge overflow */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #a8c0ff, #3f4c77);
+    box-sizing: border-box;
+}
+
+/* Form container */
+.formdiv {
+    width: 100%;
+    max-width: 450px;
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+/* Heading */
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Form */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Form row */
+.formrow {
+    margin-bottom: 20px;
+}
+
+/* Label */
+.formrow label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #444;
+    display: block;
+    /* Ensure it's on its own line */
+}
+
+/* Input fields */
+.formrow input,
+input[type="text"],
+input[type="password"] {
+    width: 100% !important;
+    /* Force full width */
+    max-width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    margin-top: 5px;
+    box-sizing: border-box;
+}
+
+/* Input focus */
+.formrow input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Button */
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Button hover */
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Error message */
+.error {
+    color: #e74c3c;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Django messages */
+.messages {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.messages p {
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+/* Links */
+.form-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.form-links a {
+    color: #007bff;
+    text-decoration: none;
+    word-break: break-word;
+    display: inline-block;
+}
+
+.form-links a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive: Small screens */
+@media (max-width: 600px) {
+    .formdiv {
+        padding: 40px;
+        width: 100%;
+    }
+
+    div input {
+        max-width: 100px;
+        min-width: 10px;
+    }
+}

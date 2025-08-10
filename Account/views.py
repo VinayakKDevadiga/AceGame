@@ -14,6 +14,27 @@ from .utils import send_email_with_fallback  # Import your fallback function
 
 User = get_user_model()
 
+import random
+import string
+from Account.models import RoomTable
+
+# for jwt
+from .utils import generate_jwt
+from django.http import JsonResponse
+
+# jwt
+from django.http import JsonResponse,HttpResponseRedirect
+from .utils import decode_jwt
+
+
+def generate_unique_room_id(username):
+    base = username[:5].lower()  # first 5 chars for better uniqueness
+    while True:
+        rand_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        room_id = f"{base}{rand_part}"  # e.g., "vinayA1Z9"
+        if not RoomTable.objects.filter(room_id=room_id).exists():
+            return room_id
+
 
 def SignUp(request):
     if request.method == 'POST':
@@ -27,6 +48,15 @@ def SignUp(request):
             user = form.save(commit=False)
             user.is_active = False
             user.save()
+
+            # initializing the room table entry for user
+            RoomTable.objects.create(
+                username=user.username,
+                email=user.email,
+                room_id=generate_unique_room_id(user.username),  # You can use a function or UUID here
+            )
+
+
 
             # Generate token and UID for verification link
             token = default_token_generator.make_token(user)
@@ -144,11 +174,22 @@ def reset_password(request):
 # login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
+from datetime import datetime, timedelta
+import json
+import logging
+logger = logging.getLogger('myapp')  # must match logger name in settings
 
 def Login(request):
     if request.method == "POST":
-        form = AuthenticationForm(request, data=request.POST)
-        username = request.POST.get('username')  # Username field often holds email if using email login
+        try:
+            data = json.loads(request.body)
+            username = data.get('username')
+            password = data.get('password')
+        except json.JSONDecodeError:
+            return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+        if not username or not password:
+            return JsonResponse({"detail": "Username and password are required."}, status=400)
 
         try:
             user = User.objects.get(username=username)
@@ -160,9 +201,9 @@ def Login(request):
 
                 email_subject = 'Activate Your Account'
                 email_body = render_to_string('account/verification_email.html', {
-                'user': user,
-                'verification_link': verification_link,
-            })
+                    'user': user,
+                    'verification_link': verification_link,
+                })
 
                 send_email_with_fallback(
                     subject=email_subject,
@@ -171,30 +212,47 @@ def Login(request):
                     html_message=email_body,
                 )
 
-                messages.error(
-                    request,
-                    f"Your account is inactive. We've sent you a new verification email.{user.email} Please activate your account before logging in."
-                )
-                return redirect('login')
+                return JsonResponse({
+                    "detail": f"Your account is inactive. We sent a verification email to {user.email}."
+                }, status=403)
 
         except User.DoesNotExist:
-            messages.error(request,f"Account Doesnot Exist")
-            return redirect('login')
+            return JsonResponse({"detail": "Account does not exist."}, status=404)
 
+        # Authenticate the user
+        form = AuthenticationForm(request, data={'username': username, 'password': password})
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, "Logged in successfully!")
-            return redirect('home')
-        else:
-            messages.error(request, "Invalid username or password!")
-    else:
-        form = AuthenticationForm()
-    
-    return render(request, 'login/login.html', {'form': form})
+            payload = {'username': user.username}
+            token = generate_jwt(payload)
+            logger.info("Received login request")
 
+            # Create response and set token as cookie
+            response = JsonResponse({'message': 'Login successful'})
+            response.set_cookie(
+                key='jwt',
+                value=token,
+                path='/',             # Accessible on all paths
+                httponly=False,
+                samesite='Lax',
+                secure=False  # Set to True if using HTTPS
+            )
+            logger.info("Receivedone respnese")
+
+            return response
+        else:
+            return JsonResponse({"detail": "Invalid username or password."}, status=401)
+
+    return render(request, 'login/login.html', {'form': AuthenticationForm()})
+
+
+# def Logout(request):
+#     # logout(request)
+#     response = HttpResponseRedirect('/login')  # Or use redirect('login') + delete cookie
+#     response.delete_cookie('jwt')
+#     messages.success(request, "Logged out successfully!")
+#     return redirect('login')  # Redirect to your login page after logout
 
 def Logout(request):
-    logout(request)
-    messages.success(request, "Logged out successfully!")
-    return redirect('login')  # Redirect to your login page after logout
+    response = redirect('login')
+    response.delete_cookie('jwt')   # Or 'access' — use the correct cookie name
+    return response

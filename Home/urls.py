@@ -6,6 +6,15 @@ urlpatterns = [
     path('playgame/', views.Playgame, name='playgame'),
 
     # Rom page urls
-    path('roompage/', views.Playgame, name='roompage'),
+    path('createroom/', views.CreateRoom, name='createroom'),
+    path('joinroom/', views.Join_room, name='join_room'),
+    path('waitforplayers/', views.Waitforplayers, name='waitforplayers'),
+
+    # Game page
+    path('gamepage/', views.Gamepage, name='gamepage'),
+    path('rulepage/', views.Rulepage, name='rulepage'),
+
+    # jwt get user
+    path("getuser/", views.get_user, name="current_user"),
 
 ]

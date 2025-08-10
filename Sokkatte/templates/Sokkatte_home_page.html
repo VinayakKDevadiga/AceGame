@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Round Table</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+
+        #table {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background-color: lightgreen;
+            border: 8px solid brown;
+            margin-top: 20px;
+        }
+
+        .person {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid black;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .person:hover::after {
+            content: attr(data-username);
+            position: absolute;
+            top: -25px;
+            background: #333;
+            color: #fff;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Round Table Seating</h2>
+    <div id="table"></div>
+
+    <script>
+        async function drawTable(players) {
+            const table = document.getElementById("table");
+            const centerX = table.clientWidth / 2;
+            const centerY = table.clientHeight / 2;
+            const total = players.length;
+
+            table.innerHTML = ''; // Clear existing players
+
+            const personSize = 30;
+            const borderWidth = 8;
+            const baseRadius = (table.clientWidth / 2);  // radius of outer edge
+            const radius = baseRadius + (personSize / 2);  // push players outside the circle
+
+            players.forEach((player, i) => {
+                // Save each player's color in sessionStorage
+                sessionStorage.setItem(`player_color_${player.username}`, player.color || "gray");
+
+                const angle = (2 * Math.PI * i) / total;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                const div = document.createElement("div");
+                div.className = "person";
+                div.style.backgroundColor = "white";
+                div.style.borderColor = player.color || "gray";
+                div.style.left = `${x - personSize / 2}px`;
+                div.style.top = `${y - personSize / 2}px`;
+                div.innerText = player.username[0].toUpperCase();
+                div.setAttribute("data-username", player.username);
+
+                table.appendChild(div);
+            });
+
+
+        }
+
+        // WebSocket logic
+
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) window.location.reload();
+        });
+
+        const roomId = sessionStorage.getItem("room_id");
+        let username = 'Guest';
+        const password = sessionStorage.getItem("password");
+
+        const urls = {
+            currentUserUrl: "{% url 'current_user' %}"  // replace with actual endpoint
+        };
+
+        function getJWTToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [key, value] = cookie.trim().split('=');
+                if (key === 'jwt') {
+                    return decodeURIComponent(value);
+                }
+            }
+            return null;
+        }
+
+        async function checkAuthAndInit() {
+            const token = getJWTToken();
+            if (!token) {
+                console.log("JWT not found in cookies.");
+                window.location.href = "{% url 'login' %}";
+                return;
+            }
+
+            try {
+                const response = await fetch(urls.currentUserUrl, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    username = data.username;
+                    console.log('calling initWebSocket');
+
+                    initWebSocket();
+                } else {
+                    console.warn("Token invalid or expired");
+                    window.location.href = "{% url 'login' %}";
+                }
+            } catch (error) {
+                console.error("Auth check failed:", error);
+                window.location.href = "{% url 'login' %}";
+            }
+        }
+
+        checkAuthAndInit();
+
+        let reconnectAttempts = 0;
+        let maxReconnectAttempts = 10;
+        let reconnectDelay = 2000; // start at 2s
+        function initWebSocket() {
+
+            let socket;
+            if (!roomId || !username || !password) {
+                console.error("Missing roomId, username, or password.");
+                window.location.href = "{% url 'login' %}";
+            } else {
+                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const token = getJWTToken();
+                console.log('url', protocol, window.location.host, roomId, username, password, token);
+                document.cookie = `jwt=${getJWTToken()}; path=/; samesite=Lax`;
+                console.log("Connecting to WebSocket...", `${protocol}://${window.location.host}/ws/Sokkatte/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`);
+                socket = new WebSocket(
+                    `${protocol}://${window.location.host}/ws/Sokkatte/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`
+                );
+
+                socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === "players_update" && data.connected_dict) {
+                        console.log('players_update', data.connected_dict);
+
+                        const players = Object.entries(data.connected_dict).map(([username, color]) => ({
+                            username,
+                            color
+                        }));
+
+                        drawTable(players);
+                    }
+                    if (data.type == "start_card_distribution") {
+                        console.log("card distribution will start now");
+                        // send message to the server
+                        if (socket && socket.readyState === WebSocket.OPEN) {
+                            socket.send(JSON.stringify({
+                                type: "get_my_cards_req",
+                            }));
+                        }
+
+                    }
+                    if (data.type == "cards_distributed") {
+                        console.log("card distributino done");
+                        console.log('cards you got', data.player_cards);
+
+
+                    }
+
+                };
+
+                socket.onerror = (error) => {
+                    console.error("WebSocket error:", error);
+                };
+
+                socket.onclose = (e) => {
+                    console.log("Socket closed:", e);
+                    console.log("Closed:", e.code, e.reason);
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+
+                        const jitter = Math.random() * 1000; // 0–1000 ms
+                        const delayWithJitter = reconnectDelay + jitter;
+
+                        console.log(`Reconnecting in ${(delayWithJitter / 5000).toFixed(2)}s... (attempt ${reconnectAttempts})`);
+
+                        setTimeout(() => {
+                            initWebSocket();
+                        }, delayWithJitter);
+
+                        reconnectDelay = Math.min(reconnectDelay * 2, 30000); // exponential backoff
+                    } else {
+                        console.error("Max reconnect attempts reached, stopping.");
+                    }
+                };
+
+                setInterval(() => {
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: "ping" }));
+                    }
+                }, 30000); // every 30 sec
+
+            }
+
+        }
+
+
+
+
+    </script>
+</body>
+
+</html>
