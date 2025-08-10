@@ -203,7 +203,7 @@
                 sessionStorage.setItem("gamePageURL", gamePageURL);
                 if (username == owner) {
                     socket.close();
-                    console.log("gamePageURL",gamePageURL)
+                    console.log("gamePageURL", gamePageURL)
                     document.cookie = `jwt=${getJWTToken()}; path=/; samesite=Lax`;
                     setTimeout(() => {
                         window.location.href = gamePageURL;

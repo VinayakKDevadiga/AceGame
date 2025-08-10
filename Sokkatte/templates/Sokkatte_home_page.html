@@ -155,22 +155,24 @@
 
         checkAuthAndInit();
 
+        let reconnectAttempts = 0;
+        let maxReconnectAttempts = 10;
+        let reconnectDelay = 2000; // start at 2s
         function initWebSocket() {
 
             let socket;
             if (!roomId || !username || !password) {
-
+                console.error("Missing roomId, username, or password.");
                 window.location.href = "{% url 'login' %}";
             } else {
                 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
                 const token = getJWTToken();
                 console.log('url', protocol, window.location.host, roomId, username, password, token);
-
+                document.cookie = `jwt=${getJWTToken()}; path=/; samesite=Lax`;
+                console.log("Connecting to WebSocket...", `${protocol}://${window.location.host}/ws/Sokkatte/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`);
                 socket = new WebSocket(
                     `${protocol}://${window.location.host}/ws/Sokkatte/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`
                 );
-
-
 
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
@@ -211,12 +213,24 @@
                 socket.onclose = (e) => {
                     console.log("Socket closed:", e);
                     console.log("Closed:", e.code, e.reason);
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
 
-                    // if (e.code !== 1000) {
-                    //     // Only redirect on abnormal close
-                    //     window.location.href = "{% url 'login' %}";
-                    // }
+                        const jitter = Math.random() * 1000; // 0–1000 ms
+                        const delayWithJitter = reconnectDelay + jitter;
+
+                        console.log(`Reconnecting in ${(delayWithJitter / 5000).toFixed(2)}s... (attempt ${reconnectAttempts})`);
+
+                        setTimeout(() => {
+                            initWebSocket();
+                        }, delayWithJitter);
+
+                        reconnectDelay = Math.min(reconnectDelay * 2, 30000); // exponential backoff
+                    } else {
+                        console.error("Max reconnect attempts reached, stopping.");
+                    }
                 };
+
                 setInterval(() => {
                     if (socket.readyState === WebSocket.OPEN) {
                         socket.send(JSON.stringify({ type: "ping" }));

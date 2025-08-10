@@ -72,57 +72,46 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         
         logger.info(f"User '{self.username}' connected successfully to room '{self.room_id}'")
 
-        # Fetch current color mapping
-        # connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
-        # connected_dict = json.loads(connected_raw.decode()) if connected_raw else {}
-        
-        # Fetch again here inside lock
-        # connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
-        # connected_dict = json.loads(connected_raw.decode()) if connected_raw else {}
-        
-        # Room-specific lock key to avoid collisions
-        lock_key = f"{self.redis_key}:connected_lock"
-        lock = Lock(self.redis, name=lock_key, timeout=10)
 
         try:
-            async with lock:
-                self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
-                self.connected_dict = json.loads(self.connected_raw.decode()) if self.connected_raw else {}
+            
+            self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+            self.connected_dict = json.loads(self.connected_raw.decode()) if self.connected_raw else {}
 
-                if self.username not in self.connected_dict:
-                    assigned_colors = set(self.connected_dict.values())
-                    available_colors = [c for c in COLOR_CODES if c not in assigned_colors]
+            if self.username not in self.connected_dict:
+                assigned_colors = set(self.connected_dict.values())
+                available_colors = [c for c in COLOR_CODES if c not in assigned_colors]
 
-                    if not available_colors:
-                        await self.send(text_data=json.dumps({
-                            "error": "All player slots are full — try again later."
-                        }))
-                        await self.close(code=4004)
-                        return
+                if not available_colors:
+                    await self.send(text_data=json.dumps({
+                        "error": "All player slots are full — try again later."
+                    }))
+                    await self.close(code=4004)
+                    return
 
-                    assigned_color = available_colors[0]
-                    self.connected_dict[self.username] = assigned_color
-                    await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(self.connected_dict))
+                assigned_color = available_colors[0]
+                self.connected_dict[self.username] = assigned_color
+                await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(self.connected_dict))
 
-                    # Broadcast to all in the group
-                    logger.info(f"User '{self.username}' connected with color {assigned_color}")
+                # Broadcast to all in the group
+                logger.info(f"User '{self.username}' connected with color {assigned_color}")
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type": "players_update",
+                        "connected_dict": self.connected_dict
+                    }
+                )
+
+                await asyncio.sleep(random.uniform(2, 5.3))  # Optional delay
+
+                all_connected = all(player in self.connected_dict for player in players)
+                if all_connected:
                     await self.channel_layer.group_send(
                         self.group_name,
-                        {
-                            "type": "players_update",
-                            "connected_dict": self.connected_dict
-                        }
+                        {"type": "everyone_joined"}
                     )
-
-                    await asyncio.sleep(random.uniform(2, 5.3))  # Optional delay
-
-                    all_connected = all(player in self.connected_dict for player in players)
-                    if all_connected:
-                        await self.channel_layer.group_send(
-                            self.group_name,
-                            {"type": "everyone_joined"}
-                        )
-                        await self.distribute_cards()
+                    await self.distribute_cards()
         except Exception as e:
             logger.error(f"Error in connection lock logic: {e}", exc_info=True)
             await self.send(text_data=json.dumps({
@@ -130,14 +119,6 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 "message": "Server encountered an error during setup."
             }))
             await self.close(code=1011)
-
-        finally:
-            if lock.locked():  # ✅ release only if still held
-                try:
-                    await lock.release()
-                except LockNotOwnedError:
-                    logger.warning(f"{self.username} lost the lock before release")
-
 
 
     async def send_error_message(self, event):
