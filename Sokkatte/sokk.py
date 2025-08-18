@@ -67,17 +67,13 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
         await self.accept()
         logger.info("Accepted the websocket conection")
-
         await self.channel_layer.group_add(self.group_name, self.channel_name)
-        
         logger.info(f"User '{self.username}' connected successfully to room '{self.room_id}'")
 
 
-        try:
-            
+        try: 
             self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
             self.connected_dict = json.loads(self.connected_raw.decode()) if self.connected_raw else {}
-
             if self.username not in self.connected_dict:
                 assigned_colors = set(self.connected_dict.values())
                 available_colors = [c for c in COLOR_CODES if c not in assigned_colors]
@@ -92,9 +88,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 assigned_color = available_colors[0]
                 self.connected_dict[self.username] = assigned_color
                 await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(self.connected_dict))
-
-                # Broadcast to all in the group
-                logger.info(f"User '{self.username}' connected with color {assigned_color}")
+                logger.info(f"User '{self.username}' connected with color {assigned_color}")   # Broadcast to all in the group
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
@@ -104,7 +98,6 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 )
 
                 await asyncio.sleep(random.uniform(2, 5.3))  # Optional delay
-
                 all_connected = all(player in self.connected_dict for player in players)
                 if all_connected:
                     await self.channel_layer.group_send(
@@ -136,12 +129,10 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
         if connected_raw:
             connected_dict = await json.loads(connected_raw.decode())
-
             if self.username in connected_dict:
                 del connected_dict[self.username]
                 await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(connected_dict))
                 logger.info(f"Removed '{self.username}' from players_connected_list")
-
                 # Send unified update to all players
                 await self.channel_layer.group_send(
                     self.group_name,
@@ -162,7 +153,6 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
     async def everyone_joined(self, event):
         logger.info(f"Cards sent{ self.username}")
-
         await self.send(text_data=json.dumps({
             "type": "start_card_distribution",
         }))
@@ -185,11 +175,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         try:
             # Check if cards are already distributed
             logger.info("Card distribution flag")
-
             logger.info("Distributing cards now...")
-
             await self.redis.hset(self.redis_key, "card_distributed_flag", "1")
-
             # Create full deck
             SUITS = ['F', 'S', 'H', 'D']
             RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']

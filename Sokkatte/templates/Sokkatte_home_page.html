@@ -52,15 +52,113 @@
             border-radius: 4px;
             font-size: 12px;
         }
+
+        /* cardlist */
+        .cardlist {
+            border: 2px solid black;
+            width: 90vw;
+            min-height: 130px;
+            margin-top: 20px;
+            overflow-x: auto;
+            white-space: nowrap;
+            background: #fafafa;
+            padding: 10px 0;
+        }
     </style>
 </head>
 
 <body>
 
     <h2>Round Table Seating</h2>
-    <div id="table"></div>
+    <div id="table">
+    </div>
+
+    <!-- Add suit filter buttons above the cardlist -->
+    <div id="suit-filters" style="margin-bottom: 10px; text-align: center;">
+        <button class="suit-btn" data-suit="D" style="font-size:2rem;">♦️</button>
+        <button class="suit-btn" data-suit="F" style="font-size:2rem;">♣️</button>
+        <button class="suit-btn" data-suit="S" style="font-size:2rem;">♠️</button>
+        <button class="suit-btn" data-suit="H" style="font-size:2rem;">♥️</button>
+        <button class="suit-btn" data-suit="ALL" style="font-size:1rem;">All</button>
+    </div>
+
+    <div class="cardlist">
+
+    </div>
 
     <script>
+        // Place these at the top level, NOT inside any function:
+        let lastCards = [];
+        let lastBorderColor = "gray";
+        let currentSuitFilter = "ALL";
+
+        // Helper to render cards with filter and overlap
+        function renderCards(cards, borderColor, suitFilter) {
+            const cardlistDiv = document.querySelector('.cardlist');
+            cardlistDiv.innerHTML = '';
+
+            // Filter cards by suit
+            let filteredCards = cards;
+            if (suitFilter !== "ALL") {
+                filteredCards = cards.filter(card => card.startsWith(suitFilter));
+            }
+
+            filteredCards.forEach((card, idx) => {
+                const cardDiv = document.createElement('div');
+                let symbol = "";
+                if (card.startsWith("D")) symbol = "♦️";
+                else if (card.startsWith("F")) symbol = "♣️";
+                else if (card.startsWith("S")) symbol = "♠️";
+                else if (card.startsWith("H")) symbol = "♥️";
+                const cardValue = card.substring(1);
+
+                // Suit symbol centered
+                const suitSpan = document.createElement('span');
+                suitSpan.textContent = symbol;
+                suitSpan.style.fontSize = '2rem';
+                suitSpan.style.position = 'absolute';
+                suitSpan.style.top = '50%';
+                suitSpan.style.left = '50%';
+                suitSpan.style.transform = 'translate(-50%, -50%)';
+
+                // Card value top left
+                const valueSpan = document.createElement('span');
+                valueSpan.textContent = cardValue;
+                valueSpan.style.fontSize = '2rem';
+                valueSpan.style.position = 'absolute';
+                valueSpan.style.top = '8px';
+                valueSpan.style.left = '12px';
+
+                cardDiv.style.position = 'relative';
+                cardDiv.appendChild(suitSpan);
+                cardDiv.appendChild(valueSpan);
+
+                cardDiv.style.display = 'inline-block';
+                cardDiv.style.marginLeft = idx === 0 ? '0' : '-32px'; // 40% overlap
+                cardDiv.style.width = '80px';
+                cardDiv.style.height = '120px';
+                cardDiv.style.border = `3px solid ${borderColor}`;
+                cardDiv.style.borderRadius = '12px';
+                cardDiv.style.background = '#fff';
+                cardDiv.style.fontWeight = 'bold';
+                cardDiv.style.boxShadow = '0 4px 16px rgba(0,0,0,0.25)';
+                cardDiv.style.verticalAlign = 'middle';
+                cardDiv.style.overflow = 'hidden';
+
+                cardlistDiv.appendChild(cardDiv);
+            });
+        }
+
+        // Add event listeners for suit filter buttons (only once)
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.suit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentSuitFilter = btn.getAttribute('data-suit');
+                    renderCards(lastCards, lastBorderColor, currentSuitFilter);
+                });
+            });
+        });
+
         async function drawTable(players) {
             const table = document.getElementById("table");
             const centerX = table.clientWidth / 2;
@@ -203,12 +301,10 @@
 
                     }
                     if (data.type == "cards_distributed") {
-                        console.log("card distributino done");
-                        console.log('cards you got', data.player_cards);
-
-
+                        lastCards = data.player_cards;
+                        lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
+                        renderCards(lastCards, lastBorderColor, currentSuitFilter);
                     }
-
                 };
 
                 socket.onerror = (error) => {
