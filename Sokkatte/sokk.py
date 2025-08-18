@@ -75,6 +75,14 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
             self.connected_dict = json.loads(self.connected_raw.decode()) if self.connected_raw else {}
             if self.username not in self.connected_dict:
+                # check whether the card distributed player is refreshed the page or not.
+                self.card_distributed_flag = await self.redis.hget(self.redis_key, "card_distributed_flag")
+                if self.card_distributed_flag.decode() == "1":
+                    logger.info(f"User '{self.username}' has already been connected and cards distributed.but refreshed the page")
+                    
+                else:
+                    logger.info(f"User '{self.username}' is a new connection.")
+
                 assigned_colors = set(self.connected_dict.values())
                 available_colors = [c for c in COLOR_CODES if c not in assigned_colors]
 
@@ -100,11 +108,15 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 await asyncio.sleep(random.uniform(2, 5.3))  # Optional delay
                 all_connected = all(player in self.connected_dict for player in players)
                 if all_connected:
-                    await self.channel_layer.group_send(
-                        self.group_name,
-                        {"type": "everyone_joined"}
-                    )
-                    await self.distribute_cards()
+                    if self.card_distributed_flag.decode() == "1":
+                        logger.info(f"All players connected and cards already distributed for room {self.room_id}")
+                        await self.get_player_card()
+                    else:
+                        await self.channel_layer.group_send(
+                            self.group_name,
+                            {"type": "everyone_joined"}
+                        )
+                        await self.distribute_cards()
         except Exception as e:
             logger.error(f"Error in connection lock logic: {e}", exc_info=True)
             await self.send(text_data=json.dumps({
@@ -128,7 +140,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         # Remove user from Redis player-connected list
         connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
         if connected_raw:
-            connected_dict = await json.loads(connected_raw.decode())
+            connected_dict = json.loads(connected_raw.decode())
             if self.username in connected_dict:
                 del connected_dict[self.username]
                 await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(connected_dict))

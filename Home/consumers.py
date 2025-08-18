@@ -88,6 +88,7 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     "duplicate_owner_login":0,
                     "players": json.dumps([self.username]),
                     "cardList": json.dumps({}),
+                    "card_distributed_flag": 0,
                     "current_round": json.dumps({}),
                     "players_connected_list": json.dumps({}),
                     "played_card_list": json.dumps([]),

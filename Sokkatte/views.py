@@ -6,7 +6,7 @@ logger.debug("WebSocket connected")
 
 
 # Create your views here.
-
+@jwt_required
 def StartGame(request):
     logger.info(f"logged in and request object is : {request}")
     token = request.COOKIES.get('jwt')
