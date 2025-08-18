@@ -201,27 +201,37 @@
                 const gamePageURL = data.redirect_url;
                 console.log('gamepage url:', gamePageURL)
                 sessionStorage.setItem("gamePageURL", gamePageURL);
+                const token = getJWTToken()
+
+                if (!token) {
+                    console.log("JWT not found in cookies.");
+                    window.location.href = "{% url 'login' %}";
+                    return;
+                }
+
                 if (username == owner) {
                     socket.close();
                     console.log("gamePageURL", gamePageURL)
-                    document.cookie = `jwt=${getJWTToken()}; path=/; samesite=Lax`;
+
+                    // document.cookie = `jwt=${token}; path=/; samesite=Lax; `;
+                    document.cookie = `jwt=${token}; path=/; samesite=Lax;`;
+                    console.log("owner is starting the game, redirecting to game page:", gamePageURL);
                     setTimeout(() => {
                         window.location.href = gamePageURL;
-                    }, 200);  // 200ms delay helps the browser commit the cookie
+                    }, 3000); // 300ms delay
 
-                    window.location.href = gamePageURL;
                 } else {
+                    socket.close();
                     const interval = setInterval(() => {
                         counter--;
                         countdownElement.textContent = counter;
                         if (counter === 0) {
                             clearInterval(interval);
-                            socket.close();
-                            document.cookie = `jwt=${getJWTToken()}; path=/; samesite=Lax`;
+                            console.log("owner is starting the game, redirecting to game page:", gamePageURL);
+                            document.cookie = `jwt=${token}; path=/; samesite=Lax;`;
                             setTimeout(() => {
                                 window.location.href = gamePageURL;
-                            }, 200);  // 200ms delay helps the browser commit the cookie
-
+                            }, 3000); // 300ms delay
                         }
                     }, 1000);
                 }

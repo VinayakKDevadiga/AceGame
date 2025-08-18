@@ -84,6 +84,7 @@ def jwt_required(view_func):
     def _wrapped_view(request, *args, **kwargs):
         logger.info(f"came to jwt required: {request}")
         token = request.COOKIES.get('jwt')
+        logger.info(f"the token is: {token}")
         if not token:
             return redirect('login')
 

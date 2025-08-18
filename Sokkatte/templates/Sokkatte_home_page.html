@@ -7,6 +7,8 @@
     <title>Round Table</title>
     <style>
         body {
+
+
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -112,7 +114,9 @@
         function getJWTToken() {
             const cookies = document.cookie.split(';');
             for (let cookie of cookies) {
+
                 const [key, value] = cookie.trim().split('=');
+                console.log("key", key, value);
                 if (key === 'jwt') {
                     return decodeURIComponent(value);
                 }
@@ -154,6 +158,7 @@
         }
 
         checkAuthAndInit();
+
 
         let reconnectAttempts = 0;
         let maxReconnectAttempts = 10;
