@@ -168,6 +168,13 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "type": "start_card_distribution",
         }))
+
+    async def send_starting_player_update(self, event):
+        logger.info(f"Starting player sent: {self.starting_player}")
+        await self.send(text_data=json.dumps({
+            "type": "starting_player",
+            "starting_player": self.starting_player
+        }))
         
 
 
@@ -221,10 +228,18 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                     distributed_card_dict[player].append(card)
 
             # Save to Redis
+
+            #to store starting player name:
+            if players_connected:
+                self.starting_player = random.choice(players_connected)
+                await self.redis.hset(self.redis_key, "starting_player", self.starting_player)
+                logger.info(f"Starting player selected: {self.starting_player}")
+                await self.redis.hset(self.redis_key, "current_player", self.starting_player)
+
             try:
                 await self.redis.hset(self.redis_key, mapping={
                     "cardList": json.dumps(card_list),
-                    "players_card_list": json.dumps(distributed_card_dict)
+                    "players_card_list": json.dumps(distributed_card_dict),
                 })
                 logger.info(f"Cards successfully distributed to players: {distributed_card_dict}")
             except Exception as e:
@@ -266,6 +281,39 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 "message": "Failed to retrieve your cards"
             }))
 
+    async def get_starting_player(self):
+        try:
+            # Add retry logic or small wait if needed
+            for attempt in range(3):
+                self.starting_player_data = await self.redis.hget(self.redis_key, "starting_player")
+                if self.starting_player_data:
+                    break
+                await asyncio.sleep(0.1)  # wait a bit for cards to be set
+            else:
+                logger.warning("Starting player data not available after retries")
+                self.starting_player_data = None
+
+            if self.starting_player_data:
+                logger.info(f"Starting player selected: {self.starting_player_data.decode()}")
+                await self.send(text_data=json.dumps({
+                "type": "starting_player",
+                "starting_player": self.starting_player_data.decode()
+            }))
+            
+            else:
+                await self.send(text_data=json.dumps({
+                    "type": "starting_player",
+                    "starting_player": None
+                }))
+                        
+        except Exception as e:
+            logger.error(f"Failed to send starting player to {self.username}: {e}", exc_info=True)
+            await self.send(text_data=json.dumps({
+                "type": "error",
+                "message": "Failed to retrieve starting player"
+            }))
+      
+            
 
     async def receive(self, text_data):
         try:
@@ -276,6 +324,11 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             if msg_type == "get_my_cards_req":
                 # Instead of distributing again, just fetch and send
                 await self.get_player_card()
+
+            if msg_type=="get_starting_player":
+                logger.info("calling get starting player")
+                await self.get_starting_player()
+
             elif msg_type == "ping":
                 await self.send(text_data=json.dumps({"type": "error", "message": "Server error"}))
 
@@ -284,4 +337,3 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error handling receive: {e}", exc_info=True)
             await self.send(text_data=json.dumps({"type": "error", "message": "Server error"}))
-    

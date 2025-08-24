@@ -213,12 +213,12 @@
                     socket.close();
                     console.log("gamePageURL", gamePageURL)
 
-                    // document.cookie = `jwt=${token}; path=/; samesite=Lax; `;
                     document.cookie = `jwt=${token}; path=/; samesite=Lax;`;
                     console.log("owner is starting the game, redirecting to game page:", gamePageURL);
+                    console.log("The token is:", token);
                     setTimeout(() => {
                         window.location.href = gamePageURL;
-                    }, 3000); // 300ms delay
+                    }, 2000); // 10 seconds delay
 
                 } else {
                     socket.close();
@@ -231,7 +231,7 @@
                             document.cookie = `jwt=${token}; path=/; samesite=Lax;`;
                             setTimeout(() => {
                                 window.location.href = gamePageURL;
-                            }, 3000); // 300ms delay
+                            }, 2000); // 2 seconds delay
                         }
                     }, 1000);
                 }

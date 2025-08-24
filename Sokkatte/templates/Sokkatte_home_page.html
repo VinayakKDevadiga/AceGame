@@ -64,14 +64,100 @@
             background: #fafafa;
             padding: 10px 0;
         }
+
+        /* player highlight animation */
+        /* Animation for highlighting the starting player */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+            }
+
+            50% {
+                transform: scale(1.5);
+                box-shadow: 0 0 15px 10px rgba(255, 215, 0, 0.4);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+            }
+        }
+
+        .person.highlight {
+            animation: pulse 2s infinite;
+            z-index: 10;
+        }
+
+        /* current player name style */
+        #turn-indicator {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #fffae6;
+            border: 2px solid gold;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            animation: glow 1.5s infinite alternate;
+            transition: all 0.3s ease-in-out;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+            }
+
+            to {
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        #turn-indicator {
+            text-align: center;
+            max-width: 90vw;
+        }
+
+        /* border of cardlist animation for current user */
+        @keyframes rotate-border-colors {
+            0% {
+                border-color: black;
+            }
+
+            25% {
+                border-color: red;
+            }
+
+            50% {
+                border-color: blue;
+            }
+
+            75% {
+                border-color: gold;
+            }
+
+            100% {
+                border-color: black;
+            }
+        }
+
+        .cardlist.rotating-border {
+            animation: rotate-border-colors 1.5s linear infinite;
+            border-width: 3px;
+            border-style: solid;
+        }
     </style>
 </head>
 
 <body>
 
     <h2>Round Table Seating</h2>
+    <div id="turn-indicator">Waiting for game to start...</div>
+
     <div id="table">
     </div>
+
 
     <!-- Add suit filter buttons above the cardlist -->
     <div id="suit-filters" style="margin-bottom: 10px; text-align: center;">
@@ -304,43 +390,82 @@
                         lastCards = data.player_cards;
                         lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
                         renderCards(lastCards, lastBorderColor, currentSuitFilter);
+                        console.log("cards received:", data.player_cards);
+                        if (socket && socket.readyState === WebSocket.OPEN) {
+                            socket.send(JSON.stringify({
+                                type: "get_starting_player",
+                            }));
+                        }
+
                     }
-                };
 
-                socket.onerror = (error) => {
-                    console.error("WebSocket error:", error);
-                };
+                    if (data.type == "starting_player") {
+                        console.log("Starting player:", data.starting_player);
+                        const turnIndicator = document.getElementById('turn-indicator');
 
-                socket.onclose = (e) => {
-                    console.log("Socket closed:", e);
-                    console.log("Closed:", e.code, e.reason);
-                    if (reconnectAttempts < maxReconnectAttempts) {
-                        reconnectAttempts++;
+                        // Remove highlight from all
+                        document.querySelectorAll('.person.highlight').forEach(el => el.classList.remove('highlight'));
 
-                        const jitter = Math.random() * 1000; // 0–1000 ms
-                        const delayWithJitter = reconnectDelay + jitter;
+                        if (data.starting_player) {
+                            if (data.starting_player === username) {
+                                const cardlist = document.querySelector('.cardlist');
 
-                        console.log(`Reconnecting in ${(delayWithJitter / 5000).toFixed(2)}s... (attempt ${reconnectAttempts})`);
+                                console.log("You are the starting player!");
+                                turnIndicator.textContent = "🎯 Your turn!";
+                                cardlist.classList.add('rotating-border');
+                                cardlist.style.boxShadow = "0 0 15px 5px gold";
+                                cardlist.style.transition = "box-shadow 0.5s ease-in-out";
+                            } else {
+                                console.log("Waiting for the starting player to play.");
+                                turnIndicator.textContent = `🕒 ${data.starting_player}'s turn...`;
+                                const playerElement = document.querySelector(`.person[data-username="${data.starting_player}"]`);
+                                if (playerElement) {
+                                    playerElement.classList.add("highlight");
+                                }
+                                cardlist.classList.remove('rotating-border');
+                                cardlist.style.boxShadow = "";
+                            }
+                        }
 
-                        setTimeout(() => {
-                            initWebSocket();
-                        }, delayWithJitter);
 
-                        reconnectDelay = Math.min(reconnectDelay * 2, 30000); // exponential backoff
-                    } else {
-                        console.error("Max reconnect attempts reached, stopping.");
-                    }
-                };
+                    };
 
-                setInterval(() => {
-                    if (socket.readyState === WebSocket.OPEN) {
-                        socket.send(JSON.stringify({ type: "ping" }));
-                    }
-                }, 30000); // every 30 sec
+                    socket.onerror = (error) => {
+                        console.error("WebSocket error:", error);
+                    };
+
+                    socket.onclose = (e) => {
+                        console.log("Socket closed:", e);
+                        console.log("Closed:", e.code, e.reason);
+                        if (reconnectAttempts < maxReconnectAttempts) {
+                            reconnectAttempts++;
+
+                            const jitter = Math.random() * 1000; // 0–1000 ms
+                            const delayWithJitter = reconnectDelay + jitter;
+
+                            console.log(`Reconnecting in ${(delayWithJitter / 5000).toFixed(2)}s... (attempt ${reconnectAttempts})`);
+
+                            setTimeout(() => {
+                                initWebSocket();
+                            }, delayWithJitter);
+
+                            reconnectDelay = Math.min(reconnectDelay * 2, 30000); // exponential backoff
+                        } else {
+                            console.error("Max reconnect attempts reached, stopping.");
+                        }
+                    };
+
+                    setInterval(() => {
+                        if (socket.readyState === WebSocket.OPEN) {
+                            socket.send(JSON.stringify({ type: "ping" }));
+                        }
+                    }, 30000); // every 30 sec
+
+                }
 
             }
-
         }
+
 
 
 
