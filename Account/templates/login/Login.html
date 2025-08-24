@@ -31,14 +31,14 @@
             </div>
 
             <div class="form-links">
-                <a href="{% url 'send_verification_code' %}">Forgot Password? Reset</a>
+                <a href="{% url 'account:send_verification_code' %}">Forgot Password? Reset</a>
             </div>
 
             <button type="submit">Login</button>
         </form>
 
         <div class="form-links">
-            <a href="{% url 'signup' %}">Don't have an account? Sign Up</a>
+            <a href="{% url 'account:signup' %}">Don't have an account? Sign Up</a>
         </div>
     </div>
 
@@ -51,7 +51,7 @@
             const messagesDiv = document.getElementById('messages');
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-            axios.post("{% url 'login' %}", {
+            axios.post("{% url 'account:login' %}", {
                 username: username,
                 password: password
             }, {

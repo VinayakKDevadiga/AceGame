@@ -312,7 +312,7 @@
             const token = getJWTToken();
             if (!token) {
                 console.log("JWT not found in cookies.");
-                window.location.href = "{% url 'login' %}";
+                window.location.href = "{% url 'account:login' %}";
                 return;
             }
 
@@ -333,11 +333,11 @@
                     initWebSocket();
                 } else {
                     console.warn("Token invalid or expired");
-                    window.location.href = "{% url 'login' %}";
+                    window.location.href = "{% url 'account:login' %}";
                 }
             } catch (error) {
                 console.error("Auth check failed:", error);
-                window.location.href = "{% url 'login' %}";
+                window.location.href = "{% url 'account:login' %}";
             }
         }
 
@@ -352,7 +352,7 @@
             let socket;
             if (!roomId || !username || !password) {
                 console.error("Missing roomId, username, or password.");
-                window.location.href = "{% url 'login' %}";
+                window.location.href = "{% url 'account:login' %}";
             } else {
                 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
                 const token = getJWTToken();
@@ -415,6 +415,10 @@
                                 cardlist.classList.add('rotating-border');
                                 cardlist.style.boxShadow = "0 0 15px 5px gold";
                                 cardlist.style.transition = "box-shadow 0.5s ease-in-out";
+                                const playerElement = document.querySelector(`.person[data-username="${data.starting_player}"]`);
+                                if (playerElement) {
+                                    playerElement.classList.add("highlight");
+                                }
                             } else {
                                 console.log("Waiting for the starting player to play.");
                                 turnIndicator.textContent = `🕒 ${data.starting_player}'s turn...`;

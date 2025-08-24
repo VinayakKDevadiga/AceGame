@@ -5,6 +5,8 @@ from . import views
 from django.contrib.auth import views as auth_views
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+app_name='account_app'
+
 urlpatterns = [
     path('signup/', views.SignUp, name='signup'),
     path('verify/<uidb64>/<token>/', views.verify_email, name='verify_email'),

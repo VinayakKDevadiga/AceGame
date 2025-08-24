@@ -149,7 +149,7 @@
             const token = getJWTToken();
             if (!token) {
                 console.log("JWT not found in cookies.");
-                window.location.href = "{% url 'login' %}";
+                window.location.href = "{% url 'account:login' %}";
                 return;
             }
 
@@ -168,11 +168,11 @@
                     initWebSocket();
                 } else {
                     console.warn("Token invalid or expired");
-                    window.location.href = "{% url 'login' %}";
+                    window.location.href = "{% url 'account:login' %}";
                 }
             } catch (error) {
                 console.error("Auth check failed:", error);
-                window.location.href = "{% url 'login' %}";
+                window.location.href = "{% url 'account:login' %}";
             }
         }
 
@@ -205,7 +205,7 @@
 
                 if (!token) {
                     console.log("JWT not found in cookies.");
-                    window.location.href = "{% url 'login' %}";
+                    window.location.href = "{% url 'account:login' %}";
                     return;
                 }
 
@@ -240,7 +240,7 @@
             }
 
             if (!roomId || !username || !password) {
-                window.location.href = "{% url 'login' %}";
+                window.location.href = "{% url 'account:login' %}";
             } else {
                 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
                 const token = getJWTToken();

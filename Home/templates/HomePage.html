@@ -23,8 +23,8 @@
             <!-- Dynamic buttons will be rendered by JS -->
         </div>
 
-        <div id="data-urls" data-playgame-url="{% url 'playgame' %}" data-login-url="{% url 'login' %}"
-            data-logout-url="{% url 'logout' %}" data-signup-url="{% url 'signup' %}"
+        <div id="data-urls" data-playgame-url="{% url 'playgame' %}" data-login-url="{% url 'account:login' %}"
+            data-logout-url="{% url 'account:logout' %}" data-signup-url="{% url 'account:signup' %}"
             data-current-user-url="{% url 'current_user' %}">
         </div>
     </main>
