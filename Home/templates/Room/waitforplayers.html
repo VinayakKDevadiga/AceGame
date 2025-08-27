@@ -196,48 +196,28 @@
             function startCountdown(data) {
                 const owner = sessionStorage.getItem("owner");
                 let counter = 3;
+                const countdownElement = document.getElementById("countdown");
                 countdownElement.style.display = "block";
                 countdownElement.textContent = counter;
                 const gamePageURL = data.redirect_url;
-                console.log('gamepage url:', gamePageURL)
-                sessionStorage.setItem("gamePageURL", gamePageURL);
-                const token = getJWTToken()
 
-                if (!token) {
-                    console.log("JWT not found in cookies.");
-                    window.location.href = "{% url 'account:login' %}";
-                    return;
-                }
-
-                if (username == owner) {
-                    socket.close();
-                    console.log("gamePageURL", gamePageURL)
-
-                    document.cookie = `jwt=${token}; path=/; samesite=Lax;`;
-                    console.log("owner is starting the game, redirecting to game page:", gamePageURL);
-                    console.log("The token is:", token);
-                    setTimeout(() => {
-                        window.location.href = gamePageURL;
-                    }, 2000); // 10 seconds delay
-
+                if (username === owner) {
+                    countdownElement.textContent = "0";
+                    window.location.href = "{% url 'waitforplayers' %}?gamePage=" + encodeURIComponent(gamePageURL);
                 } else {
-                    socket.close();
                     const interval = setInterval(() => {
                         counter--;
                         countdownElement.textContent = counter;
                         if (counter === 0) {
                             clearInterval(interval);
-                            console.log("owner is starting the game, redirecting to game page:", gamePageURL);
-                            document.cookie = `jwt=${token}; path=/; samesite=Lax;`;
-                            setTimeout(() => {
-                                window.location.href = gamePageURL;
-                            }, 2000); // 2 seconds delay
+                            window.location.href = "{% url 'waitforplayers' %}?gamePage=" + encodeURIComponent(gamePageURL);
                         }
                     }, 1000);
+
                 }
-
-
             }
+
+
 
             if (!roomId || !username || !password) {
                 window.location.href = "{% url 'account:login' %}";

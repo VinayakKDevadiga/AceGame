@@ -157,7 +157,9 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
     async def players_update(self, event):
         logger.info(f"connected dict: {event}")
+        
         self.connected_dict = event.get("connected_dict", {})
+        
         await self.send(text_data=json.dumps({
             "type": "players_update",
             "connected_dict":self.connected_dict

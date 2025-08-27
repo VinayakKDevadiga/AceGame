@@ -18,6 +18,6 @@ def StartGame(request):
             username = payload.get('username')
             logger.info(f" Home  request{username}")
     response = render(request, 'Sokkatte_home_page.html', {'name': username})
-    if token:
-        response.set_cookie('jwt', token, path='/', samesite='Lax')
+    # if token:
+        # response.set_cookie('jwt', token, path='/', samesite='Lax')
     return response

@@ -89,9 +89,33 @@ def CreateRoom(request):
 
 
 # Starts the websocket
+# @jwt_required
+# def Waitforplayers(request):
+#     if 
+#     return render(request,'Room/waitforplayers.html')
+from django.http import HttpResponseRedirect
+
 @jwt_required
 def Waitforplayers(request):
-    return render(request,'Room/waitforplayers.html')
+    game_page_url = request.GET.get('gamePage')
+    token = request.COOKIES.get('jwt')
+
+    if game_page_url:
+        logger.info(f"Waitforplayers accessed, gamePage: {game_page_url} and token{token}")
+        response = HttpResponseRedirect(game_page_url)  # create redirect response
+        # if token:  # re-set the same token
+        #     response.set_cookie(
+        #         key='jwt',
+        #         value=token,
+        #         path='/',
+        #         httponly=False,  # if you want JS access, keep False
+        #         samesite='Lax',
+        #         secure=False  # change to True on HTTPS
+        #     )
+        return response
+
+    return render(request, 'Room/waitforplayers.html')
+
 
 @jwt_required
 def Join_room(request):
@@ -151,5 +175,3 @@ def get_all_players_in_room(room_id):
     all_data = redis_conn.hgetall(key)
     # Decode JSON and bytes
     return {player.decode(): json.loads(cards) for player, cards in all_data.items()}
-
-
