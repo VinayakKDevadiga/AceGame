@@ -341,7 +341,32 @@
             }
         }
 
-        checkAuthAndInit();
+
+
+        function observeCookies() {
+            let oldCookie = document.cookie;
+            setInterval(() => {
+                if (document.cookie !== oldCookie) {
+                    oldCookie = document.cookie;
+                    if (document.cookie.includes("jwt")) {
+                        checkAuthAndInit();
+                    }
+                }
+            }, 200);
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            // First, check if JWT exists on page load
+
+            if (document.cookie.includes("jwt")) {
+                checkAuthAndInit();
+            } else {
+                console.log("JWT cookie not found yet, waiting...");
+                observeCookies(); // retry every 500ms
+            }
+
+        });
+
+
 
 
         let reconnectAttempts = 0;
@@ -459,11 +484,7 @@
                         }
                     };
 
-                    setInterval(() => {
-                        if (socket.readyState === WebSocket.OPEN) {
-                            socket.send(JSON.stringify({ type: "ping" }));
-                        }
-                    }, 30000); // every 30 sec
+
 
                 }
 

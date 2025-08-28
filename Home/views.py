@@ -6,13 +6,12 @@ from django.contrib import messages
 # jwt
 from Account.utils import jwt_required, decode_jwt
 from django.http import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 # Create your views here.
 from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 User = get_user_model()
 import logging
@@ -87,34 +86,18 @@ def CreateRoom(request):
         'password': room.password
     })
 
-
-# Starts the websocket
-# @jwt_required
-# def Waitforplayers(request):
-#     if 
-#     return render(request,'Room/waitforplayers.html')
-from django.http import HttpResponseRedirect
-
 @jwt_required
 def Waitforplayers(request):
     game_page_url = request.GET.get('gamePage')
-    token = request.COOKIES.get('jwt')
-
     if game_page_url:
-        logger.info(f"Waitforplayers accessed, gamePage: {game_page_url} and token{token}")
-        response = HttpResponseRedirect(game_page_url)  # create redirect response
-        # if token:  # re-set the same token
-        #     response.set_cookie(
-        #         key='jwt',
-        #         value=token,
-        #         path='/',
-        #         httponly=False,  # if you want JS access, keep False
-        #         samesite='Lax',
-        #         secure=False  # change to True on HTTPS
-        #     )
-        return response
+        gamepage = (game_page_url.split('/'))
+        logging.info(f"redirecting to gamepage: {gamepage}")
+        game_page_url = reverse(f'sokkatte_app:{gamepage[3]}')
 
+        response = HttpResponseRedirect(game_page_url)
+        return response
     return render(request, 'Room/waitforplayers.html')
+
 
 
 @jwt_required

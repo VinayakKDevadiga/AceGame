@@ -233,7 +233,7 @@ def Login(request):
                 value=token,
                 path='/',             # Accessible on all paths
                 httponly=False,
-                samesite='Lax',
+                samesite=None, #'Lax',
                 secure=False  # Set to True if using HTTPS
             )
             logger.info("Receivedone respnese")
