@@ -126,16 +126,6 @@ def Gamepage(request):
 def Rulepage(request):
     return render(request, 'Room/rules.html')
     
-@jwt_required
-def Playgame(request):
-    game_types = [
-        {'id': 1, 'name': 'Poker'},
-        {'id': 2, 'name': 'Blackjack'},
-        {'id': 3, 'name': 'Solitaire'},
-        {'id': 4, 'name': 'Bridge'}
-    ]
-    return render(request, 'playgame.html', {'game_types': game_types})
-
 import json
 from django_redis import get_redis_connection
 
