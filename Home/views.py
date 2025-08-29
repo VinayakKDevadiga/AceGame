@@ -142,6 +142,11 @@ def get_player_cards(room_id, player):
         return json.loads(data)
     return None
 
+    
+@jwt_required
+def Playgame(request):
+    return render(request, 'playgame.html')
+
 def get_all_players_in_room(room_id):
     redis_conn = get_redis_connection("default")
     key = f'game_room:{room_id}'
