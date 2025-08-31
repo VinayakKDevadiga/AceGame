@@ -138,19 +138,19 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         logger.info(f"User '{self.username}' disconnected from room '{self.room_id}'")
         
         # Remove user from Redis player-connected list
-        connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
-        if connected_raw:
-            connected_dict = json.loads(connected_raw.decode())
-            if self.username in connected_dict:
-                del connected_dict[self.username]
-                await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(connected_dict))
+        self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+        if self.connected_raw:
+            connected_dict = json.loads(self.connected_raw.decode())
+            if self.username in self.connected_dict:
+                del self.connected_dict[self.username]
+                await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(self.connected_dict))
                 logger.info(f"Removed '{self.username}' from players_connected_list")
                 # Send unified update to all players
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
                         "type": "players_update",
-                        "connected_dict": connected_dict
+                        "connected_dict": self.connected_dict
                     }
                 )
 
@@ -177,6 +177,29 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "type": "starting_player",
             "starting_player": self.starting_player
         }))
+
+    async def send_dynamic_message(self, message_type, message):
+        """
+        Send a message with dynamic type and content to the client.
+        :param message_type: The type of the message (string)
+        :param message: The actual message (string or dict)
+        """
+        await self.send(text_data=json.dumps({
+            "type": message_type,
+            "message": message
+        }))
+
+    async def card_played(self, event):
+        logger.info(f"Card played: {event.get('card')}, next player: {event.get('next_player')}")
+        await self.send(text_data=json.dumps({
+            "type": "card_played",
+            "player": self.username,
+            "card": event.get('card'),
+            "next_player": event.get('next_player'),
+            "current_round": event.get('current_round'),
+            "player_color_dict": event.get('player_color_dict')
+        }))
+
         
 
 
@@ -315,7 +338,93 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 "message": "Failed to retrieve starting player"
             }))
       
+    async def drop_play_card_to_table(self,card):
+        # validate user has that card
+        # validate the card is valid for the crrent_round
+        # if both assed then allow and update in the current round and update currentplayer to next player
+        
+        try:
+            # Fetch required data from Redis
+            self.players_card_raw = await self.redis.hget(self.redis_key, "players_card_list")
+            self.current_player_raw = await self.redis.hget(self.redis_key, "current_player")
+            self.current_round_raw = await self.redis.hget(self.redis_key, "current_round")
+            self.played_card_raw = await self.redis.hget(self.redis_key, "played_card_list")
+            self.card=card
+            if not self.players_card_raw or not self.current_player_raw:
+                await self.send_dynamic_message("error", "Game state missing or corrupted")
+                return
+
+            # Decode Redis values
+            self.players_card_dict = json.loads(self.players_card_raw.decode())
+            self.current_player = self.current_player_raw.decode()
+            self.current_round = json.loads(self.current_round_raw.decode()) if self.current_round_raw else {}
+            self.played_card_list = json.loads(self.played_card_raw.decode()) if self.played_card_raw else []
+
+            # ✅ Validate: Is it this player's turn?
+            if self.username != self.current_player:
+                await self.send_dynamic_message("error", "It's not your turn")
+                return
+
+            # ✅ Validate: Player has the card
+            self.player_cards = self.players_card_dict.get(self.username, [])
+            if card not in self.player_cards:
+                await self.send_dynamic_message("error", "You don't have this card")
+                return
+
+            # ✅ Validate: Check round-specific rules (e.g., suit enforcement)
+            # if current_round is empty then add the required_suit of this card[0] and set it in redis
+            if not self.current_round:
+                # if the player is the first layer in round
+                self.required_suit = self.card[0]
+                self.current_round = {"required_suit": self.required_suit, "played_cards": [{self.username: self.card}]}
+            else:
+                # if the player is the next layer in round
+                self.required_suit = self.current_round.get("required_suit")
+                if self.required_suit and not card.startswith(self.required_suit):
+                    await self.send_dynamic_message("error", f"Card must be of suit {self.required_suit}")
+                    return
+                else:
+                    self.current_round["played_cards"].append({self.username: self.card})
+
+            # ✅ Remove card from player's hand
+            self.player_cards.remove(self.card)
+            self.players_card_dict[self.username] = self.player_cards
             
+            # ✅ Update Redis
+            await self.redis.hset(self.redis_key, mapping={
+                "players_card_list": json.dumps(self.players_card_dict),
+                "current_round": json.dumps(self.current_round)
+            })
+
+            # ✅ Determine next player
+            self.players_raw = await self.redis.hget(self.redis_key, "players")
+            self.players_list = json.loads(self.players_raw.decode()) if self.players_raw else []
+            self.next_player = None
+            if self.players_list:
+                current_index = self.players_list.index(self.username)
+                next_index = (current_index + 1) % len(self.players_list)
+                self.next_player = self.players_list[next_index]
+                await self.redis.hset(self.redis_key, "current_player", self.next_player)
+            
+            self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+            self.connected_dict = json.loads(self.connected_raw.decode()) if self.connected_raw else {}
+
+            # ✅ Broadcast to all players
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "card_played",
+                    "player": self.username,
+                    "card": self.card,
+                    "next_player": self.next_player,
+                    "current_round": self.current_round,
+                    "player_color_dict": self.connected_dict
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to drop_play_card_to_table {self.username}: {e} and card:{self.card}", exc_info=True)
+            await self.send_dynamic_message("error", "Failed to drop_play_card_to_table")
+
 
     async def receive(self, text_data):
         try:
@@ -327,12 +436,13 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 # Instead of distributing again, just fetch and send
                 await self.get_player_card()
 
-            if msg_type=="get_starting_player":
+            elif msg_type=="get_starting_player":
                 logger.info("calling get starting player")
                 await self.get_starting_player()
 
-            elif msg_type == "ping":
-                await self.send(text_data=json.dumps({"type": "error", "message": "Server error"}))
+            elif msg_type == "playing_card":
+                logger.info("calling play card")
+                await self.drop_play_card_to_table(data.get("card"))
 
             else:
                 logger.warning(f"Unhandled message type: {msg_type}")

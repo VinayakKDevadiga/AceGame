@@ -7,8 +7,6 @@
     <title>Round Table</title>
     <style>
         body {
-
-
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -53,7 +51,6 @@
             font-size: 12px;
         }
 
-        /* cardlist */
         .cardlist {
             border: 2px solid black;
             width: 90vw;
@@ -65,8 +62,26 @@
             padding: 10px 0;
         }
 
-        /* player highlight animation */
-        /* Animation for highlighting the starting player */
+        .card {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 120px;
+            border-radius: 12px;
+            margin-left: -32px;
+            border: 3px solid gray;
+            background: #fff;
+            font-weight: bold;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+            vertical-align: middle;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .card.drag-disabled {
+            cursor: not-allowed;
+        }
+
         @keyframes pulse {
             0% {
                 transform: scale(1);
@@ -89,7 +104,6 @@
             z-index: 10;
         }
 
-        /* current player name style */
         #turn-indicator {
             font-size: 1.5rem;
             font-weight: bold;
@@ -102,6 +116,8 @@
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
             animation: glow 1.5s infinite alternate;
             transition: all 0.3s ease-in-out;
+            text-align: center;
+            max-width: 90vw;
         }
 
         @keyframes glow {
@@ -114,12 +130,6 @@
             }
         }
 
-        #turn-indicator {
-            text-align: center;
-            max-width: 90vw;
-        }
-
-        /* border of cardlist animation for current user */
         @keyframes rotate-border-colors {
             0% {
                 border-color: black;
@@ -147,6 +157,20 @@
             border-width: 3px;
             border-style: solid;
         }
+
+        #played-cards {
+            position: relative;
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            width: 100%;
+            padding: 10px 0;
+            border: 2px solid #ccc;
+            border-radius: 12px;
+            background: #f5f5f5;
+            min-height: 140px;
+            /* enough to show cards */
+        }
     </style>
 </head>
 
@@ -156,10 +180,12 @@
     <div id="turn-indicator">Waiting for game to start...</div>
 
     <div id="table">
+        <div id="played-cards"
+            style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:200px; height:200px;">
+        </div>
+
     </div>
 
-
-    <!-- Add suit filter buttons above the cardlist -->
     <div id="suit-filters" style="margin-bottom: 10px; text-align: center;">
         <button class="suit-btn" data-suit="D" style="font-size:2rem;">♦️</button>
         <button class="suit-btn" data-suit="F" style="font-size:2rem;">♣️</button>
@@ -168,37 +194,44 @@
         <button class="suit-btn" data-suit="ALL" style="font-size:1rem;">All</button>
     </div>
 
-    <div class="cardlist">
-
-    </div>
+    <div class="cardlist"></div>
 
     <script>
-        // Place these at the top level, NOT inside any function:
         let lastCards = [];
         let lastBorderColor = "gray";
         let currentSuitFilter = "ALL";
+        let currentTurnPlayer = null;
+        let username = 'Guest';
+        const roomId = sessionStorage.getItem("room_id");
+        const password = sessionStorage.getItem("password");
+        let socket;
 
-        // Helper to render cards with filter and overlap
-        function renderCards(cards, borderColor, suitFilter) {
+        function renderCards(cards, borderColor, suitFilter, isMyTurn) {
             const cardlistDiv = document.querySelector('.cardlist');
             cardlistDiv.innerHTML = '';
 
-            // Filter cards by suit
-            let filteredCards = cards;
-            if (suitFilter !== "ALL") {
-                filteredCards = cards.filter(card => card.startsWith(suitFilter));
-            }
+            let filteredCards = suitFilter !== "ALL"
+                ? cards.filter(card => card.startsWith(suitFilter))
+                : cards;
 
             filteredCards.forEach((card, idx) => {
                 const cardDiv = document.createElement('div');
+                cardDiv.classList.add('card');
+                cardDiv.setAttribute('data-card', card);
+                cardDiv.style.border = `3px solid ${borderColor}`;
+                cardDiv.style.marginLeft = idx === 0 ? '0' : '-32px';
+                cardDiv.draggable = isMyTurn;
+                if (!isMyTurn) cardDiv.classList.add('drag-disabled');
+
+                // Card content
                 let symbol = "";
                 if (card.startsWith("D")) symbol = "♦️";
                 else if (card.startsWith("F")) symbol = "♣️";
                 else if (card.startsWith("S")) symbol = "♠️";
                 else if (card.startsWith("H")) symbol = "♥️";
+
                 const cardValue = card.substring(1);
 
-                // Suit symbol centered
                 const suitSpan = document.createElement('span');
                 suitSpan.textContent = symbol;
                 suitSpan.style.fontSize = '2rem';
@@ -207,7 +240,6 @@
                 suitSpan.style.left = '50%';
                 suitSpan.style.transform = 'translate(-50%, -50%)';
 
-                // Card value top left
                 const valueSpan = document.createElement('span');
                 valueSpan.textContent = cardValue;
                 valueSpan.style.fontSize = '2rem';
@@ -215,51 +247,34 @@
                 valueSpan.style.top = '8px';
                 valueSpan.style.left = '12px';
 
-                cardDiv.style.position = 'relative';
                 cardDiv.appendChild(suitSpan);
                 cardDiv.appendChild(valueSpan);
 
-                cardDiv.style.display = 'inline-block';
-                cardDiv.style.marginLeft = idx === 0 ? '0' : '-32px'; // 40% overlap
-                cardDiv.style.width = '80px';
-                cardDiv.style.height = '120px';
-                cardDiv.style.border = `3px solid ${borderColor}`;
-                cardDiv.style.borderRadius = '12px';
-                cardDiv.style.background = '#fff';
-                cardDiv.style.fontWeight = 'bold';
-                cardDiv.style.boxShadow = '0 4px 16px rgba(0,0,0,0.25)';
-                cardDiv.style.verticalAlign = 'middle';
-                cardDiv.style.overflow = 'hidden';
+                if (isMyTurn) {
+                    cardDiv.addEventListener('dragstart', e => {
+                        e.dataTransfer.setData('text/plain', card);
+                        e.target.style.opacity = '0.5';
+                    });
+                    cardDiv.addEventListener('dragend', e => {
+                        e.target.style.opacity = '1';
+                    });
+                }
 
                 cardlistDiv.appendChild(cardDiv);
             });
         }
 
-        // Add event listeners for suit filter buttons (only once)
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.suit-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    currentSuitFilter = btn.getAttribute('data-suit');
-                    renderCards(lastCards, lastBorderColor, currentSuitFilter);
-                });
-            });
-        });
-
-        async function drawTable(players) {
+        function drawTable(players) {
             const table = document.getElementById("table");
             const centerX = table.clientWidth / 2;
             const centerY = table.clientHeight / 2;
             const total = players.length;
 
-            table.innerHTML = ''; // Clear existing players
-
+            // table.innerHTML = '';
             const personSize = 30;
-            const borderWidth = 8;
-            const baseRadius = (table.clientWidth / 2);  // radius of outer edge
-            const radius = baseRadius + (personSize / 2);  // push players outside the circle
+            const radius = table.clientWidth / 2 + (personSize / 2);
 
             players.forEach((player, i) => {
-                // Save each player's color in sessionStorage
                 sessionStorage.setItem(`player_color_${player.username}`, player.color || "gray");
 
                 const angle = (2 * Math.PI * i) / total;
@@ -277,224 +292,169 @@
 
                 table.appendChild(div);
             });
-
-
         }
 
-        // WebSocket logic
-
-        window.addEventListener("pageshow", function (event) {
-            if (event.persisted) window.location.reload();
+        // --- Drop Feature ---
+        const tableDiv = document.getElementById('table');
+        tableDiv.addEventListener('dragover', e => e.preventDefault());
+        tableDiv.addEventListener('drop', e => {
+            e.preventDefault();
+            const card = e.dataTransfer.getData('text/plain');
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'playing_card', card: card }));
+            }
         });
 
-        const roomId = sessionStorage.getItem("room_id");
-        let username = 'Guest';
-        const password = sessionStorage.getItem("password");
+        function updateTurnUI(currentPlayer) {
+            const turnIndicator = document.getElementById('turn-indicator');
+            document.querySelectorAll('.person.highlight').forEach(el => el.classList.remove('highlight'));
 
-        const urls = {
-            currentUserUrl: "{% url 'current_user' %}"  // replace with actual endpoint
-        };
+            if (currentPlayer === username) {
+                turnIndicator.textContent = "🎯 Your turn!";
+                document.querySelector('.cardlist').classList.add('rotating-border');
+            } else {
+                turnIndicator.textContent = `🕒 ${currentPlayer}'s turn...`;
+                document.querySelector('.cardlist').classList.remove('rotating-border');
+            }
+
+            const playerElement = document.querySelector(`.person[data-username="${currentPlayer}"]`);
+            if (playerElement) playerElement.classList.add("highlight");
+
+            renderCards(lastCards, lastBorderColor, currentSuitFilter, currentPlayer === username);
+        }
 
         function getJWTToken() {
             const cookies = document.cookie.split(';');
             for (let cookie of cookies) {
-
                 const [key, value] = cookie.trim().split('=');
-                console.log("key", key, value);
-                if (key === 'jwt') {
-                    return decodeURIComponent(value);
-                }
+                if (key === 'jwt') return decodeURIComponent(value);
             }
             return null;
         }
 
         async function checkAuthAndInit() {
             const token = getJWTToken();
-            if (!token) {
-                console.log("JWT not found in cookies.");
-                window.location.href = "{% url 'account:login' %}";
-                return;
-            }
+            if (!token) return window.location.href = "{% url 'account:login' %}";
 
             try {
-                const response = await fetch(urls.currentUserUrl, {
+                const response = await fetch("{% url 'current_user' %}", {
                     method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    }
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
                 });
-
                 if (response.ok) {
                     const data = await response.json();
                     username = data.username;
-                    console.log('calling initWebSocket');
-
                     initWebSocket();
                 } else {
-                    console.warn("Token invalid or expired");
                     window.location.href = "{% url 'account:login' %}";
                 }
-            } catch (error) {
-                console.error("Auth check failed:", error);
+            } catch (err) {
                 window.location.href = "{% url 'account:login' %}";
             }
         }
 
-
-
-        function observeCookies() {
-            let oldCookie = document.cookie;
-            setInterval(() => {
-                if (document.cookie !== oldCookie) {
-                    oldCookie = document.cookie;
-                    if (document.cookie.includes("jwt")) {
-                        checkAuthAndInit();
-                    }
-                }
-            }, 200);
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            // First, check if JWT exists on page load
-
-            if (document.cookie.includes("jwt")) {
-                checkAuthAndInit();
-            } else {
-                console.log("JWT cookie not found yet, waiting...");
-                observeCookies(); // retry every 500ms
-            }
-
-        });
-
-
-
-
-        let reconnectAttempts = 0;
-        let maxReconnectAttempts = 10;
-        let reconnectDelay = 2000; // start at 2s
         function initWebSocket() {
+            if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            const token = getJWTToken();
+            socket = new WebSocket(`${protocol}://${window.location.host}/ws/Sokkatte/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`);
 
-            let socket;
-            if (!roomId || !username || !password) {
-                console.error("Missing roomId, username, or password.");
-                window.location.href = "{% url 'account:login' %}";
-            } else {
-                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-                const token = getJWTToken();
-                console.log('url', protocol, window.location.host, roomId, username, password, token);
-                document.cookie = `jwt=${getJWTToken()}; path=/; samesite=Lax`;
-                console.log("Connecting to WebSocket...", `${protocol}://${window.location.host}/ws/Sokkatte/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`);
-                socket = new WebSocket(
-                    `${protocol}://${window.location.host}/ws/Sokkatte/${roomId}/?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&token=${token}`
-                );
+            socket.onmessage = event => {
+                const data = JSON.parse(event.data);
+                if (data.type === "players_update" && data.connected_dict) {
+                    const players = Object.entries(data.connected_dict).map(([username, color]) => ({ username, color }));
+                    drawTable(players);
+                }
+                if (data.type === "start_card_distribution") {
+                    socket.send(JSON.stringify({ type: "get_my_cards_req" }));
+                }
+                if (data.type === "cards_distributed") {
+                    lastCards = data.player_cards;
+                    lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
+                    renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
+                    socket.send(JSON.stringify({ type: "get_starting_player" }));
+                }
+                if (data.type === "starting_player") {
+                    currentTurnPlayer = data.starting_player;
+                    updateTurnUI(data.starting_player);
+                }
+                if (data.type === "card_played") {
+                    const player_color_dict = data.player_color_dict || {};
+                    const playedCardsDiv = document.getElementById('played-cards');
+                    playedCardsDiv.innerHTML = ''; // clear previous round
 
-                socket.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
+                    const current_round = data.current_round;
 
-                    if (data.type === "players_update" && data.connected_dict) {
-                        console.log('players_update', data.connected_dict);
+                    current_round.played_cards.forEach(entry => {
+                        const playerName = Object.keys(entry)[0];
+                        const card = entry[playerName];
 
-                        const players = Object.entries(data.connected_dict).map(([username, color]) => ({
-                            username,
-                            color
-                        }));
+                        const cardDiv = document.createElement('div');
+                        cardDiv.classList.add('card');
 
-                        drawTable(players);
-                    }
-                    if (data.type == "start_card_distribution") {
-                        console.log("card distribution will start now");
-                        // send message to the server
-                        if (socket && socket.readyState === WebSocket.OPEN) {
-                            socket.send(JSON.stringify({
-                                type: "get_my_cards_req",
-                            }));
+                        // Style like cardlist
+                        cardDiv.style.border = `3px solid ${player_color_dict[playerName] || 'gray'}`;
+                        cardDiv.style.width = '80px';
+                        cardDiv.style.height = '120px';
+                        cardDiv.style.marginLeft = playedCardsDiv.children.length === 0 ? '0' : '-32px';
+                        cardDiv.style.position = 'relative';
+                        cardDiv.style.background = '#fff';
+                        cardDiv.style.borderRadius = '12px';
+                        cardDiv.style.display = 'inline-flex';
+                        cardDiv.style.flexDirection = 'column';
+                        cardDiv.style.justifyContent = 'center';
+                        cardDiv.style.alignItems = 'center';
+                        cardDiv.style.fontWeight = 'bold';
+                        cardDiv.style.fontSize = '1rem';
+                        cardDiv.style.zIndex = 100;
+
+                        // Card symbol
+                        let symbol = "";
+                        if (card.startsWith("D")) symbol = "♦️";
+                        else if (card.startsWith("F")) symbol = "♣️";
+                        else if (card.startsWith("S")) symbol = "♠️";
+                        else if (card.startsWith("H")) symbol = "♥️";
+
+                        const valueSpan = document.createElement('span');
+                        valueSpan.textContent = card.substring(1);
+                        valueSpan.style.fontSize = '1.2rem';
+                        valueSpan.style.marginBottom = '5px';
+
+                        const symbolSpan = document.createElement('span');
+                        symbolSpan.textContent = symbol;
+                        symbolSpan.style.fontSize = '2rem';
+
+                        cardDiv.appendChild(symbolSpan);
+                        cardDiv.appendChild(valueSpan);
+
+                        playedCardsDiv.appendChild(cardDiv);
+
+                        // Remove from hand if you played it
+                        if (playerName === username) {
+                            lastCards = lastCards.filter(c => c !== card);
                         }
+                    });
 
-                    }
-                    if (data.type == "cards_distributed") {
-                        lastCards = data.player_cards;
-                        lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
-                        renderCards(lastCards, lastBorderColor, currentSuitFilter);
-                        console.log("cards received:", data.player_cards);
-                        if (socket && socket.readyState === WebSocket.OPEN) {
-                            socket.send(JSON.stringify({
-                                type: "get_starting_player",
-                            }));
-                        }
-
-                    }
-
-                    if (data.type == "starting_player") {
-                        console.log("Starting player:", data.starting_player);
-                        const turnIndicator = document.getElementById('turn-indicator');
-
-                        // Remove highlight from all
-                        document.querySelectorAll('.person.highlight').forEach(el => el.classList.remove('highlight'));
-
-                        if (data.starting_player) {
-                            if (data.starting_player === username) {
-                                const cardlist = document.querySelector('.cardlist');
-
-                                console.log("You are the starting player!");
-                                turnIndicator.textContent = "🎯 Your turn!";
-                                cardlist.classList.add('rotating-border');
-                                cardlist.style.boxShadow = "0 0 15px 5px gold";
-                                cardlist.style.transition = "box-shadow 0.5s ease-in-out";
-                                const playerElement = document.querySelector(`.person[data-username="${data.starting_player}"]`);
-                                if (playerElement) {
-                                    playerElement.classList.add("highlight");
-                                }
-                            } else {
-                                console.log("Waiting for the starting player to play.");
-                                turnIndicator.textContent = `🕒 ${data.starting_player}'s turn...`;
-                                const playerElement = document.querySelector(`.person[data-username="${data.starting_player}"]`);
-                                if (playerElement) {
-                                    playerElement.classList.add("highlight");
-                                }
-                                cardlist.classList.remove('rotating-border');
-                                cardlist.style.boxShadow = "";
-                            }
-                        }
-
-
-                    };
-
-                    socket.onerror = (error) => {
-                        console.error("WebSocket error:", error);
-                    };
-
-                    socket.onclose = (e) => {
-                        console.log("Socket closed:", e);
-                        console.log("Closed:", e.code, e.reason);
-                        if (reconnectAttempts < maxReconnectAttempts) {
-                            reconnectAttempts++;
-
-                            const jitter = Math.random() * 1000; // 0–1000 ms
-                            const delayWithJitter = reconnectDelay + jitter;
-
-                            console.log(`Reconnecting in ${(delayWithJitter / 5000).toFixed(2)}s... (attempt ${reconnectAttempts})`);
-
-                            setTimeout(() => {
-                                initWebSocket();
-                            }, delayWithJitter);
-
-                            reconnectDelay = Math.min(reconnectDelay * 2, 30000); // exponential backoff
-                        } else {
-                            console.error("Max reconnect attempts reached, stopping.");
-                        }
-                    };
-
-
-
+                    currentTurnPlayer = data.next_player;
+                    updateTurnUI(data.next_player);
+                }
+                if (data.type === "error") {
+                    alert(data.message);
                 }
 
-            }
+
+            };
         }
 
-
-
-
-
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.cookie.includes("jwt")) checkAuthAndInit();
+            document.querySelectorAll('.suit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentSuitFilter = btn.getAttribute('data-suit');
+                    renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
+                });
+            });
+        });
     </script>
 </body>
 
