@@ -76,6 +76,8 @@
             vertical-align: middle;
             overflow: hidden;
             cursor: grab;
+            touch-action: none;
+            /* important for touch drag */
         }
 
         .card.drag-disabled {
@@ -169,7 +171,6 @@
             border-radius: 12px;
             background: #f5f5f5;
             min-height: 140px;
-            /* enough to show cards */
         }
     </style>
 </head>
@@ -183,7 +184,6 @@
         <div id="played-cards"
             style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:200px; height:200px;">
         </div>
-
     </div>
 
     <div id="suit-filters" style="margin-bottom: 10px; text-align: center;">
@@ -206,6 +206,59 @@
         const password = sessionStorage.getItem("password");
         let socket;
 
+        function enableTouchDrag(cardElement) {
+            let startX, startY, originalX, originalY;
+            let dragging = false;
+
+            cardElement.addEventListener("touchstart", function (e) {
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+
+                const rect = cardElement.getBoundingClientRect();
+                originalX = rect.left;
+                originalY = rect.top;
+
+                cardElement.style.position = 'absolute';
+                cardElement.style.zIndex = '1000';
+                dragging = true;
+            });
+
+            cardElement.addEventListener("touchmove", function (e) {
+                if (!dragging) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - startX;
+                const deltaY = touch.clientY - startY;
+
+                cardElement.style.left = `${originalX + deltaX}px`;
+                cardElement.style.top = `${originalY + deltaY}px`;
+            });
+
+            cardElement.addEventListener("touchend", function (e) {
+                dragging = false;
+                const table = document.getElementById('table');
+                const rect = table.getBoundingClientRect();
+                const touch = e.changedTouches[0];
+
+                if (
+                    touch.clientX > rect.left &&
+                    touch.clientX < rect.right &&
+                    touch.clientY > rect.top &&
+                    touch.clientY < rect.bottom
+                ) {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: 'playing_card', card: cardElement.getAttribute('data-card') }));
+                    }
+                }
+
+                cardElement.style.position = '';
+                cardElement.style.left = '';
+                cardElement.style.top = '';
+                cardElement.style.zIndex = '';
+            });
+        }
+
         function renderCards(cards, borderColor, suitFilter, isMyTurn) {
             const cardlistDiv = document.querySelector('.cardlist');
             cardlistDiv.innerHTML = '';
@@ -223,7 +276,6 @@
                 cardDiv.draggable = isMyTurn;
                 if (!isMyTurn) cardDiv.classList.add('drag-disabled');
 
-                // Card content
                 let symbol = "";
                 if (card.startsWith("D")) symbol = "♦️";
                 else if (card.startsWith("F")) symbol = "♣️";
@@ -251,6 +303,7 @@
                 cardDiv.appendChild(valueSpan);
 
                 if (isMyTurn) {
+                    // Mouse drag events
                     cardDiv.addEventListener('dragstart', e => {
                         e.dataTransfer.setData('text/plain', card);
                         e.target.style.opacity = '0.5';
@@ -258,6 +311,9 @@
                     cardDiv.addEventListener('dragend', e => {
                         e.target.style.opacity = '1';
                     });
+
+                    // Touch drag events
+                    enableTouchDrag(cardDiv);
                 }
 
                 cardlistDiv.appendChild(cardDiv);
@@ -269,8 +325,6 @@
             const centerX = table.clientWidth / 2;
             const centerY = table.clientHeight / 2;
             const total = players.length;
-
-            // table.innerHTML = '';
             const personSize = 30;
             const radius = table.clientWidth / 2 + (personSize / 2);
 
@@ -294,7 +348,6 @@
             });
         }
 
-        // --- Drop Feature ---
         const tableDiv = document.getElementById('table');
         tableDiv.addEventListener('dragover', e => e.preventDefault());
         tableDiv.addEventListener('drop', e => {
@@ -381,7 +434,7 @@
                 if (data.type === "card_played") {
                     const player_color_dict = data.player_color_dict || {};
                     const playedCardsDiv = document.getElementById('played-cards');
-                    playedCardsDiv.innerHTML = ''; // clear previous round
+                    playedCardsDiv.innerHTML = '';
 
                     const current_round = data.current_round;
 
@@ -391,8 +444,6 @@
 
                         const cardDiv = document.createElement('div');
                         cardDiv.classList.add('card');
-
-                        // Style like cardlist
                         cardDiv.style.border = `3px solid ${player_color_dict[playerName] || 'gray'}`;
                         cardDiv.style.width = '80px';
                         cardDiv.style.height = '120px';
@@ -408,7 +459,6 @@
                         cardDiv.style.fontSize = '1rem';
                         cardDiv.style.zIndex = 100;
 
-                        // Card symbol
                         let symbol = "";
                         if (card.startsWith("D")) symbol = "♦️";
                         else if (card.startsWith("F")) symbol = "♣️";
@@ -429,7 +479,6 @@
 
                         playedCardsDiv.appendChild(cardDiv);
 
-                        // Remove from hand if you played it
                         if (playerName === username) {
                             lastCards = lastCards.filter(c => c !== card);
                         }
@@ -441,8 +490,6 @@
                 if (data.type === "error") {
                     alert(data.message);
                 }
-
-
             };
         }
 
