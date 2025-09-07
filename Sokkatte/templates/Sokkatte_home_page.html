@@ -226,7 +226,7 @@
             height: 60px;
             /* match dealing-card */
             z-index: 500;
-            pointer-events: none;
+            /* pointer-events: none; */
             border-radius: 6px;
             background: repeating-conic-gradient(from 45deg,
                     #3f06fc 0deg 30deg,
@@ -474,6 +474,8 @@
             if (playerElement) playerElement.classList.add("highlight");
 
             renderCards(lastCards, lastBorderColor, currentSuitFilter, currentPlayer === username);
+            // 🔹 Enable/disable deck pile
+            updateDeckPileState(currentPlayer);
         }
 
         function getJWTToken() {
@@ -703,10 +705,40 @@
                 }, 1800);
             }, 400);
         }
-
-
-
         // clear round animation end
+
+        // clear updateDeckPileState
+        function updateDeckPileState(currentPlayer) {
+            const deckPile = document.getElementById('deck-pile');
+            if (currentPlayer === username) {
+                deckPile.style.cursor = 'pointer';
+                deckPile.style.opacity = '1';
+                deckPile.onclick = () => {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: 'get_extra_card_from_deck' }));
+                    }
+                };
+            } else {
+                deckPile.style.cursor = 'not-allowed';
+                deckPile.style.opacity = '0.5';
+                deckPile.onclick = null; // disable click
+            }
+        }
+
+        // newly drawn card animation start
+        function animateDrawnCard(card) {
+            const deckPile = document.getElementById('deck-pile');
+            const cardDiv = document.createElement('div');
+            cardDiv.classList.add('dealing-card');
+            cardDiv.style.left = '0px';
+            cardDiv.style.top = '0px';
+            cardDiv.style.setProperty('--target-transform', `translate(0px, -10px) scale(1)`);
+            deckPile.appendChild(cardDiv);
+
+            setTimeout(() => cardDiv.remove(), 600);
+        }
+        // newly drawn card animation end
+
         function initWebSocket() {
             if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -810,6 +842,13 @@
                     animateRoundWinner(data.next_player, data.card, data.player_color_dict || {});
 
 
+                }
+                if (data.type === "extra_card") {
+                    const newlyDrawnCards = data.new_cards; // cards just drawn
+                    lastCards = data.full_cards; // full hand
+                    lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
+
+                    renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username, newlyDrawnCards);
                 }
                 if (data.type === "error") {
                     // alert(data.message);

@@ -257,7 +257,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             distributed_card_dict = {}
             for player in players_connected:
                 distributed_card_dict[player] = []
-                for _ in range(8):
+                for _ in range(2):
                     if not card_list:
                         break
                     card = random.choice(card_list)
@@ -503,6 +503,105 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             await self.send_dynamic_message("error", "Failed to drop_play_card_to_table")
     
     
+    async def handle_extra_card_request_validation(self):
+        # Get current round
+        current_round_raw = await self.redis.hget(self.redis_key, "current_round")
+        current_round = json.loads(current_round_raw.decode()) if current_round_raw else {}
+
+        # Check if player already played
+        played_cards_list = current_round.get("played_cards", [])
+        if any(self.username in played_card for played_card in played_cards_list):
+            logger.info(f"Player '{self.username}' has already played this round.")
+            await self.send(text_data=json.dumps({
+                "type": "error",
+                "message": "You already completed the round!"
+            }))
+            return True  # block further processing
+
+        # Get player's cards
+        current_player_cards_raw = await self.redis.hget(self.redis_key, "players_card_list")
+        current_player_cards = json.loads(current_player_cards_raw.decode()) if current_player_cards_raw else {}
+        player_cards = current_player_cards.get(self.username, [])
+
+        # Get required suit
+        required_suit = current_round.get("required_suit", "")
+
+        # Check if player has a card of the required suit
+        if any(card[0] == required_suit for card in player_cards):
+            logger.info(f"Player '{self.username}' has a card of the required suit '{required_suit}'. Cannot borrow.")
+            await self.send(text_data=json.dumps({
+                "type": "error",
+                "message": "You have the card, do not borrow!"
+            }))
+            return True  # block further processing
+
+        return False  # safe to allow borrowing
+
+
+
+
+
+    async def handle_extra_card_request(self):
+        """
+        Handles 'get_extra_card_from_deck' request:
+        1. Draws random cards from the deck until a card of required suit is found
+        or deck is empty.
+        2. Updates player's card list in Redis.
+        3. Always returns the cards drawn so far, even if no match found.
+        """
+        # Get current round
+        self.current_round_raw = await self.redis.hget(self.redis_key, "current_round")
+        self.current_round = json.loads(self.current_round_raw.decode()) if self.current_round_raw else {}
+
+
+        self.required_suits = self.current_round.get("required_suit", [])
+        
+    
+
+        # Get deck and player cards
+        self.card_list_raw = await self.redis.hget(self.redis_key,"cardList")
+        self.card_list = json.loads(self.card_list_raw.decode()) if self.card_list_raw else []
+
+        self.players_cards_raw = await self.redis.hget(self.redis_key, "players_card_list")
+        self.players_cards = json.loads(self.players_cards_raw.decode()) if self.players_cards_raw else {}
+        self.player_cards = self.players_cards.get(self.username, [])
+
+        # Draw cards until a required suit is found or deck is empty
+        self.drawn_cards = []
+        while self.card_list:
+            card = random.choice(self.card_list)
+            self.drawn_cards.append(card)
+            self.player_cards.append(card)
+            self.card_list.remove(card)
+
+            if not self.required_suits: 
+                # get only one card and break the loop
+                self.drawn_cards = [card]
+                logger.info("No required suit specified, drew one card.")
+                break
+
+            if card[0] in self.required_suits:
+                logger.info(f"Found required suit card: {card}")
+                break  # stop once a required suit is found
+            
+
+        # Update Redis
+        self.players_cards[self.username] = self.player_cards
+        await self.redis.hset(self.redis_key, "players_card_list", json.dumps(self.players_cards))
+        await self.redis.hset(self.redis_key, "cardList", json.dumps(self.card_list))
+
+        # Send new card info
+        await self.send(json.dumps({
+            "type": "extra_card",
+            "new_cards": self.drawn_cards,
+            "full_cards": self.player_cards
+        }))
+
+        return False  # continue processing if needed
+
+
+
+
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
@@ -521,6 +620,14 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 logger.info("calling play card")
                 await self.drop_play_card_to_table(data.get("card"))
                 
+           
+            elif msg_type == "get_extra_card_from_deck":
+                if await self.handle_extra_card_request_validation():
+                    logger.info("Extra card request validation failed.")
+                    return  # stop further processing
+                # Proceed to give extra card
+                await self.handle_extra_card_request()
+
 
             else:
                 logger.warning(f"Unhandled message type: {msg_type}")
