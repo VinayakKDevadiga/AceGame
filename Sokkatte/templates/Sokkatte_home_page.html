@@ -213,6 +213,46 @@
                 opacity: 0.8;
             }
         }
+
+        #deck-pile {
+            position: absolute;
+            bottom: 20px;
+            /* fixed distance from table bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            /* center horizontally */
+            width: 40px;
+            /* match dealing-card */
+            height: 60px;
+            /* match dealing-card */
+            z-index: 500;
+            pointer-events: none;
+            border-radius: 6px;
+            background: repeating-conic-gradient(from 45deg,
+                    #3f06fc 0deg 30deg,
+                    #fff7ed 30deg 60deg);
+            background-size: 20px 20px;
+            border: 2px solid #132bce;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+
+
+
+
+
+
+        .deck-card {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            border-radius: 12px;
+            border: 2px solid #132bce;
+            background: repeating-conic-gradient(from 45deg,
+                    #3f06fc 0deg 30deg,
+                    #fff7ed 30deg 60deg);
+            background-size: 20px 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
     </style>
 </head>
 
@@ -225,8 +265,11 @@
         <div id="played-cards"
             style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:200px; height:200px;">
         </div>
+        <div id="deck-pile" style="z-index:1000;"></div>
 
     </div>
+
+
 
     <div id="suit-filters" style="margin-bottom: 10px; text-align: center;">
         <button class="suit-btn" data-suit="D" style="font-size:2rem;">♦️</button>
@@ -478,35 +521,32 @@
             pendingCardsData = null;
 
             const table = document.getElementById("table");
-            const centerX = table.clientWidth / 2;
-            const centerY = table.clientHeight / 2;
-            const total = players.length;
-            const personSize = 30;
-            const radius = table.clientWidth / 2 + (personSize / 2);
+            const deckPile = document.getElementById("deck-pile");
+            const deckRect = deckPile.getBoundingClientRect();
+            const tableRect = table.getBoundingClientRect();
+            const centerX = deckRect.left - tableRect.left + deckRect.width / 2;
+            const centerY = deckRect.top - tableRect.top + deckRect.height / 2;
 
+            const total = players.length;
             let idx = 0;
+
             dealingInterval = setInterval(() => {
                 const playerEl = players[idx];
                 const playerRect = playerEl.getBoundingClientRect();
-                const tableRect = table.getBoundingClientRect();
 
-                // Center of player circle relative to table
                 const targetX = playerRect.left - tableRect.left + playerRect.width / 2;
                 const targetY = playerRect.top - tableRect.top + playerRect.height / 2;
 
-
                 const card = document.createElement("div");
                 card.classList.add("dealing-card");
-                const cardWidth = 40;  // same as in CSS
+                const cardWidth = 40;
                 const cardHeight = 60;
 
                 card.style.left = (centerX - cardWidth / 2) + "px";
                 card.style.top = (centerY - cardHeight / 2) + "px";
-
                 card.style.setProperty("--target-transform",
                     `translate(${targetX - centerX}px, ${targetY - centerY}px)`
                 );
-
 
                 table.appendChild(card);
                 setTimeout(() => card.remove(), 700);
@@ -514,7 +554,6 @@
                 idx = (idx + 1) % total;
             }, 200);
 
-            // ⏳ force minimum duration (e.g. 3 seconds)
             setTimeout(() => {
                 stopDealingAnimation();
                 if (pendingCardsData) {
@@ -523,6 +562,7 @@
                 }
             }, 3000);
         }
+
 
         function stopDealingAnimation() {
             if (dealingInterval) clearInterval(dealingInterval);
@@ -533,11 +573,63 @@
         function showCards(data) {
             lastCards = data.player_cards;
             lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
+
             renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
+
             socket.send(JSON.stringify({ type: "get_starting_player" }));
+
+            // Wait for next tick so players divs exist
+            setTimeout(() => {
+                const players = Array.from(document.querySelectorAll(".person"));
+                const remaining = 52 - (players.length ? data.player_cards.length * players.length : 0);
+                createDeckPile(remaining);
+            }, 50); // 50ms delay ensures DOM updated
         }
 
+
         // card distribution logic end
+
+
+        // card deck drop animation start
+        function createDeckPile(remainingCards = 52) {
+            const deckPile = document.getElementById('deck-pile');
+            deckPile.innerHTML = '';
+
+            const maxVisible = 3;
+            const visibleCount = Math.min(remainingCards, maxVisible);
+
+            for (let i = 0; i < visibleCount; i++) {
+                const cardDiv = document.createElement('div');
+                cardDiv.classList.add('deck-card');
+                cardDiv.style.left = '0px';
+                cardDiv.style.top = `${-i * 2}px`; // small offset for stacked effect
+                cardDiv.style.zIndex = i;
+                cardDiv.style.transform = `rotate(${(Math.random() - 0.5) * 3}deg)`;
+                cardDiv.style.width = '40px';
+                cardDiv.style.height = '60px';
+                deckPile.appendChild(cardDiv);
+            }
+
+            // card count
+            const countSpan = document.createElement('span');
+            countSpan.textContent = remainingCards;
+            countSpan.style.color = 'black';            // color as string
+            countSpan.style.position = 'absolute';      // full word
+            countSpan.style.top = '50%';
+            countSpan.style.left = '50%';
+            countSpan.style.transform = 'translate(-50%, -50%)';
+            countSpan.style.fontWeight = 'bold';
+            countSpan.style.fontSize = '1.2rem';
+            countSpan.style.textShadow = '0 0 3px white'; // optional for visibility
+            countSpan.style.zIndex = 1000;
+            deckPile.appendChild(countSpan);
+
+        }
+
+
+
+
+        // card deck drop animation end 
 
         function initWebSocket() {
             if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
@@ -567,9 +659,14 @@
                     } else {
                         // no animation running, show immediately
                         showCards(data);
-                    }
 
+                        // 🃏 create deck pile after distribution
+                        const players = Array.from(document.querySelectorAll(".person"));
+                        const remaining = 52 - data.player_cards.length * players.length;
+                        createDeckPile(remaining);
+                    }
                 }
+
                 if (data.type === "starting_player") {
                     currentTurnPlayer = data.starting_player;
                     updateTurnUI(data.starting_player);
