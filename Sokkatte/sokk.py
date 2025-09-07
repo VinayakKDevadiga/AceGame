@@ -197,15 +197,18 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "card": event.get('card'),
             "next_player": event.get('next_player'),
             "current_round": event.get('current_round'),
-            "player_color_dict": event.get('player_coclear_roundlor_dict')
+            "player_color_dict": event.get('player_color_dict')
         }))
     async def clear_round(self, event):
         logger.info(f"Clearing round: {event.get('current_round')}")
         await self.send(text_data=json.dumps({
             "type": "clear_round",
+            "card": event.get('card'),
             "current_round": event.get('current_round'),
             "current_round": event.get('current_round'),
             "next_player": event.get('next_player'),
+         "player_color_dict": event.get('player_color_dict'),
+
 
         }))
 
@@ -254,7 +257,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             distributed_card_dict = {}
             for player in players_connected:
                 distributed_card_dict[player] = []
-                for _ in range(4):
+                for _ in range(8):
                     if not card_list:
                         break
                     card = random.choice(card_list)
@@ -394,13 +397,16 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             await self.start_next_round()
             # send the empty current_round and clear the cards in frontend
             logger.info(f"Round winner: {self.winner_dict}")
+            # get the player color
+            
             await self.channel_layer.group_send(
                 self.group_name,
                 {
                     "type": "clear_round",
-                    "card": self.card,
+                    "card":  self.winner_dict['card'],
                     "current_round": {},
                     "next_player": self.winner_dict["winner"],
+                    "player_color_dict": self.connected_dict
                 }
             )
         else:

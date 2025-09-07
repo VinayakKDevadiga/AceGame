@@ -620,11 +620,93 @@
 
         }
 
-
-
-
         // card deck drop animation end 
 
+        // clear round animation start
+        function animateRoundWinner(winnerPlayer, winnerCard, player_color_dict) {
+            if (!winnerCard) return; // safety check
+
+            const playedCardsDiv = document.getElementById('played-cards');
+            const tableRect = playedCardsDiv.getBoundingClientRect();
+
+            // vanish previous cards
+            playedCardsDiv.querySelectorAll('.card').forEach(card => {
+                card.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+                card.style.transform = 'scale(0)';
+                card.style.opacity = '0';
+            });
+
+            setTimeout(() => {
+                playedCardsDiv.innerHTML = "";
+
+                // create winner card
+                const cardDiv = document.createElement('div');
+                cardDiv.classList.add('card');
+                cardDiv.style.width = '80px';
+                cardDiv.style.height = '110px';
+                cardDiv.style.border = `3px solid ${player_color_dict[winnerPlayer] || 'gold'}`;
+                cardDiv.style.borderRadius = '10px';
+                cardDiv.style.position = 'absolute';
+                cardDiv.style.top = '50%';
+                cardDiv.style.left = '50%';
+                cardDiv.style.transform = 'translate(-50%, -50%) scale(0)';
+                cardDiv.style.background = '#fff';
+                cardDiv.style.display = 'flex';
+                cardDiv.style.flexDirection = 'column';
+                cardDiv.style.justifyContent = 'center';
+                cardDiv.style.alignItems = 'center';
+                cardDiv.style.fontWeight = 'bold';
+                cardDiv.style.fontSize = '1rem';
+                cardDiv.style.zIndex = 1000;
+                cardDiv.style.transition = 'all 0.6s ease';
+
+                // symbol & value
+                let symbolMap = { D: "♦️", F: "♣️", S: "♠️", H: "♥️" };
+                const symbol = symbolMap[winnerCard[0]] || "";
+                const valueSpan = document.createElement('span');
+                valueSpan.textContent = winnerCard.substring(1);
+                valueSpan.style.fontSize = '1.2rem';
+                const symbolSpan = document.createElement('span');
+                symbolSpan.textContent = symbol;
+                symbolSpan.style.fontSize = '2rem';
+                cardDiv.appendChild(symbolSpan);
+                cardDiv.appendChild(valueSpan);
+                playedCardsDiv.appendChild(cardDiv);
+
+                // scale up slightly in center
+                requestAnimationFrame(() => {
+                    cardDiv.style.transform = 'translate(-50%, -50%) scale(1)';
+                    cardDiv.style.boxShadow = '0 0 20px gold, 0 0 30px rgba(255,215,0,0.5)';
+                });
+
+                // move to winner's avatar smoothly after 0.8s
+                setTimeout(() => {
+                    const winnerEl = document.querySelector(`.person[data-username="${winnerPlayer}"]`);
+                    if (!winnerEl) return;
+
+                    const winnerRect = winnerEl.getBoundingClientRect();
+                    const parentRect = playedCardsDiv.getBoundingClientRect();
+                    const targetX = winnerRect.left - parentRect.left + winnerRect.width / 2 - 40; // half card width
+                    const targetY = winnerRect.top - parentRect.top + winnerRect.height / 2 - 55; // half card height
+
+                    cardDiv.style.left = `${targetX}px`;
+                    cardDiv.style.top = `${targetY}px`;
+                    cardDiv.style.transform = 'scale(0.6)';
+                    cardDiv.style.boxShadow = '0 0 10px gold, 0 0 20px rgba(255,215,0,0.3)';
+                }, 800);
+
+                // cleanup
+                setTimeout(() => {
+                    cardDiv.remove();
+                    currentTurnPlayer = winnerPlayer;
+                    updateTurnUI(winnerPlayer);
+                }, 1800);
+            }, 400);
+        }
+
+
+
+        // clear round animation end
         function initWebSocket() {
             if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -725,6 +807,8 @@
                     console.log("winner", data.next_player);
                     updateTurnUI(data.next_player);
                     document.getElementById('played-cards').innerHTML = "";
+                    animateRoundWinner(data.next_player, data.card, data.player_color_dict || {});
+
 
                 }
                 if (data.type === "error") {
