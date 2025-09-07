@@ -172,6 +172,47 @@
             background: #f5f5f5;
             min-height: 140px;
         }
+
+        /* card distribution animation */
+
+
+        .dealing-card {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            border-radius: 6px;
+
+            /* diamond mesh pattern in orange */
+            background: repeating-conic-gradient(from 45deg,
+                    /* rotate to make diamond shapes */
+                    #3f06fc 0deg 30deg,
+                    /* orange diamond */
+                    #fff7ed 30deg 60deg
+                    /* pale background between diamonds */
+                );
+            background-size: 20px 20px;
+            /* controls size of diamonds */
+
+            border: 2px solid #132bce;
+            /* deep orange border */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            animation: flyCard 0.6s linear forwards;
+        }
+
+
+
+
+        @keyframes flyCard {
+            from {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+
+            to {
+                transform: var(--target-transform) scale(0.8);
+                opacity: 0.8;
+            }
+        }
     </style>
 </head>
 
@@ -184,6 +225,7 @@
         <div id="played-cards"
             style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:200px; height:200px;">
         </div>
+
     </div>
 
     <div id="suit-filters" style="margin-bottom: 10px; text-align: center;">
@@ -324,29 +366,48 @@
             const table = document.getElementById("table");
             const centerX = table.clientWidth / 2;
             const centerY = table.clientHeight / 2;
-            const total = players.length;
             const personSize = 30;
             const radius = table.clientWidth / 2 + (personSize / 2);
 
-            players.forEach((player, i) => {
-                sessionStorage.setItem(`player_color_${player.username}`, player.color || "gray");
+            // Keep track of existing player divs
+            const existingDivs = {};
+            table.querySelectorAll('.person').forEach(div => {
+                const uname = div.getAttribute('data-username');
+                existingDivs[uname] = div;
+            });
 
+            // Create new divs if they don't exist
+            players.forEach(player => {
+                if (!existingDivs[player.username]) {
+                    const div = document.createElement('div');
+                    div.className = 'person';
+                    div.style.backgroundColor = "white";
+                    div.style.borderColor = player.color || "gray";
+                    div.innerText = player.username[0].toUpperCase();
+                    div.setAttribute('data-username', player.username);
+                    table.appendChild(div);
+                    existingDivs[player.username] = div;
+                }
+                sessionStorage.setItem(`player_color_${player.username}`, player.color || "gray");
+            });
+
+            // Recalculate positions for all player divs
+            const total = players.length;
+            players.forEach((player, i) => {
                 const angle = (2 * Math.PI * i) / total;
                 const x = centerX + radius * Math.cos(angle);
                 const y = centerY + radius * Math.sin(angle);
+                const div = existingDivs[player.username];
 
-                const div = document.createElement("div");
-                div.className = "person";
-                div.style.backgroundColor = "white";
-                div.style.borderColor = player.color || "gray";
+                // Smooth movement using CSS transition
+                div.style.transition = 'left 0.5s, top 0.5s';
                 div.style.left = `${x - personSize / 2}px`;
                 div.style.top = `${y - personSize / 2}px`;
-                div.innerText = player.username[0].toUpperCase();
-                div.setAttribute("data-username", player.username);
-
-                table.appendChild(div);
+                div.style.borderColor = player.color || "gray";
             });
         }
+
+
 
         const tableDiv = document.getElementById('table');
         tableDiv.addEventListener('dragover', e => e.preventDefault());
@@ -406,6 +467,78 @@
             }
         }
 
+        // card distribution logic start 
+        let dealingInterval;
+        let animationRunning = false;
+        let pendingCardsData = null;
+
+        function startDealingAnimation(players) {
+            stopDealingAnimation();
+            animationRunning = true;
+            pendingCardsData = null;
+
+            const table = document.getElementById("table");
+            const centerX = table.clientWidth / 2;
+            const centerY = table.clientHeight / 2;
+            const total = players.length;
+            const personSize = 30;
+            const radius = table.clientWidth / 2 + (personSize / 2);
+
+            let idx = 0;
+            dealingInterval = setInterval(() => {
+                const playerEl = players[idx];
+                const playerRect = playerEl.getBoundingClientRect();
+                const tableRect = table.getBoundingClientRect();
+
+                // Center of player circle relative to table
+                const targetX = playerRect.left - tableRect.left + playerRect.width / 2;
+                const targetY = playerRect.top - tableRect.top + playerRect.height / 2;
+
+
+                const card = document.createElement("div");
+                card.classList.add("dealing-card");
+                const cardWidth = 40;  // same as in CSS
+                const cardHeight = 60;
+
+                card.style.left = (centerX - cardWidth / 2) + "px";
+                card.style.top = (centerY - cardHeight / 2) + "px";
+
+                card.style.setProperty("--target-transform",
+                    `translate(${targetX - centerX}px, ${targetY - centerY}px)`
+                );
+
+
+                table.appendChild(card);
+                setTimeout(() => card.remove(), 700);
+
+                idx = (idx + 1) % total;
+            }, 200);
+
+            // ⏳ force minimum duration (e.g. 3 seconds)
+            setTimeout(() => {
+                stopDealingAnimation();
+                if (pendingCardsData) {
+                    showCards(pendingCardsData);
+                    pendingCardsData = null;
+                }
+            }, 3000);
+        }
+
+        function stopDealingAnimation() {
+            if (dealingInterval) clearInterval(dealingInterval);
+            dealingInterval = null;
+            document.querySelectorAll(".dealing-card").forEach(c => c.remove());
+            animationRunning = false;
+        }
+        function showCards(data) {
+            lastCards = data.player_cards;
+            lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
+            renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
+            socket.send(JSON.stringify({ type: "get_starting_player" }));
+        }
+
+        // card distribution logic end
+
         function initWebSocket() {
             if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -419,13 +552,23 @@
                     drawTable(players);
                 }
                 if (data.type === "start_card_distribution") {
+                    // start animation
+                    const players = document.querySelectorAll(".person");
+                    if (players.length > 0) {
+                        startDealingAnimation(players);
+                    }
                     socket.send(JSON.stringify({ type: "get_my_cards_req" }));
                 }
                 if (data.type === "cards_distributed") {
-                    lastCards = data.player_cards;
-                    lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
-                    renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
-                    socket.send(JSON.stringify({ type: "get_starting_player" }));
+                    // stop animation
+                    if (animationRunning) {
+                        // store until animation finishes
+                        pendingCardsData = data;
+                    } else {
+                        // no animation running, show immediately
+                        showCards(data);
+                    }
+
                 }
                 if (data.type === "starting_player") {
                     currentTurnPlayer = data.starting_player;
@@ -488,7 +631,9 @@
                     updateTurnUI(data.next_player);
                 }
                 if (data.type === "error") {
-                    alert(data.message);
+                    // alert(data.message);
+                    console.log(data.message);
+
                 }
             };
         }

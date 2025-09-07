@@ -275,7 +275,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"error": "Card distribution failed"}))
 
         
-
+    
     async def get_player_card(self):
         try:
             # Add retry logic or small wait if needed
@@ -342,6 +342,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         # validate user has that card
         # validate the card is valid for the crrent_round
         # if both assed then allow and update in the current round and update currentplayer to next player
+        # if all the player have put one then, store the current round data in played_card_list and then clear the current card and update the net player as the highest number of card played player name
+
         
         try:
             # Fetch required data from Redis
@@ -421,9 +423,26 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                     "player_color_dict": self.connected_dict
                 }
             )
+            # 3. Validate if the current player's turn is complete
+            await self.validate_round_completion()
+            
         except Exception as e:
             logger.error(f"Failed to drop_play_card_to_table {self.username}: {e} and card:{self.card}", exc_info=True)
             await self.send_dynamic_message("error", "Failed to drop_play_card_to_table")
+    
+    async def validate_round_completion(self):
+        self.game_id = self.room_name
+        self.round_data = await self.get_current_round(self.game_id)
+
+        self.total_players = await self.get_total_players(self.game_id)
+        self.played_cards = self.round_data.get("played_cards", [])
+
+        if len(self.played_cards) == self.total_players:
+            logger.info("Round completed. Evaluating winner...")
+            await self.evaluate_round_winner(self.round_data)
+            await self.start_next_round()
+        else:
+            logger.info(f"Waiting for {self.total_players - len(self.played_cards)} more players.")
 
 
     async def receive(self, text_data):
@@ -443,6 +462,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             elif msg_type == "playing_card":
                 logger.info("calling play card")
                 await self.drop_play_card_to_table(data.get("card"))
+                
 
             else:
                 logger.warning(f"Unhandled message type: {msg_type}")
