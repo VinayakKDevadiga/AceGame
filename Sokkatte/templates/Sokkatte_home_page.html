@@ -237,10 +237,6 @@
         }
 
 
-
-
-
-
         .deck-card {
             position: absolute;
             width: 80px;
@@ -585,8 +581,6 @@
                 createDeckPile(remaining);
             }, 50); // 50ms delay ensures DOM updated
         }
-
-
         // card distribution logic end
 
 
@@ -726,6 +720,12 @@
 
                     currentTurnPlayer = data.next_player;
                     updateTurnUI(data.next_player);
+                }
+                if (data.type == "clear_round") {
+                    console.log("winner", data.next_player);
+                    updateTurnUI(data.next_player);
+                    document.getElementById('played-cards').innerHTML = "";
+
                 }
                 if (data.type === "error") {
                     // alert(data.message);

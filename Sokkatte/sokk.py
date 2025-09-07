@@ -197,7 +197,16 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "card": event.get('card'),
             "next_player": event.get('next_player'),
             "current_round": event.get('current_round'),
-            "player_color_dict": event.get('player_color_dict')
+            "player_color_dict": event.get('player_coclear_roundlor_dict')
+        }))
+    async def clear_round(self, event):
+        logger.info(f"Clearing round: {event.get('current_round')}")
+        await self.send(text_data=json.dumps({
+            "type": "clear_round",
+            "current_round": event.get('current_round'),
+            "current_round": event.get('current_round'),
+            "next_player": event.get('next_player'),
+
         }))
 
         
@@ -337,20 +346,78 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 "type": "error",
                 "message": "Failed to retrieve starting player"
             }))
-      
+
+            
+    async def evaluate_round_winner(self):
+        self.winner_dict = {
+                "winner": list(self.played_cards[0].keys())[0],
+                "card": list(self.played_cards[0].values())[0]
+            }        
+        self.RANK_TO_VALUE = {
+            '2': 0, '3': 1, '4': 2, '5': 3, '6': 4, '7': 5,
+            '8': 6, '9': 7, '10': 8, 'J': 9, 'Q': 10, 'K': 11, 'A': 12
+        }
+
+        def get_rank_index(card: str) -> int:
+            return self.RANK_TO_VALUE[card[1:]]
+        
+        for playerdict in self.played_cards:
+            for username, card in playerdict.items():  # iterate directly over key-value
+                card_rank = get_rank_index(card)
+                logger.info(f"Comparing card {card} of player {username} with current winner card {self.winner_dict['card']}")
+                if card_rank > get_rank_index(self.winner_dict["card"]):
+                    logger.info(f"New highest card found: {card} by player {username}")
+                    self.winner_dict["winner"] = username   # directly use username
+                    self.winner_dict["card"] = card
+
+        return self.winner_dict
+
+    async def start_next_round(self):
+        # update the current player as winner player
+        # store the current round in "played_card_list"
+        # set the current__round as empty dictionary
+        self.winner_dict=await self.evaluate_round_winner()
+        await self.redis.hset(self.redis_key, "current_player", self.winner_dict['winner'])
+        self.played_card_raw = await self.redis.hget(self.redis_key, "played_card_list")
+        self.played_card_list = json.loads(self.played_card_raw.decode()) if self.played_card_raw else []
+        self.played_card_list.append(self.current_round)
+        await self.redis.hset(self.redis_key, "played_card_list", json.dumps(self.played_card_list))
+        await self.redis.hset(self.redis_key, "current_round", json.dumps({}))
+
+
+
+    async def validate_round_completion(self):
+        self.played_cards = self.current_round.get("played_cards", [])
+
+        if len(self.played_cards) == len(self.players_list):
+            logger.info("Round completed. Evaluating winner...")
+            await self.start_next_round()
+            # send the empty current_round and clear the cards in frontend
+            logger.info(f"Round winner: {self.winner_dict}")
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "clear_round",
+                    "card": self.card,
+                    "current_round": {},
+                    "next_player": self.winner_dict["winner"],
+                }
+            )
+        else:
+            logger.info(f"Waiting for {len(self.players_list) - len(self.played_cards)} more players.")
+
+
     async def drop_play_card_to_table(self,card):
         # validate user has that card
         # validate the card is valid for the crrent_round
         # if both assed then allow and update in the current round and update currentplayer to next player
         # if all the player have put one then, store the current round data in played_card_list and then clear the current card and update the net player as the highest number of card played player name
-
         
         try:
             # Fetch required data from Redis
             self.players_card_raw = await self.redis.hget(self.redis_key, "players_card_list")
             self.current_player_raw = await self.redis.hget(self.redis_key, "current_player")
             self.current_round_raw = await self.redis.hget(self.redis_key, "current_round")
-            self.played_card_raw = await self.redis.hget(self.redis_key, "played_card_list")
             self.card=card
             if not self.players_card_raw or not self.current_player_raw:
                 await self.send_dynamic_message("error", "Game state missing or corrupted")
@@ -360,7 +427,6 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             self.players_card_dict = json.loads(self.players_card_raw.decode())
             self.current_player = self.current_player_raw.decode()
             self.current_round = json.loads(self.current_round_raw.decode()) if self.current_round_raw else {}
-            self.played_card_list = json.loads(self.played_card_raw.decode()) if self.played_card_raw else []
 
             # ✅ Validate: Is it this player's turn?
             if self.username != self.current_player:
@@ -430,21 +496,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             logger.error(f"Failed to drop_play_card_to_table {self.username}: {e} and card:{self.card}", exc_info=True)
             await self.send_dynamic_message("error", "Failed to drop_play_card_to_table")
     
-    async def validate_round_completion(self):
-        self.game_id = self.room_name
-        self.round_data = await self.get_current_round(self.game_id)
-
-        self.total_players = await self.get_total_players(self.game_id)
-        self.played_cards = self.round_data.get("played_cards", [])
-
-        if len(self.played_cards) == self.total_players:
-            logger.info("Round completed. Evaluating winner...")
-            await self.evaluate_round_winner(self.round_data)
-            await self.start_next_round()
-        else:
-            logger.info(f"Waiting for {self.total_players - len(self.played_cards)} more players.")
-
-
+    
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
