@@ -249,6 +249,70 @@
             background-size: 20px 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         }
+
+
+        /* red day animation */
+        @keyframes redPulse {
+            0% {
+                box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+                transform: scale(1);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
+                transform: scale(1.2);
+            }
+
+            100% {
+                box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+                transform: scale(1);
+            }
+        }
+
+        .person.red-day-winner {
+            animation: redPulse 2s infinite;
+            border-color: red !important;
+            background: #ffe5e5 !important;
+            z-index: 999;
+        }
+
+        @keyframes textFlow {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            50% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+
+        .red-day-text {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff4d4d;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+            animation: textFlow 5s ease forwards;
+            z-index: 2000;
+        }
     </style>
 </head>
 
@@ -718,6 +782,13 @@
                         socket.send(JSON.stringify({ type: 'get_extra_card_from_deck' }));
                     }
                 };
+                // for android
+                deckPile.touchstart = () => {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: 'get_extra_card_from_deck' }));
+                    }
+                };
+
             } else {
                 deckPile.style.cursor = 'not-allowed';
                 deckPile.style.opacity = '0.5';
@@ -738,6 +809,39 @@
             setTimeout(() => cardDiv.remove(), 600);
         }
         // newly drawn card animation end
+
+
+        // red day animation start
+        function triggerRedDay(winnerUsername) {
+            if (!winnerUsername) {
+                console.error("triggerRedDay called without winnerUsername");
+                return;
+            }
+
+            // 1. Highlight winner bubble
+            const winnerEl = document.querySelector(`.person[data-username="${winnerUsername}"]`);
+            if (winnerEl) {
+                winnerEl.classList.add("red-day-winner");
+            }
+
+            // 2. Show smashed text for all players
+            const smashedText = document.createElement("div");
+            smashedText.className = "red-day-text";
+            smashedText.textContent = `💥 SMASHED TO ${winnerUsername.toUpperCase()} 💥`;
+            document.body.appendChild(smashedText);
+            setTimeout(() => smashedText.remove(), 5000);
+
+            // 3. Red blinking screen ONLY for the winner
+            if (isCurrentUser(winnerUsername)) {   // <- check if current user is the winner
+                document.body.classList.add("winner-blink");
+                setTimeout(() => {
+                    document.body.classList.remove("winner-blink");
+                }, 3000); // blink lasts 3s
+            }
+        }
+
+        // red day animation end
+
 
         function initWebSocket() {
             if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
@@ -833,6 +937,7 @@
                     });
 
                     currentTurnPlayer = data.next_player;
+                    console.log("next player", data.next_player);
                     updateTurnUI(data.next_player);
                 }
                 if (data.type == "clear_round") {
@@ -850,10 +955,34 @@
 
                     renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username, newlyDrawnCards);
                 }
+
+                if (data.type === "red_day_triggered") {
+                    triggerRedDay(data.to_winner);
+                }
+
                 if (data.type === "error") {
                     // alert(data.message);
                     console.log(data.message);
 
+                }
+            };
+
+            // for retry logic
+            socket.onopen = () => {
+                console.log("WebSocket connected!");
+                retries = 0; // reset retries on success
+            };
+            socket.onerror = err => {
+                console.error("WebSocket error:", err);
+                socket.close(); // triggers retry
+            };
+
+            socket.onclose = () => {
+                if (retries > 0) {
+                    console.warn(`WebSocket closed. Retrying in ${delay / 1000}s... (${retries} left)`);
+                    setTimeout(() => initWebSocket(retries - 1, delay), delay);
+                } else {
+                    console.error("Max retries reached. Could not connect WebSocket.");
                 }
             };
         }

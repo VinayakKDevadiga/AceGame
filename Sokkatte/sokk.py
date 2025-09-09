@@ -211,8 +211,17 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
 
         }))
-
-        
+    async def red_day_triggered(self, event):
+        logger.info(f"Red day triggered by {event.get('from_player')} → winner {event.get('to_winner')}")
+        await self.send(text_data=json.dumps({
+            "type": "red_day_triggered",
+            "from_player": event.get("from_player"),
+            "to_winner": event.get("to_winner"),
+            "card_given": event.get("card_given"),
+            "current_round": event.get("current_round"),
+            "next_player": event.get("next_player"),
+            "player_color_dict": event.get("player_color_dict"),
+        }))
 
 
     # distribute cards | initialize cards
@@ -418,7 +427,17 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         # validate the card is valid for the crrent_round
         # if both assed then allow and update in the current round and update currentplayer to next player
         # if all the player have put one then, store the current round data in played_card_list and then clear the current card and update the net player as the highest number of card played player name
-        
+        self.RANK_ORDER = {
+            "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
+            "10": 10, "J": 11, "Q": 12, "K": 13, "A": 14
+        }
+
+        def card_value(card: str) -> int:
+            """Return numeric value of a card like 'D9', 'HQ', 'SA'."""
+            # card format: suit + rank (example: "D9", "HQ")
+            rank = card[1:]  # everything except first char is rank
+            return self.RANK_ORDER.get(rank, 0)
+
         try:
             # Fetch required data from Redis
             self.players_card_raw = await self.redis.hget(self.redis_key, "players_card_list")
@@ -452,12 +471,69 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 self.required_suit = self.card[0]
                 self.current_round = {"required_suit": self.required_suit, "played_cards": [{self.username: self.card}]}
             else:
-                # if the player is the next layer in round
+                # if the player is the next player in round
                 self.required_suit = self.current_round.get("required_suit")
                 if self.required_suit and not card.startswith(self.required_suit):
+                    # After validating card and before setting next_player
+                    # Add Red Day handling
+                    # If required suit exists but player has no such suit (and no deckpile card),
+                    # then trigger red day logic
+                    logger.info("Checking for RED DAY condition...")
+                    self.has_required_suit = any(c.startswith(self.required_suit) for c in self.player_cards)
+                    if not self.has_required_suit:
+                        # 🔴 RED DAY situation
+                        logger.info(f"RED DAY triggered by {self.username}")
+
+                        # 1. Decide winner among rest players (highest card)
+                        self.rest_cards = [
+                            (list(c.keys())[0], list(c.values())[0])
+                            for c in self.current_round["played_cards"]
+                        ]
+                         # 2. Add played card as normal
+                        self.current_round["played_cards"].append({self.username: self.card})
+                        if self.rest_cards:
+                            winner, winning_card = max(
+                                self.rest_cards,
+                                key=lambda x: card_value(x[1])   # compare based on rank order
+                            )
+                        else:
+                            winner, winning_card = None, None
+                        # 3. Save red_day info
+                        self.current_round["red_day"] = {
+                            "from": self.username,
+                            "to": winner,
+                            "cards_given": self.card,
+                            "rest_cards": [c for c in self.current_round["played_cards"] if list(c.keys())[0] != self.username]
+                        }
+
+                        # 4. Next player is same user
+                        self.next_player = self.username
+
+                        # 5. Update Redis atomically
+                        pipe = self.redis.pipeline()
+                        pipe.hset(self.redis_key, "players_card_list", json.dumps(self.players_card_dict))
+                        pipe.hset(self.redis_key, "current_round", json.dumps(self.current_round))
+                        pipe.hset(self.redis_key, "current_player", self.next_player)
+                        await pipe.execute()
+
+                        # 6. Broadcast RED DAY to all
+                        await self.channel_layer.group_send(
+                            self.group_name,
+                            {
+                                "type": "red_day_triggered",
+                                "from_player": self.username,
+                                "to_winner": winner,
+                                "card_given": self.card,
+                                "current_round": self.current_round,
+                                "next_player": self.next_player,
+                                "player_color_dict": self.connected_dict
+                            }
+                        )
+                        return  # 🚪 stop normal flow, handled separately
                     await self.send_dynamic_message("error", f"Card must be of suit {self.required_suit}")
                     return
                 else:
+                    
                     self.current_round["played_cards"].append({self.username: self.card})
 
             # ✅ Remove card from player's hand
@@ -552,11 +628,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         # Get current round
         self.current_round_raw = await self.redis.hget(self.redis_key, "current_round")
         self.current_round = json.loads(self.current_round_raw.decode()) if self.current_round_raw else {}
-
-
         self.required_suits = self.current_round.get("required_suit", [])
-        
-    
 
         # Get deck and player cards
         self.card_list_raw = await self.redis.hget(self.redis_key,"cardList")
@@ -568,21 +640,29 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
         # Draw cards until a required suit is found or deck is empty
         self.drawn_cards = []
-        while self.card_list:
-            card = random.choice(self.card_list)
-            self.drawn_cards.append(card)
-            self.player_cards.append(card)
-            self.card_list.remove(card)
+        while self.card_list:            
+            self.card = random.choice(self.card_list)
 
             if not self.required_suits: 
+                # represents he is the starter of the round
+                # check players hand empty or not, if empty then only send card else, send proper error message you already have card
                 # get only one card and break the loop
-                self.drawn_cards = [card]
-                logger.info("No required suit specified, drew one card.")
+                if not self.player_cards:
+                    self.drawn_cards.append(self.card)
+                    self.player_cards.append(self.card)
+                    self.card_list.remove(self.card)
+                    logger.info("No cards in players hand, drew one card.")
+                else:
+                    logger.info("Player already has cards, cannot draw.")
                 break
+            else:
+                self.drawn_cards.append(self.card)
+                self.player_cards.append(self.card)
+                self.card_list.remove(self.card)
 
-            if card[0] in self.required_suits:
-                logger.info(f"Found required suit card: {card}")
-                break  # stop once a required suit is found
+                if self.card[0] in self.required_suits:
+                    logger.info(f"Found required suit card: {self.card}")
+                    break  # stop once a required suit is found
             
 
         # Update Redis
