@@ -221,6 +221,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "current_round": event.get("current_round"),
             "next_player": event.get("next_player"),
             "player_color_dict": event.get("player_color_dict"),
+            "players_card_dict": event.get("players_card_dict"),
+            
         }))
 
 
@@ -443,6 +445,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             self.players_card_raw = await self.redis.hget(self.redis_key, "players_card_list")
             self.current_player_raw = await self.redis.hget(self.redis_key, "current_player")
             self.current_round_raw = await self.redis.hget(self.redis_key, "current_round")
+            self.played_card_list_raw = await self.redis.hget(self.redis_key, "played_card_list")
+
             self.card=card
             if not self.players_card_raw or not self.current_player_raw:
                 await self.send_dynamic_message("error", "Game state missing or corrupted")
@@ -452,6 +456,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             self.players_card_dict = json.loads(self.players_card_raw.decode())
             self.current_player = self.current_player_raw.decode()
             self.current_round = json.loads(self.current_round_raw.decode()) if self.current_round_raw else {}
+            self.played_card_list = json.loads(self.played_card_list_raw.decode()) if self.played_card_list_raw else []
 
             # ✅ Validate: Is it this player's turn?
             if self.username != self.current_player:
@@ -492,16 +497,16 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                          # 2. Add played card as normal
                         self.current_round["played_cards"].append({self.username: self.card})
                         if self.rest_cards:
-                            winner, winning_card = max(
+                            self.winner, winning_card = max(
                                 self.rest_cards,
                                 key=lambda x: card_value(x[1])   # compare based on rank order
                             )
                         else:
-                            winner, winning_card = None, None
+                            self.winner, winning_card = None, None
                         # 3. Save red_day info
                         self.current_round["red_day"] = {
                             "from": self.username,
-                            "to": winner,
+                            "to": self.winner,
                             "cards_given": self.card,
                             "rest_cards": [c for c in self.current_round["played_cards"] if list(c.keys())[0] != self.username]
                         }
@@ -516,19 +521,36 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         pipe.hset(self.redis_key, "current_player", self.next_player)
                         await pipe.execute()
 
+                        # add all the cards in current_round to the winner + the current card
+                        if self.winner:
+                            self.players_card_dict[self.winner] = self.players_card_dict.get(self.winner, []) + [
+                                c for c in self.current_round["played_cards"] if list(c.keys())[0] != self.winner
+                            ]
+                        # add current_coud data to the "played_card_list"
+                        pipe = self.redis.pipeline()
+                        # get the played_card_list and add the current_round and then set it again to redis
+                        # remove played card from the player who smashed
+                        self.players_card_dict[self.username] = (self.players_card_dict.get(self.username, [])).remove(self.card)
+                        self.played_card_list.append(self.current_round)
+                        pipe.hset(self.redis_key, "played_card_list", json.dumps(self.played_card_list))
+                        pipe.hset(self.redis_key, "current_round", json.dumps({}))
+                        await pipe.execute()
+
                         # 6. Broadcast RED DAY to all
                         await self.channel_layer.group_send(
                             self.group_name,
                             {
                                 "type": "red_day_triggered",
                                 "from_player": self.username,
-                                "to_winner": winner,
+                                "to_winner": self.winner,
                                 "card_given": self.card,
                                 "current_round": self.current_round,
                                 "next_player": self.next_player,
-                                "player_color_dict": self.connected_dict
+                                "player_color_dict": self.connected_dict,
+                                "players_card_dict": self.players_card_dict
                             }
                         )
+                        
                         return  # 🚪 stop normal flow, handled separately
                     await self.send_dynamic_message("error", f"Card must be of suit {self.required_suit}")
                     return

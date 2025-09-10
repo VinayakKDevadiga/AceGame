@@ -252,52 +252,38 @@
 
 
         /* red day animation */
-        @keyframes redPulse {
+        .smash-card {
+            position: absolute;
+            top: 40%;
+            left: 40%;
+            z-index: 20;
+            font-weight: bold;
+            border: 2px solid red;
+        }
+
+        .shake-table {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
             0% {
-                box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
-                transform: scale(1);
+                transform: translate(0, 0);
+            }
+
+            25% {
+                transform: translate(-5px, 5px);
             }
 
             50% {
-                box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
-                transform: scale(1.2);
+                transform: translate(5px, -5px);
+            }
+
+            75% {
+                transform: translate(-5px, -5px);
             }
 
             100% {
-                box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
-                transform: scale(1);
-            }
-        }
-
-        .person.red-day-winner {
-            animation: redPulse 2s infinite;
-            border-color: red !important;
-            background: #ffe5e5 !important;
-            z-index: 999;
-        }
-
-        @keyframes textFlow {
-            0% {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-
-            10% {
-                opacity: 1;
-            }
-
-            50% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-
-            90% {
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateX(-100%);
-                opacity: 0;
+                transform: translate(0, 0);
             }
         }
 
@@ -306,12 +292,33 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 2rem;
+            font-size: 24px;
             font-weight: bold;
-            color: #ff4d4d;
-            text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
-            animation: textFlow 5s ease forwards;
-            z-index: 2000;
+            color: red;
+            text-shadow: 0 0 10px black;
+            z-index: 100;
+            animation: fadeInOut 4s ease;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) scale(0.5);
+            }
+
+            20% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1.1);
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) scale(0.5);
+            }
         }
     </style>
 </head>
@@ -812,33 +819,74 @@
 
 
         // red day animation start
-        function triggerRedDay(winnerUsername) {
-            if (!winnerUsername) {
-                console.error("triggerRedDay called without winnerUsername");
-                return;
-            }
+        function triggerRedDay(winnerUsername, tableCards, cardGiven) {
+            if (!winnerUsername) return;
 
-            // 1. Highlight winner bubble
             const winnerEl = document.querySelector(`.person[data-username="${winnerUsername}"]`);
+            const playedCardsDiv = document.getElementById("played-cards");
+
+            // Highlight winner with pulse + shake table
             if (winnerEl) {
-                winnerEl.classList.add("red-day-winner");
-            }
-
-            // 2. Show smashed text for all players
-            const smashedText = document.createElement("div");
-            smashedText.className = "red-day-text";
-            smashedText.textContent = `💥 SMASHED TO ${winnerUsername.toUpperCase()} 💥`;
-            document.body.appendChild(smashedText);
-            setTimeout(() => smashedText.remove(), 5000);
-
-            // 3. Red blinking screen ONLY for the winner
-            if (isCurrentUser(winnerUsername)) {   // <- check if current user is the winner
-                document.body.classList.add("winner-blink");
+                winnerEl.classList.add("highlight");
+                const table = document.getElementById("table");
+                table.classList.add("shake-table");
                 setTimeout(() => {
-                    document.body.classList.remove("winner-blink");
-                }, 3000); // blink lasts 3s
+                    winnerEl.classList.remove("highlight");
+                    table.classList.remove("shake-table");
+                }, 2000);
             }
+
+            // Floating "Red Day" text
+            const text = document.createElement("div");
+            text.classList.add("red-day-text");
+            text.textContent = `🔥 Red Day! ${winnerUsername} SMASHES the table! 🔥`;
+            document.body.appendChild(text);
+            setTimeout(() => text.remove(), 4000);
+
+            // Step 1: Smash animation for card_given
+            const smashCard = document.createElement("div");
+            smashCard.classList.add("card", "smash-card");
+            smashCard.textContent = cardGiven;
+            playedCardsDiv.appendChild(smashCard);
+
+            smashCard.style.transform = "scale(3) rotate(25deg)";
+            smashCard.style.opacity = "0.9";
+            setTimeout(() => {
+                smashCard.style.transform = "scale(1) rotate(0)";
+                smashCard.style.opacity = "1";
+            }, 300);
+
+            // Step 2: Other table cards sucked into the smash card
+            setTimeout(() => {
+                const allCards = Array.from(playedCardsDiv.querySelectorAll(".card"));
+                allCards.forEach((c, idx) => {
+                    if (c !== smashCard) {
+                        c.style.transition = "all 0.7s ease-in";
+                        c.style.transform = "translate(0,0) scale(0.2)";
+                        c.style.opacity = "0";
+                        setTimeout(() => c.remove(), 800);
+                    }
+                });
+            }, 700);
+
+            // Step 3: Smash card flies to winner
+            setTimeout(() => {
+                const winnerRect = winnerEl.getBoundingClientRect();
+                const parentRect = playedCardsDiv.getBoundingClientRect();
+
+                const targetX = winnerRect.left - parentRect.left + winnerRect.width / 2 - 40;
+                const targetY = winnerRect.top - parentRect.top + winnerRect.height / 2 - 55;
+
+                smashCard.style.transition = "all 1s ease-in-out";
+                smashCard.style.left = `${targetX}px`;
+                smashCard.style.top = `${targetY}px`;
+                smashCard.style.transform = "scale(0.6)";
+                smashCard.style.opacity = "0.8";
+
+                setTimeout(() => smashCard.remove(), 1000);
+            }, 1500);
         }
+
 
         // red day animation end
 
@@ -957,8 +1005,25 @@
                 }
 
                 if (data.type === "red_day_triggered") {
-                    triggerRedDay(data.to_winner);
+                    const winner = data.to_winner;
+                    const smasher = data.from_player
+                    const tableCards = data.players_card_dict || [];
+                    const cardGiven = data.card_given;   // the arrogance smash card
+
+                    triggerRedDay(winner, tableCards, cardGiven);
+
+                    if (username === winner) {
+                        // Add both tableCards + cardGiven to my hand
+                        lastCards = [...lastCards, ...tableCards, cardGiven];
+                        renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
+                    }
+                    else if (username === smasher) {
+                        // Remove cardGiven by my hand
+                        lastCards = lastCards.filter(card => card !== cardGiven);
+                        renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
+                    }
                 }
+
 
                 if (data.type === "error") {
                     // alert(data.message);
