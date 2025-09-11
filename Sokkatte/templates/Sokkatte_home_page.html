@@ -1007,13 +1007,17 @@
                 if (data.type === "red_day_triggered") {
                     const winner = data.to_winner;
                     const smasher = data.from_player
-                    const tableCards = data.players_card_dict || [];
+                    const tableCards = data.current_round_card_list || [];
                     const cardGiven = data.card_given;   // the arrogance smash card
 
                     triggerRedDay(winner, tableCards, cardGiven);
+                    console.log('winner', winner);
+                    console.log('username', username);
 
                     if (username === winner) {
                         // Add both tableCards + cardGiven to my hand
+                        console.log('tableCards', tableCards, 'cardGiven', cardGiven, 'winner', winner);
+
                         lastCards = [...lastCards, ...tableCards, cardGiven];
                         renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
                     }

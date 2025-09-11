@@ -221,7 +221,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "current_round": event.get("current_round"),
             "next_player": event.get("next_player"),
             "player_color_dict": event.get("player_color_dict"),
-            "players_card_dict": event.get("players_card_dict"),
+            "current_round_card_list": event.get("current_round_card_list"),
             
         }))
 
@@ -479,6 +479,15 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 # if the player is the next player in round
                 self.required_suit = self.current_round.get("required_suit")
                 if self.required_suit and not card.startswith(self.required_suit):
+
+                    # check whether card_list is not empty, 
+                    # if not empty fail the red_daytrigger and send the error message saying please take card from deck
+                    self.card_list_raw = await self.redis.hget(self.redis_key,"cardList")
+                    self.card_list = json.loads(self.card_list_raw.decode()) if self.card_list_raw else []
+                    if self.card_list:
+                        await self.send_dynamic_message("error", "please take card from deck")
+                        return
+
                     # After validating card and before setting next_player
                     # Add Red Day handling
                     # If required suit exists but player has no such suit (and no deckpile card),
@@ -516,25 +525,38 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
                         # 5. Update Redis atomically
                         pipe = self.redis.pipeline()
-                        pipe.hset(self.redis_key, "players_card_list", json.dumps(self.players_card_dict))
                         pipe.hset(self.redis_key, "current_round", json.dumps(self.current_round))
                         pipe.hset(self.redis_key, "current_player", self.next_player)
                         await pipe.execute()
 
-                        # add all the cards in current_round to the winner + the current card
+                        # Add all cards from the current round to the winner + winning_card
                         if self.winner:
-                            self.players_card_dict[self.winner] = self.players_card_dict.get(self.winner, []) + [
-                                c for c in self.current_round["played_cards"] if list(c.keys())[0] != self.winner
-                            ]
-                        # add current_coud data to the "played_card_list"
+                            self.players_card_dict[self.winner] = (
+                                self.players_card_dict.get(self.winner, []) +
+                                [card for play in self.current_round["played_cards"] for card in play.values()]
+                            )
+
+                        # List of all cards in the current round except self.card to reduce duplicate self.card display in frontend
+                        self.current_round_card_list = [
+                            card for play in self.current_round["played_cards"] for card in play.values() if card!=self.card
+                        ]
+
+                        # add current_round data to the "played_card_list"
                         pipe = self.redis.pipeline()
                         # get the played_card_list and add the current_round and then set it again to redis
                         # remove played card from the player who smashed
-                        self.players_card_dict[self.username] = (self.players_card_dict.get(self.username, [])).remove(self.card)
+                        self.hand_cards = self.players_card_dict.get(self.username, [])
+                        if self.card in self.hand_cards:
+                            self.hand_cards.remove(self.card)   # modifies the list that's stored in the dict
+                            self.players_card_dict[self.username] = self.hand_cards
+                            logger.info(f"The card has been removed from smasher{self.card}")
+                        pipe = self.redis.pipeline()
+                        pipe.hset(self.redis_key, "players_card_list", json.dumps(self.players_card_dict))
                         self.played_card_list.append(self.current_round)
                         pipe.hset(self.redis_key, "played_card_list", json.dumps(self.played_card_list))
                         pipe.hset(self.redis_key, "current_round", json.dumps({}))
                         await pipe.execute()
+
 
                         # 6. Broadcast RED DAY to all
                         await self.channel_layer.group_send(
@@ -546,8 +568,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                                 "card_given": self.card,
                                 "current_round": self.current_round,
                                 "next_player": self.next_player,
-                                "player_color_dict": self.connected_dict,
-                                "players_card_dict": self.players_card_dict
+                                "player_color_dict": self.players_card_dict[self.username],
+                                "current_round_card_list": self.current_round_card_list
                             }
                         )
                         
@@ -568,9 +590,34 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 "current_round": json.dumps(self.current_round)
             })
 
+            # check who won and remove from "players"
+            # check which player has the empty cards in the "players_card_list"
+#  8) "{\"Vinayak\": [\"S6\", \"F6\"], \"test1\": [\"D7\", \"H10\"], \"admin\": [\"H6\", \"F8\"]}"
+            self.players_card_list_raw = await self.redis.hget(self.redis_key, "players_card_list")
+            self.players_card_list = json.loads(self.players_card_list_raw.decode()) if self.players_card_list_raw else []
+            self.cardList_raw = await self.redis.hget(self.redis_key, "cardList")
+            self.cardList = json.loads(self.cardList_raw.decode()) if self.cardList_raw else []
+            # check which player has the empty cards in the "players_card_list"
+            self.player_won=None
+            for player, player_card_list in self.players_card_list.items():
+                if not player_card_list and not self.cardList:
+                    self.player_won = player
+                    # remove this player
+                    self.players_card_list.pop(player)
+                    await self.redis.hset(
+                        self.redis_key, "players_card_list", json.dumps(self.players_card_list)
+                    )
+                    break
+
+            
+
             # ✅ Determine next player
             self.players_raw = await self.redis.hget(self.redis_key, "players")
             self.players_list = json.loads(self.players_raw.decode()) if self.players_raw else []
+            if self.player_won!=None:
+                self.players_list.remove(self.player_won)   
+                await self.redis.hset(self.redis_key, "players", json.dumps(self.players_list))
+
             self.next_player = None
             if self.players_list:
                 current_index = self.players_list.index(self.username)
