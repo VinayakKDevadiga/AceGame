@@ -268,7 +268,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             distributed_card_dict = {}
             for player in players_connected:
                 distributed_card_dict[player] = []
-                for _ in range(2):
+                for _ in range(1):
                     if not card_list:
                         break
                     card = random.choice(card_list)
@@ -404,7 +404,10 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         self.played_cards = self.current_round.get("played_cards", [])
 
         if len(self.played_cards) == len(self.players_list):
+            
             logger.info("Round completed. Evaluating winner...")
+            # check player_completed the game only when round
+            await self.check_gamecompletion_of_players()
             await self.start_next_round()
             # send the empty current_round and clear the cards in frontend
             logger.info(f"Round winner: {self.winner_dict}")
@@ -422,6 +425,64 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             )
         else:
             logger.info(f"Waiting for {len(self.players_list) - len(self.played_cards)} more players.")
+
+    async def check_gamecompletion_of_players(self):
+        # Load players_card_list from Redis
+        self.players_card_list_raw = await self.redis.hget(self.redis_key, "players_card_list")
+        self.players_card_list = (
+            json.loads(self.players_card_list_raw.decode())
+            if self.players_card_list_raw
+            else {}
+        )
+        self.cardList_raw = await self.redis.hget(self.redis_key, "cardList")
+        self.cardList = json.loads(self.cardList_raw.decode()) if self.cardList_raw else []
+        self.game_completed_player_list_raw = await self.redis.hget(self.redis_key, "game_completed_players_list")
+        self.game_completed_player_list = json.loads(self.cardList_raw.decode()) if self.game_completed_player_list_raw else []
+
+        # Collect players who have finished
+        self.completed_players=[]
+        for player, player_card_list in self.players_card_list.items():
+            # If hand is empty (✅ you can drop `and not self.cardList` if you want completion
+            # to be only when deck is also empty, keep it)
+            if not player_card_list and not self.cardList:
+                if player not in self.game_completed_player_list:
+                    self.completed_players.append(player)
+                    self.game_completed_player_list.append(player)
+
+        # Remove completed players safely
+        for player in self.completed_players:
+            self.players_card_list.pop(player, None)
+
+        if self.completed_players:
+            # Save updated players_card_list
+            await self.redis.hset(
+                self.redis_key, "players_card_list", json.dumps(self.players_card_list)
+            )
+
+            # Update main players list
+            self.players_raw = await self.redis.hget(self.redis_key, "players")
+            self.players_list = (
+                json.loads(self.players_raw.decode())
+                if self.players_raw
+                else []
+            )
+            self.players_list = [p for p in self.players_list if p not in self.completed_players]
+            await self.redis.hset(self.redis_key, "players", json.dumps(self.players_list))
+            await self.redis.hset(self.redis_key, "game_completed_players_list", json.dumps(self.game_completed_player_list))
+
+            logger.info(f"Players who completed in last round: {self.completed_players}")
+            logger.info(f"Players who completed totally: {self.game_completed_player_list}")
+
+            # Broadcast to group so frontend knows
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "players_update",
+                    "connected_dict": self.players_list,
+                    "players_still_in": self.players_list,
+                    "players_completed": self.game_completed_player_list,
+                }
+            )
 
 
     async def drop_play_card_to_table(self,card):
@@ -572,8 +633,10 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                                 "current_round_card_list": self.current_round_card_list
                             }
                         )
-                        
+                        # check player_competed the game
+                        await self.check_gamecompletion_of_players()
                         return  # 🚪 stop normal flow, handled separately
+                         
                     await self.send_dynamic_message("error", f"Card must be of suit {self.required_suit}")
                     return
                 else:
@@ -590,33 +653,32 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 "current_round": json.dumps(self.current_round)
             })
 
-            # check who won and remove from "players"
-            # check which player has the empty cards in the "players_card_list"
-#  8) "{\"Vinayak\": [\"S6\", \"F6\"], \"test1\": [\"D7\", \"H10\"], \"admin\": [\"H6\", \"F8\"]}"
-            self.players_card_list_raw = await self.redis.hget(self.redis_key, "players_card_list")
-            self.players_card_list = json.loads(self.players_card_list_raw.decode()) if self.players_card_list_raw else []
-            self.cardList_raw = await self.redis.hget(self.redis_key, "cardList")
-            self.cardList = json.loads(self.cardList_raw.decode()) if self.cardList_raw else []
-            # check which player has the empty cards in the "players_card_list"
-            self.player_won=None
-            for player, player_card_list in self.players_card_list.items():
-                if not player_card_list and not self.cardList:
-                    self.player_won = player
-                    # remove this player
-                    self.players_card_list.pop(player)
-                    await self.redis.hset(
-                        self.redis_key, "players_card_list", json.dumps(self.players_card_list)
-                    )
-                    break
+            # # check who won and remove from "players"
+            # # check which player has the empty cards in the "players_card_list"
+            # self.players_card_list_raw = await self.redis.hget(self.redis_key, "players_card_list")
+            # self.players_card_list = json.loads(self.players_card_list_raw.decode()) if self.players_card_list_raw else []
+            # self.cardList_raw = await self.redis.hget(self.redis_key, "cardList")
+            # self.cardList = json.loads(self.cardList_raw.decode()) if self.cardList_raw else []
+            # # check which player has the empty cards in the "players_card_list"
+            # self.player_won=None
+            # for player, player_card_list in self.players_card_list.items():
+            #     if not player_card_list and not self.cardList:
+            #         self.player_won = player
+            #         # remove this player
+            #         self.players_card_list.pop(player)
+            #         await self.redis.hset(
+            #             self.redis_key, "players_card_list", json.dumps(self.players_card_list)
+            #         )
+            #         break
 
             
 
             # ✅ Determine next player
             self.players_raw = await self.redis.hget(self.redis_key, "players")
             self.players_list = json.loads(self.players_raw.decode()) if self.players_raw else []
-            if self.player_won!=None:
-                self.players_list.remove(self.player_won)   
-                await self.redis.hset(self.redis_key, "players", json.dumps(self.players_list))
+            # if self.player_won!=None:
+            #     self.players_list.remove(self.player_won)   
+            #     await self.redis.hset(self.redis_key, "players", json.dumps(self.players_list))
 
             self.next_player = None
             if self.players_list:
@@ -642,7 +704,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             )
             # 3. Validate if the current player's turn is complete
             await self.validate_round_completion()
-            
+           
+
         except Exception as e:
             logger.error(f"Failed to drop_play_card_to_table {self.username}: {e} and card:{self.card}", exc_info=True)
             await self.send_dynamic_message("error", "Failed to drop_play_card_to_table")
@@ -736,6 +799,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
         # Update Redis
         self.players_cards[self.username] = self.player_cards
+        logger.info(f"players_cards[self.username]: {self.players_cards[self.username]}")
         await self.redis.hset(self.redis_key, "players_card_list", json.dumps(self.players_cards))
         await self.redis.hset(self.redis_key, "cardList", json.dumps(self.card_list))
 

@@ -900,6 +900,8 @@
             socket.onmessage = event => {
                 const data = JSON.parse(event.data);
                 if (data.type === "players_update" && data.connected_dict) {
+                    console.log('Player update received by the client');
+
                     const players = Object.entries(data.connected_dict).map(([username, color]) => ({ username, color }));
                     drawTable(players);
                 }
