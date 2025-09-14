@@ -891,6 +891,92 @@
         // red day animation end
 
 
+        // gamecompletedplayer feature start
+        function handleCompletedGame(data, username) {
+            const winner = data.comepleted_player;   // the username who finished
+            const rank = data.players_rank[winner];
+            const completedPlayers = data.players_completed;
+
+            // 🎉 Show winner popup
+            showWinnerPopup(winner, rank);
+
+            // 🂡 If YOU are the winner → hide your cardlist
+            if (winner === username) {
+                hidePlayerCardlist(rank);
+            }
+
+            // 🎭 Remove winner's bubble
+            removePlayerBubble(winner);
+
+            // 🏆 Update completed players list on top
+            updateCompletedPlayers(completedPlayers, data.players_rank, username);
+        }
+
+        function showWinnerPopup(winner, rank) {
+            const winDiv = document.createElement("div");
+            winDiv.textContent = `${winner} finished 🎉 Rank #${rank}`;
+            Object.assign(winDiv.style, {
+                position: "fixed",
+                top: "20%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                padding: "15px 25px",
+                background: "gold",
+                border: "3px solid black",
+                fontWeight: "bold",
+                fontSize: "1.3rem",
+                borderRadius: "10px",
+                zIndex: "2000"
+            });
+            document.body.appendChild(winDiv);
+            setTimeout(() => winDiv.remove(), 3000);
+        }
+
+        function hidePlayerCardlist(rank) {
+            const cardlistDiv = document.querySelector(".cardlist");
+            if (cardlistDiv) {
+                cardlistDiv.innerHTML = "";
+                cardlistDiv.style.display = "none";
+            }
+            const turnIndicator = document.getElementById("turn-indicator");
+            if (turnIndicator) {
+                turnIndicator.textContent = `✅ You have completed! Rank #${rank}. Watch others play...`;
+            }
+        }
+
+        function removePlayerBubble(username) {
+            const personDiv = document.querySelector(`.person[data-username="${username}"]`);
+            if (personDiv) {
+                personDiv.classList.add("fade-out");
+                setTimeout(() => personDiv.remove(), 500); // wait for animation
+            }
+        }
+
+        function updateCompletedPlayers(completedPlayers, playersRank, username) {
+            let completedDiv = document.getElementById("completed-players");
+            if (!completedDiv) {
+                completedDiv = document.createElement("div");
+                completedDiv.id = "completed-players";
+                Object.assign(completedDiv.style, {
+                    marginTop: "10px",
+                    padding: "10px",
+                    border: "2px solid black",
+                    background: "#f8f8f8"
+                });
+                completedDiv.innerHTML = "<h3>🏆 Completed Players</h3>";
+                document.body.insertBefore(completedDiv, document.getElementById("table"));
+            }
+
+            completedDiv.innerHTML = "<h3>🏆 Completed Players</h3>";
+            completedPlayers.forEach((p) => {
+                const span = document.createElement("div");
+                span.textContent = `#${playersRank[p]} ${p}`;
+                span.style.fontWeight = p === username ? "bold" : "normal";
+                completedDiv.appendChild(span);
+            });
+        }
+
+        // gamecompletedplayer feature end
         function initWebSocket() {
             if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -1029,7 +1115,11 @@
                         renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
                     }
                 }
+                if (data.type == "completed_game ") {
+                    console.log("game completed data", data);
 
+                    handleCompletedGame(data, username);
+                }
 
                 if (data.type === "error") {
                     // alert(data.message);
