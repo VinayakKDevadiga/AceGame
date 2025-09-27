@@ -893,8 +893,8 @@
 
         // gamecompletedplayer feature start
         function handleCompletedGame(data, username) {
-            const winner = data.comepleted_player;   // the username who finished
-            const rank = data.players_rank[winner];
+            const winners_list = data.players_completed;   // the username who finished
+            // const rank = data.players_completed[winner]; get the index
             const completedPlayers = data.players_completed;
 
             // 🎉 Show winner popup
