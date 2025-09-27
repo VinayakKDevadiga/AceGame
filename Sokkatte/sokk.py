@@ -175,7 +175,9 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "type": "completed_game",
             "players_still_in": event.get('players_still_in'),
             "players_completed": event.get("players_completed"),
-            'connected_dict':self.connected_dict 
+            'connected_dict':self.connected_dict ,
+            'players_completed_now': event.get("players_completed_now", []),
+            
         }))
 
     async def everyone_joined(self, event):
@@ -417,6 +419,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         self.played_card_list.append(self.current_round)
         await self.redis.hset(self.redis_key, "played_card_list", json.dumps(self.played_card_list))
         await self.redis.hset(self.redis_key, "current_round", json.dumps({}))
+        self.next_player=self.winner_dict['winner']
 
 
 
@@ -427,8 +430,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             
             logger.info("Round completed. Evaluating winner...")
             # check player_completed the game only when round
-            await self.check_gamecompletion_of_players(send_message_flag=True)
             await self.start_next_round()
+            await self.check_gamecompletion_of_players()
             # send the empty current_round and clear the cards in frontend
             logger.info(f"Round winner: {self.winner_dict}")
 
@@ -439,7 +442,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                     "type": "card_played",
                     "player": self.username,
                     "card": self.card,
-                    "next_player": self.winner_dict["winner"],
+                    "next_player":self.next_player , # self.winner_dict["winner"],
                     "current_round": self.current_round,
                     "player_color_dict": self.connected_dict
                 }
@@ -447,17 +450,19 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             time.sleep(0.5)  # slight delay to ensure order
 
             # send game completion message
-            if send_message_flag==True:
+            if self.completed_players:
                 # Broadcast to group so frontend knows
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
                         "type": "completed_game",
-                        "players_still_in": self.players_list,
+                        "players_still_in": self.players_list_updated,
                         "players_completed": self.game_completed_player_list,
+                        "players_completed_now": self.completed_players,
                     }
                 )
-            time.sleep(0.5)  # slight delay to ensure order
+                time.sleep(0.5)  # slight delay to ensure order
+
             # get the player color dict            
             await self.channel_layer.group_send(
                 self.group_name,
@@ -501,19 +506,21 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         # for player in self.completed_players:
         #     self.players_card_list.pop(player, None)
 
-        if self.completed_players:
-            # Save updated players_card_list
-            await self.redis.hset(
-                self.redis_key, "players_card_list", json.dumps(self.players_card_list)
-            )
-
-            # Update main players list
+        # Update main players list
             self.players_raw = await self.redis.hget(self.redis_key, "players")
             self.players_list = (
                 json.loads(self.players_raw.decode())
                 if self.players_raw
                 else []
             )
+            
+        self.players_list_updated=self.players_list.copy()  # start with full list
+        if self.completed_players:
+            # Save updated players_card_list
+            await self.redis.hset(
+                self.redis_key, "players_card_list", json.dumps(self.players_card_list)
+            )
+            
             self.players_list_updated = [p for p in self.players_list if p not in self.completed_players]
             
             # if len(self.players_list_updated)==1:
@@ -530,6 +537,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         self.got_nextplayer=self.players_list[self.index_of_next_player]
                         await self.redis.hset(self.redis_key, "current_player", self.got_nextplayer)
                         logger.info(f"Next player adjusted to: {self.got_nextplayer}")
+                        self.next_player = self.got_nextplayer
                     
             
             await self.redis.hset(self.redis_key, "players", json.dumps(self.players_list_updated))
@@ -539,7 +547,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
            
             
 
-    async def detertmine_next_payer_for_normal_card(self):
+    async def determine_next_player_for_normal_card(self):
         self.players_raw = await self.redis.hget(self.redis_key, "players")
         self.players_list = json.loads(self.players_raw.decode()) if self.players_raw else []
 
@@ -548,8 +556,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
         if self.players_list:
             # Find the next player who is NOT in game_completed_player_list
-            self.current_plyer_index = self.players_list.index(self.next_player)
-            self.next_player=(self.current_plyer_index+1)%len(self.players_list)
+            self.current_player_index = self.players_list.index(self.next_player)
+            self.next_player=self.players_list[(self.current_player_index+1)%len(self.players_list)]
             await self.redis.hset(self.redis_key, "current_player", self.next_player)
         
 
@@ -697,6 +705,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         await self.check_gamecompletion_of_players() 
                         
                         # 6. Broadcast RED DAY to all
+                        logger.info(f"next player:{self.next_player}Broadcasting RED DAY: {self.username} → {self.winner} with card {self.card}")
                         await self.channel_layer.group_send(
                             self.group_name,
                             {
@@ -711,16 +720,17 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                                 
                             }
                         )
-
+                        time.sleep(0.5)  # slight delay to ensure order
                         if self.completed_players:
                             # Broadcast to group so frontend knows
                             await self.channel_layer.group_send(
                                 self.group_name,
                                 {
                                     "type": "completed_game",
-                                    "players_still_in": self.players_list,
+                                    "players_still_in": self.players_list_updated,
                                     "players_completed": self.game_completed_player_list,
                                     "connected_dict": self.connected_dict,
+                                    "players_completed_now": self.completed_players,
                                 }
                             )
                       
@@ -744,9 +754,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
 
             # ✅ Determine next player
-            self.game_completed_player_list_raw = await self.redis.hget(self.redis_key, "game_completed_players_list")
-            self.game_completed_player_list = json.loads(self.game_completed_player_list_raw.decode()) if self.game_completed_player_list_raw else []
-            await self.detertmine_next_payer_for_normal_card()
+            await self.determine_next_player_for_normal_card() 
 
             # Validate if the current player's turn is complete
             await self.validate_round_completion()

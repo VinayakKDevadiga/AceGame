@@ -478,6 +478,14 @@
             const centerY = table.clientHeight / 2;
             const personSize = 30;
             const radius = table.clientWidth / 2 + (personSize / 2);
+            // Remove bubbles for players not in the new list
+            const currentUsernames = players.map(p => p.username);
+            table.querySelectorAll('.person').forEach(div => {
+                const uname = div.getAttribute('data-username');
+                if (!currentUsernames.includes(uname)) {
+                    div.remove();
+                }
+            });
 
             // Keep track of existing player divs
             const existingDivs = {};
@@ -819,7 +827,7 @@
 
 
         // red day animation start
-        function triggerRedDay(winnerUsername, tableCards, cardGiven) {
+        function triggerRedDay(winnerUsername, tableCards, cardGiven, smasher) {
             if (!winnerUsername) return;
 
             const winnerEl = document.querySelector(`.person[data-username="${winnerUsername}"]`);
@@ -839,7 +847,7 @@
             // Floating "Red Day" text
             const text = document.createElement("div");
             text.classList.add("red-day-text");
-            text.textContent = `🔥 Red Day! ${winnerUsername} SMASHES the table! 🔥`;
+            text.textContent = `Red Day! ${winnerUsername} has been SMASHED by ${smasher}! 🔥`;
             document.body.appendChild(text);
             setTimeout(() => text.remove(), 4000);
 
@@ -892,24 +900,20 @@
 
 
         // gamecompletedplayer feature start
-        function handleCompletedGame(data, username) {
-            const winners_list = data.players_completed;   // the username who finished
-            // const rank = data.players_completed[winner]; get the index
+        function handleCompletedGame(data, players_completed_now) {
             const completedPlayers = data.players_completed;
-
-            // 🎉 Show winner popup
-            showWinnerPopup(winner, rank);
+            const winner = players_completed_now.find(player => player === username);
+            if (winner) {
+                const rank = completedPlayers.indexOf(winner) + 1;
+                // 🎉 Show winner popup
+                showWinnerPopup(winner, rank);
+            }
 
             // 🂡 If YOU are the winner → hide your cardlist
             if (winner === username) {
-                hidePlayerCardlist(rank);
+                hidePlayerCardlist();
             }
 
-            // 🎭 Remove winner's bubble
-            removePlayerBubble(winner);
-
-            // 🏆 Update completed players list on top
-            updateCompletedPlayers(completedPlayers, data.players_rank, username);
         }
 
         function showWinnerPopup(winner, rank) {
@@ -932,27 +936,24 @@
             setTimeout(() => winDiv.remove(), 3000);
         }
 
-        function hidePlayerCardlist(rank) {
+        function hidePlayerCardlist() {
             const cardlistDiv = document.querySelector(".cardlist");
             if (cardlistDiv) {
                 cardlistDiv.innerHTML = "";
                 cardlistDiv.style.display = "none";
             }
-            const turnIndicator = document.getElementById("turn-indicator");
-            if (turnIndicator) {
-                turnIndicator.textContent = `✅ You have completed! Rank #${rank}. Watch others play...`;
-            }
+          
         }
 
-        function removePlayerBubble(username) {
-            const personDiv = document.querySelector(`.person[data-username="${username}"]`);
-            if (personDiv) {
-                personDiv.classList.add("fade-out");
-                setTimeout(() => personDiv.remove(), 500); // wait for animation
-            }
-        }
+        // function removePlayerBubble(username) {
+        //     const personDiv = document.querySelector(`.person[data-username="${username}"]`);
+        //     if (personDiv) {
+        //         personDiv.classList.add("fade-out");
+        //         setTimeout(() => personDiv.remove(), 500); // wait for animation
+        //     }
+        // }
 
-        function updateCompletedPlayers(completedPlayers, playersRank, username) {
+       function updateCompletedPlayers(completedPlayers) {
             let completedDiv = document.getElementById("completed-players");
             if (!completedDiv) {
                 completedDiv = document.createElement("div");
@@ -963,19 +964,19 @@
                     border: "2px solid black",
                     background: "#f8f8f8"
                 });
-                completedDiv.innerHTML = "<h3>🏆 Completed Players</h3>";
-                document.body.insertBefore(completedDiv, document.getElementById("table"));
+                // Insert at top of body
+                document.body.insertBefore(completedDiv, document.body.firstChild);
             }
 
-            completedDiv.innerHTML = "<h3>🏆 Completed Players</h3>";
-            completedPlayers.forEach((p) => {
+            completedDiv.innerHTML = "<h3>🏆 Completed Players: " + completedPlayers.length + "</h3>";
+            completedPlayers.forEach((p, idx) => {
                 const span = document.createElement("div");
-                span.textContent = `#${playersRank[p]} ${p}`;
+                span.textContent = `#${idx + 1} ${p}`;
                 span.style.fontWeight = p === username ? "bold" : "normal";
                 completedDiv.appendChild(span);
             });
         }
-
+     
         // gamecompletedplayer feature end
         function initWebSocket() {
             if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
@@ -1098,9 +1099,11 @@
                     const tableCards = data.current_round_card_list || [];
                     const cardGiven = data.card_given;   // the arrogance smash card
 
-                    triggerRedDay(winner, tableCards, cardGiven);
+                    triggerRedDay(winner, tableCards, cardGiven, smasher);
                     console.log('winner', winner);
                     console.log('username', username);
+                    console.log("next player", data.next_player);
+                    
 
                     if (username === winner) {
                         // Add both tableCards + cardGiven to my hand
@@ -1114,11 +1117,30 @@
                         lastCards = lastCards.filter(card => card !== cardGiven);
                         renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
                     }
-                }
-                if (data.type == "completed_game ") {
-                    console.log("game completed data", data);
+                    
+                    updateTurnUI(data.next_player);
 
-                    handleCompletedGame(data, username);
+                }
+               if (data.type == "completed_game") {
+                    console.log("game completed data", data);
+                    if (data.connected_dict && data.players_still_in) {
+                        // Build a new dict with only active players and their colors
+                        const new_connected_dict = {};
+                        data.players_still_in.forEach(username => {
+                            new_connected_dict[username] = data.connected_dict[username] || "gray";
+                        });
+
+                        // Create array of { username, color } objects for drawTable
+                        const players = data.players_still_in.map(username => ({
+                            username,
+                            color: new_connected_dict[username]
+                        }));
+
+                        drawTable(players);
+                    }
+                    handleCompletedGame(data, data.players_completed_now);
+                    // 🏆 Update completed players list on top
+                    updateCompletedPlayers(data.players_completed_now);
                 }
 
                 if (data.type === "error") {
