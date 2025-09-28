@@ -223,9 +223,16 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "current_round": event.get('current_round'),
             "next_player": event.get('next_player'),
          "player_color_dict": event.get('player_color_dict'),
-
-
         }))
+    
+    async def game_over(self, event):
+        logger.info(f"Game over, looser is: {event.get('looser')}")
+        await self.send(text_data=json.dumps({
+            "type": "game_over",
+            "looser": event.get("looser"),
+            "game_completed_player_list": event.get("game_completed_player_list", []),
+        }))
+        
     async def red_day_triggered(self, event):
         logger.info(f"Red day triggered by {event.get('from_player')} → winner {event.get('to_winner')}")
         await self.send(text_data=json.dumps({
@@ -522,9 +529,20 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             )
             
             self.players_list_updated = [p for p in self.players_list if p not in self.completed_players]
-            
-            # if len(self.players_list_updated)==1:
-            #   reurn  #because only one player left , he is the looser.
+
+            if len(self.players_list_updated)==1 and self.game_completed_player_list: #if player_list_updated is 1 and teh completed_player is not empty.list is n-1 then the last player is looser
+                logger.info(f"Game over. Looser is: {self.players_list_updated[0]} and game_completed_player_list: {self.game_completed_player_list}")
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type": "game_over",
+                        "looser": self.players_list_updated[0],
+                        "game_completed_player_list": self.game_completed_player_list,
+                    }
+                )
+                return
+                #because only one player left , he is the looser.
+
 
             # check next_playeris in empty list if so change nextplaer to next to him who has card if next is empty then next like that
             # determine true next player:

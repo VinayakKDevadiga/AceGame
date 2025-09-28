@@ -153,3 +153,22 @@ def get_all_players_in_room(room_id):
     all_data = redis_conn.hgetall(key)
     # Decode JSON and bytes
     return {player.decode(): json.loads(cards) for player, cards in all_data.items()}
+
+
+
+
+@jwt_required
+def Game_Over(request):
+    logger.info(f"logged in and request object is : {request}")
+    token = request.COOKIES.get('jwt')
+    username = None
+    logger.info(f"token in view of sokkatte : {token}")
+    if token:
+        payload = decode_jwt(token)
+        if payload:
+            username = payload.get('username')
+            logger.info(f" Home  request{username}")
+    response = render(request, 'Home/winner_page.html', {'name': username})
+    # if token:
+        # response.set_cookie('jwt', token, path='/', samesite='Lax')
+    return response
