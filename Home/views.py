@@ -168,7 +168,18 @@ def Game_Over(request):
         if payload:
             username = payload.get('username')
             logger.info(f" Home  request{username}")
-    response = render(request, 'Home/winner_page.html', {'name': username})
+
+    looser = request.GET.get('looser')
+    completed_json = request.GET.get('completed')
+    try:
+        game_completed_player_list = json.loads(completed_json) if completed_json else []
+    except Exception:
+        game_completed_player_list = []
+    response = render(request, 'winner_page.html', {
+        'looser': looser,
+        'game_completed_player_list': game_completed_player_list,
+        'username': username,  # Use the JWT username variable here
+    })
     # if token:
         # response.set_cookie('jwt', token, path='/', samesite='Lax')
     return response
