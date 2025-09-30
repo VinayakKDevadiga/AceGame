@@ -348,6 +348,35 @@
 
     <div class="cardlist"></div>
 
+        <!-- Card Problem Modal -->
+    <div id="cardProblemModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:2000;">
+    
+        <div style="background:#fff; padding:20px; border-radius:12px; width:400px; max-width:90%; text-align:center;
+                    box-shadow:0 8px 20px rgba(0,0,0,0.4);">
+            <h2 style="margin-top:0; color:#b91c1c;">⚠️ Card Suit Problem</h2>
+            <p id="cardProblemMessage">Card suit problem detected. Choose an option:</p>
+
+            <div id="otherPlayerCards" style="margin-top:15px; display:none;">
+            <h4>Other Player’s Cards</h4>
+            <div id="cardsContainer" 
+                style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:10px;">
+            </div>
+            </div>
+
+            <div style="margin-top:20px; display:flex; justify-content:space-around;">
+            <button id="seeCardsBtn" 
+                    style="padding:10px 16px; border:none; background:#3b82f6; color:#fff; border-radius:6px; cursor:pointer;">
+                👀 See Cards
+            </button>
+            <button id="continueBtn" 
+                    style="padding:10px 16px; border:none; background:#22c55e; color:#fff; border-radius:6px; cursor:pointer;">
+                ✅ Continue
+            </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let lastCards = [];
         let lastBorderColor = "gray";
@@ -976,7 +1005,123 @@
                 completedDiv.appendChild(span);
             });
         }
-     
+
+
+        // popup for card_problem start
+       
+
+        function showCardProblemPopup(cardsByPlayer) {
+            const modal = document.getElementById("cardProblemModal");
+            const cardsContainer = document.getElementById("cardsContainer");
+            const otherPlayerCardsDiv = document.getElementById("otherPlayerCards");
+            const continueBtn = document.getElementById("continueBtn");
+            const seeCardsBtn = document.getElementById("seeCardsBtn");
+            const messagePara = document.getElementById("cardProblemMessage");
+
+            // Reset
+            cardsContainer.innerHTML = "";
+            otherPlayerCardsDiv.style.display = "none";
+            continueBtn.disabled = true;
+            continueBtn.textContent = "Get Extra 3 Cards to Continue";
+            seeCardsBtn.textContent = "See Opponent Cards";
+            seeCardsBtn.disabled = false;
+
+            messagePara.textContent = "Card problem detected! Click below to reveal opponent cards.";
+
+            // Heading
+            const heading = document.createElement("h4");
+            heading.textContent = "Opponent Cards:";
+            heading.style.marginBottom = "12px";
+            cardsContainer.appendChild(heading);
+
+            // Loop opponents
+            Object.keys(cardsByPlayer).forEach(player => {
+                if (player === username) return; // skip self
+
+                const playerDiv = document.createElement("div");
+                playerDiv.style.marginBottom = "16px";
+
+                const header = document.createElement("b");
+                header.textContent = player;
+                playerDiv.appendChild(header);
+
+                const cardRow = document.createElement("div");
+                cardRow.style.display = "flex";
+                cardRow.style.flexDirection = "row";
+                cardRow.style.marginTop = "6px";
+
+                const cards = Array.isArray(cardsByPlayer[player]) ? cardsByPlayer[player] : [];
+
+                cards.forEach((card, idx) => {
+                    const cardDiv = document.createElement("div");
+                    cardDiv.classList.add("card");
+                    cardDiv.style.border = "2px solid red";
+                    cardDiv.style.marginLeft = idx === 0 ? "0" : "-28px";
+
+                    let symbol = "";
+                    if (card.startsWith("D")) symbol = "♦️";
+                    else if (card.startsWith("F")) symbol = "♣️";
+                    else if (card.startsWith("S")) symbol = "♠️";
+                    else if (card.startsWith("H")) symbol = "♥️";
+
+                    const cardValue = card.substring(1);
+
+                    const suitSpan = document.createElement("span");
+                    suitSpan.textContent = symbol;
+                    suitSpan.style.fontSize = "2rem";
+                    suitSpan.style.display = "block";
+                    suitSpan.style.textAlign = "center";
+
+                    const valueSpan = document.createElement("span");
+                    valueSpan.textContent = cardValue;
+                    valueSpan.style.fontSize = "1.2rem";
+                    valueSpan.style.display = "block";
+                    valueSpan.style.textAlign = "center";
+
+                    cardDiv.appendChild(suitSpan);
+                    cardDiv.appendChild(valueSpan);
+
+                    cardRow.appendChild(cardDiv);
+                });
+
+                playerDiv.appendChild(cardRow);
+                cardsContainer.appendChild(playerDiv);
+            });
+
+            // Show modal
+            modal.style.display = "flex";
+
+            // Toggle see/hide cards
+            seeCardsBtn.onclick = () => {
+                const isHidden = otherPlayerCardsDiv.style.display === "none";
+                if (isHidden) {
+                    otherPlayerCardsDiv.style.display = "block";
+                    seeCardsBtn.textContent = "Hide Opponent Cards";
+                    continueBtn.disabled = false;
+
+                    // notify server
+                    socket.send(JSON.stringify({ type: "saw_the_card" }));
+                } else {
+                    otherPlayerCardsDiv.style.display = "none";
+                    seeCardsBtn.textContent = "See Opponent Cards";
+                    continueBtn.disabled = true;
+                }
+            };
+
+            // Continue button
+            continueBtn.onclick = () => {
+                modal.style.display = "none";
+                // socket.send(JSON.stringify({ type: "get_extra_3_cards" }));
+            };
+        }
+
+   
+
+
+
+
+        //popup for card_problem end
+
         // gamecompletedplayer feature end
         function initWebSocket() {
             if (!roomId || !username || !password) window.location.href = "{% url 'account:login' %}";
@@ -1153,10 +1298,27 @@
                     window.location.href = `{% url 'winner_page' %}?looser=${encodeURIComponent(looser)}&completed=${completedList}`;                
                 }
 
-                if (data.type=="card_problem") {
-                    console.log("Card problem:", data);
-                    const playedCardsDiv = document.getElementById('played-cards');
-                    playedCardsDiv.innerHTML = '';
+                if (data.type === "card_problem") {
+                    console.log("Card problem:", data.other_player_card_list,data.players);
+                    console.log("username",username)
+                    // Build object only for opponents
+                    const cardsByPlayer = {};
+                    data.players.forEach(player => {
+                        if (player !== username) {
+                                cardsByPlayer[player] = data.other_player_card_list[player];
+                            }
+                    });
+
+                    showCardProblemPopup(cardsByPlayer, data.message);
+                    
+
+                }
+                if(data.type==="saw_the_card_acknowledge"){
+                    console.log("Server acknowledged that you saw the card.");
+                }
+
+                if (data.type==="watching_card_again"){
+                    console.log("Server message:", data.message);
                 }
 
                 if (data.type === "error") {

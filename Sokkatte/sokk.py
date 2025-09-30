@@ -237,6 +237,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         logger.info(f"Card problem detected")
         await self.send(text_data=json.dumps({
             "type": "card_problem",
+            "message": event.get("message", "Card suit problem detected."),
             "players": event.get("players"),
             "other_player_card_list": event.get("other_player_card_list", []),
             "connected_dict": self.connected_dict
@@ -599,14 +600,24 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             if total_number_of_cards==3 or total_number_of_cards==4:
                 self.player1_suits = {card[0] for card in self.player1_card}
                 self.player2_suits = {card[0] for card in self.player2_card}
-
+                #find the other player than current player.
+                
                 #get the current_player from redis
                 self.current_player_raw = await self.redis.hget(self.redis_key, "current_player")
                 self.current_player = self.current_player_raw.decode() if self.current_player_raw else None
-                if len(self.player1_card)==1 and self.current_player!=self.players_list_p[0]:
+                self.other_player = self.players_list_p[1] if self.current_player == self.players_list_p[0] else self.players_list_p[0]
+                self.other_player_card_list=self.players_card_list_p[self.other_player]
+
+                if len(self.other_player_card_list)==1 : #if other player has only one card then no need to check the suit problem he will smash this current_player and win
                     return False
-                if len(self.player2_card)==1 and self.current_player!=self.players_list_p[1]:
+               
+                #for 4 card scenario handle
+                if (len(self.players_card_list_p[self.current_player]))==1 and len(self.players_card_list_p[self.other_player])==3:
+                    #if current player has only one card and other player has 3 cards then other player has to trigger red day to give one card to current player.
                     return False
+                    
+                #for 3 card scenario handle
+                #no need to handle because its a card_problem handled below by giving extra cards.
 
                 Flag=True
                 for suit in self.player1_suits:
@@ -618,9 +629,11 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                     self.card_problem_dict = {
                         "card_problem": True,
                         "players": {
-                            self.players_list_p[0]: {"watched_card": False},
-                            self.players_list_p[1]: {"watched_card": False}
-                        }
+                            self.players_list_p[0]: {"watched_card": False, "cards": self.player1_card, "number_of_cards": len(self.player1_card)},
+                            self.players_list_p[1]: {"watched_card": False, "cards": self.player2_card, "number_of_cards": len(self.player2_card)}
+                        },
+                        "total_number_of_cards": total_number_of_cards
+                    
                     }
                     await self.redis.hset(self.redis_key, "card_problem", json.dumps(self.card_problem_dict))
                     # send message to the frontend
@@ -629,11 +642,12 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         self.group_name,
                         {
                             "type": "card_problem",
+                            "message":"You both have different Suits of cards So,Game will not be finished.Please click on get extra cards to continue the game",
                             "players": self.players_list_p,
                             "other_player_card_list": self.players_card_list_p
                         }
                     )
-                   return True
+                    return True
         return False
 
     async def determine_next_player_for_normal_card(self):
@@ -970,6 +984,71 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         return False  # continue processing if needed
 
 
+    async def handle_saw_the_card(self):
+        logger.info("Handling saw_the_card request")
+        self.card_problem_handle_saw_raw = await self.redis.hget(self.redis_key, "card_problem")
+        self.card_problem_handle_saw = json.loads(self.card_problem_handle_saw_raw.decode()) if self.card_problem_handle_saw_raw else {}
+        if not self.card_problem_handle_saw["card_problem"]:
+            send_dynamic_message(self, "watching_card_again", "Alreday resolved the card problem, no need to watch again")
+            return
+
+        if self.username in self.card_problem_handle_saw.get("players", {}):
+            self.card_problem_handle_saw["players"][self.username]["watched_card"] = True
+            # get the total_number_of_cards and check how many cards the user has
+            # if the total card number is 4 and the username has 2 cards then get 3 extra card form the new deck which is not present in both players cards.  which is not present in both players cards.
+            # if the total card number is 3 and the user has 2 cards then get 3 extra card from the new deck if the username has 1 card then give  4 extra cards which is not present in both players cards.
+            total_number_of_cards=self.card_problem_handle_saw.get("total_number_of_cards",0)
+            user_number_of_cards=self.card_problem_handle_saw["players"][self.username].get("number_of_cards",0)
+            number_of_extra_cards_to_give=0
+            if (total_number_of_cards==4 or total_number_of_cards==3) and user_number_of_cards==2:
+                number_of_extra_cards_to_give=3
+            elif total_number_of_cards==3 and user_number_of_cards==1:
+                number_of_extra_cards_to_give=4
+            
+            SUITS = ['F', 'S', 'H', 'D']
+            RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+            FULL_DECK = [f"{suit}{rank}" for suit in SUITS for rank in RANKS]
+            existing_cards = []
+            for player_info in self.card_problem_handle_saw["players"].values():
+                existing_cards.extend(player_info.get("cards", []))                
+            available_cards = [card for card in FULL_DECK if card not in existing_cards]
+            random.shuffle(available_cards)       
+
+            # get the number_of_extra_cards_to_give to the username
+            if number_of_extra_cards_to_give > 0:
+                extra_cards = available_cards[:number_of_extra_cards_to_give]
+                self.card_problem_handle_saw["players"][self.username]["extra_cards"] = extra_cards
+            # update Redis
+            await self.redis.hset(self.redis_key, "card_problem", json.dumps(self.card_problem_handle_saw))
+
+            # update total cards in the layers_card_list on redis
+            logger.info(f"Extra cards given to {self.username}: {self.card_problem_handle_saw['players'][self.username].get('extra_cards', [])}")
+            self.players_card_raw = await self.redis.hget(self.redis_key, "players_card_list")
+            self.players_card_dict = json.loads(self.players_card_raw.decode()) if self.players_card_raw else {}
+            self.player_cards = self.players_card_dict.get(self.username, [])
+            self.player_cards.extend(self.card_problem_handle_saw["players"][self.username].get("extra_cards", []))
+            self.players_card_dict[self.username] = self.player_cards
+            await self.redis.hset(self.redis_key, "players_card_list", json.dumps(self.players_card_dict))
+            logger.info(f"Updated players_card_list for {self.username}: {self.players_card_dict[self.username]}")
+
+
+            if all(player_info.get("watched_card") for player_info in self.card_problem_handle_saw["players"].values()):
+                # Clear the card problem
+                await self.redis.hset(self.redis_key, "card_problem", json.dumps({"card_problem": False}))
+                logger.info("Both players have watched their cards. Card problem cleared.")
+
+            await self.send(text_data=json.dumps({
+                "type": "saw_card_ack",
+                "message": "You have acknowledged seeing your card.",
+                "extra_cards": self.card_problem_handle_saw["players"][self.username].get("extra_cards", []),
+            }))
+        
+        else:
+            await self.send(text_data=json.dumps({
+                "type": "error",
+                "message": "You are not part of the current card problem"
+            }))
+
 
 
     async def receive(self, text_data):
@@ -995,7 +1074,9 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                     await self.drop_play_card_to_table(data.get("card"))
                     logger.info("after drop_play_card_to_table")
 
-                
+            elif msg_type=="saw_the_card":
+                logger.info("calling saw the card")
+                await self.handle_saw_the_card()
            
             elif msg_type == "get_extra_card_from_deck":
                 if await self.handle_extra_card_request_validation():
