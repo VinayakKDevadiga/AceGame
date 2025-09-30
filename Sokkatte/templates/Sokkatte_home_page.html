@@ -1150,12 +1150,21 @@
                     const completedList = encodeURIComponent(JSON.stringify(data.game_completed_player_list));
                     // Redirect with query params
                     console.log("Game over. Redirecting to winner page...",data.looser, data.game_completed_player_list);
-window.location.href = `{% url 'winner_page' %}?looser=${encodeURIComponent(looser)}&completed=${completedList}`;                }
+                    window.location.href = `{% url 'winner_page' %}?looser=${encodeURIComponent(looser)}&completed=${completedList}`;                
+                }
+
+                if (data.type=="card_problem") {
+                    console.log("Card problem:", data);
+                    const playedCardsDiv = document.getElementById('played-cards');
+                    playedCardsDiv.innerHTML = '';
+                }
 
                 if (data.type === "error") {
                     // alert(data.message);
-                    console.log(data.message);
-
+                    console.log(data.players);
+                    console.log(data.other_player_card_list);
+                    console.log(data.connected_dict);                    
+    
                 }
             };
 

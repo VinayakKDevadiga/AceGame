@@ -232,6 +232,16 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "looser": event.get("looser"),
             "game_completed_player_list": event.get("game_completed_player_list", []),
         }))
+
+    async def card_problem(self, event):
+        logger.info(f"Card problem detected")
+        await self.send(text_data=json.dumps({
+            "type": "card_problem",
+            "players": event.get("players"),
+            "other_player_card_list": event.get("other_player_card_list", []),
+            "connected_dict": self.connected_dict
+
+        }))
         
     async def red_day_triggered(self, event):
         logger.info(f"Red day triggered by {event.get('from_player')} → winner {event.get('to_winner')}")
@@ -481,6 +491,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                     "player_color_dict": self.connected_dict,
                 }
             )
+            
             return 
         else:
             logger.info(f"Waiting for {len(self.players_list) - len(self.played_cards)} more players.")
@@ -562,8 +573,68 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             await self.redis.hset(self.redis_key, "game_completed_players_list", json.dumps(self.game_completed_player_list))
             logger.info(f"Players who completed in last round: {self.completed_players}")
             logger.info(f"Players who completed totally: {self.game_completed_player_list}")
-           
-            
+
+
+    async def check_card_suit_problem(self,card_dropped):
+        """
+        get the players, cardList, players_card_list
+
+        """
+        self.players_raw_p = await self.redis.hget(self.redis_key, "players")
+        self.card_list_raw_p = await self.redis.hget(self.redis_key, "cardList")
+        self.players_card_list_raw_p = await self.redis.hget(self.redis_key, "players_card_list")
+        # decode each of this
+        self.players_list_p = json.loads(self.players_raw_p.decode()) if self.players_raw_p else []
+        self.card_list_p = json.loads(self.card_list_raw_p.decode()) if self.card_list_raw_p else []
+        self.players_card_list_p = json.loads(self.players_card_list_raw_p.decode()) if self.players_card_list_raw_p else {}
+        
+        if len(self.players_list_p)==2 and len(self.card_list_p)==0:
+            # player1_card=get all the cards from player1
+            # player2_card=get all the cards from player2
+            # total_number_of_cards=len(players1_card)+len(player2_card)
+            self.player1_card=self.players_card_list_p[self.players_list_p[0]]
+            self.player2_card=self.players_card_list_p[self.players_list_p[1]]
+            total_number_of_cards=len(self.player1_card)+len(self.player2_card)
+
+            if total_number_of_cards==3 or total_number_of_cards==4:
+                self.player1_suits = {card[0] for card in self.player1_card}
+                self.player2_suits = {card[0] for card in self.player2_card}
+
+                #get the current_player from redis
+                self.current_player_raw = await self.redis.hget(self.redis_key, "current_player")
+                self.current_player = self.current_player_raw.decode() if self.current_player_raw else None
+                if len(self.player1_card)==1 and self.current_player!=self.players_list_p[0]:
+                    return False
+                if len(self.player2_card)==1 and self.current_player!=self.players_list_p[1]:
+                    return False
+
+                Flag=True
+                for suit in self.player1_suits:
+                    if suit in self.player2_suits:
+                        Flag=False
+                        break
+                if Flag:  #means no matching suits in both players
+                    #declare as the card_problem
+                    self.card_problem_dict = {
+                        "card_problem": True,
+                        "players": {
+                            self.players_list_p[0]: {"watched_card": False},
+                            self.players_list_p[1]: {"watched_card": False}
+                        }
+                    }
+                    await self.redis.hset(self.redis_key, "card_problem", json.dumps(self.card_problem_dict))
+                    # send message to the frontend
+                    
+                    await self.channel_layer.group_send(
+                        self.group_name,
+                        {
+                            "type": "card_problem",
+                            "players": self.players_list_p,
+                            "other_player_card_list": self.players_card_list_p
+                        }
+                    )
+                   return True
+        return False
 
     async def determine_next_player_for_normal_card(self):
         self.players_raw = await self.redis.hget(self.redis_key, "players")
@@ -751,7 +822,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                                     "players_completed_now": self.completed_players,
                                 }
                             )
-                      
+                       
                         return  # 🚪 stop normal flow, handled separately
                          
                     await self.send_dynamic_message("error", f"Card must be of suit {self.required_suit}")
@@ -917,7 +988,13 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
             elif msg_type == "playing_card":
                 logger.info("calling play card")
-                await self.drop_play_card_to_table(data.get("card"))
+                if (await self.check_card_suit_problem(data.get("card"))):
+                    logger.info("Card suit problem detected, aborting play_card.")
+                    return  # stop further processing if card problem detected
+                else:
+                    await self.drop_play_card_to_table(data.get("card"))
+                    logger.info("after drop_play_card_to_table")
+
                 
            
             elif msg_type == "get_extra_card_from_deck":
