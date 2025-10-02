@@ -449,7 +449,9 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             logger.info("Round completed. Evaluating winner...")
             # check player_completed the game only when round
             await self.start_next_round()
-            await self.check_gamecompletion_of_players()
+            self.game_over_flag=await self.check_gamecompletion_of_players()
+            if self.game_over_flag=="GAME_OVER":
+                            return  # stop further processing as game is over
             # send the empty current_round and clear the cards in frontend
             logger.info(f"Round winner: {self.winner_dict}")
 
@@ -541,9 +543,32 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             )
             
             self.players_list_updated = [p for p in self.players_list if p not in self.completed_players]
+            
+            # check for the highest if all player finished:
+            if len(self.players_list_updated)==0 and self.game_completed_player_list:
+                logger.info(f"Game over. All players completed: {self.game_completed_player_list}")
+                # determine looser whose card is highest in last round:
+                # self.winner_dict['winner'] this is the looser
+                # so remove the name from game_completed_player_list and then add it at the end of the list
+                self.game_completed_player_list.remove(self.winner_dict['winner'])
+                self.game_completed_player_list.append(self.winner_dict['winner'])
+                logger.info(f"Looser is: {self.winner_dict['winner']} and game_completed_player_list: {self.game_completed_player_list}")
+
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type": "game_over",
+                        "looser": self.winner_dict['winner'],
+                        "game_completed_player_list": self.game_completed_player_list,
+                    }
+                )
+                await self.redis.hset(self.redis_key, "players", json.dumps(self.players_list_updated))
+                await self.redis.hset(self.redis_key, "game_completed_players_list", json.dumps(self.game_completed_player_list))
+                return "GAME_OVER"
 
             if len(self.players_list_updated)==1 and self.game_completed_player_list: #if player_list_updated is 1 and teh completed_player is not empty.list is n-1 then the last player is looser
                 logger.info(f"Game over. Looser is: {self.players_list_updated[0]} and game_completed_player_list: {self.game_completed_player_list}")
+                self.game_completed_player_list.append(self.username)
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
@@ -552,7 +577,9 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         "game_completed_player_list": self.game_completed_player_list,
                     }
                 )
-                return
+                await self.redis.hset(self.redis_key, "players", json.dumps(self.players_list_updated))
+                await self.redis.hset(self.redis_key, "game_completed_players_list", json.dumps(self.game_completed_player_list))
+                return "GAME_OVER"
                 #because only one player left , he is the looser.
 
 
@@ -596,7 +623,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             self.player1_card=self.players_card_list_p[self.players_list_p[0]]
             self.player2_card=self.players_card_list_p[self.players_list_p[1]]
             total_number_of_cards=len(self.player1_card)+len(self.player2_card)
-
+    
             if total_number_of_cards==3 or total_number_of_cards==4:
                 self.player1_suits = {card[0] for card in self.player1_card}
                 self.player2_suits = {card[0] for card in self.player2_card}
@@ -608,14 +635,20 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 self.other_player = self.players_list_p[1] if self.current_player == self.players_list_p[0] else self.players_list_p[0]
                 self.other_player_card_list=self.players_card_list_p[self.other_player]
 
+
+                # if the card_dropped is present in other players cards_list then return False:
+                if card_dropped in self.other_player_card_list:
+                    return False
+
                 if len(self.other_player_card_list)==1 : #if other player has only one card then no need to check the suit problem he will smash this current_player and win
                     return False
                
                 #for 4 card scenario handle
                 if (len(self.players_card_list_p[self.current_player]))==1 and len(self.players_card_list_p[self.other_player])==3:
-                    #if current player has only one card and other player has 3 cards then other player has to trigger red day to give one card to current player.
+                    #if current player has only one card and other player has 3 cards then let the other player has to trigger red day to give one card to current player.
                     return False
-                    
+                
+
                 #for 3 card scenario handle
                 #no need to handle because its a card_problem handled below by giving extra cards.
 
@@ -666,6 +699,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
     async def drop_play_card_to_table(self,card):
         self.next_player=None
+        self.game_over_flag="None"
         # validate user has that card
         # validate the card is valid for the crrent_round
         # if both assed then allow and update in the current round and update currentplayer to next player
@@ -805,7 +839,9 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         await pipe.execute()
 
                         # check whether smashed player has card if not then next player beside him is the next round starter
-                        await self.check_gamecompletion_of_players() 
+                        self.game_over_flag=await self.check_gamecompletion_of_players() 
+                        if self.game_over_flag=="GAME_OVER":
+                            return  # stop further processing as game is over
                         
                         # 6. Broadcast RED DAY to all
                         logger.info(f"next player:{self.next_player}Broadcasting RED DAY: {self.username} → {self.winner} with card {self.card}")
@@ -861,6 +897,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
             # Validate if the current player's turn is complete
             await self.validate_round_completion()
+            if self.game_over_flag=="GAME_OVER":
+                return  # stop further processing as game is over
 
             # ✅ Broadcast to all players
             await self.channel_layer.group_send(
@@ -988,8 +1026,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         logger.info("Handling saw_the_card request")
         self.card_problem_handle_saw_raw = await self.redis.hget(self.redis_key, "card_problem")
         self.card_problem_handle_saw = json.loads(self.card_problem_handle_saw_raw.decode()) if self.card_problem_handle_saw_raw else {}
-        if not self.card_problem_handle_saw["card_problem"]:
-            send_dynamic_message(self, "watching_card_again", "Alreday resolved the card problem, no need to watch again")
+        if self.card_problem_handle_saw["players"][self.username]["watched_card"]:
+            await self.send_dynamic_message( "watching_card_again", "Alreday resolved the card problem, no need to watch again")
             return
 
         if self.username in self.card_problem_handle_saw.get("players", {}):
@@ -1041,6 +1079,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 "type": "saw_card_ack",
                 "message": "You have acknowledged seeing your card.",
                 "extra_cards": self.card_problem_handle_saw["players"][self.username].get("extra_cards", []),
+                "updated_player_cards": self.player_cards,
+                "connected_dict": self.connected_dict
             }))
         
         else:

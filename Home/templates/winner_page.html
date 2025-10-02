@@ -44,6 +44,7 @@
             margin-top: 24px;
         }
         .btn {
+            text-decoration: none;
             background: #3cb44b;
             color: #fff;
             border: none;
@@ -71,12 +72,11 @@
                     Rank #{{ forloop.counter }}: {{ username_item }}
                 </li>
             {% endfor %}
-            <li class="looser">
-                Rank #{{ game_completed_player_list|length|add:"1" }}: {{ looser }}
-                {% if username == looser %}
+            {% if username == looser %}
+                <li class="looser">
                     <div class="message">Bad luck ha, better days are coming dude, will fight back!</div>
-                {% endif %}
-            </li>
+                </li>
+            {% endif %}
         </ul>
         <div class="btn-group">
             <a href="{% url 'playgame' %}" class="btn">Play Again</a>

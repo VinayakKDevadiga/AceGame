@@ -1022,7 +1022,10 @@
             cardsContainer.innerHTML = "";
             otherPlayerCardsDiv.style.display = "none";
             continueBtn.disabled = true;
-            continueBtn.textContent = "Get Extra 3 Cards to Continue";
+            continueBtn.textContent = "Continue";
+            continueBtn.style.background = "#9ca3af"; // gray
+            // make the button non clickable
+            continueBtn.style.cursor = "not-allowed";
             seeCardsBtn.textContent = "See Opponent Cards";
             seeCardsBtn.disabled = false;
 
@@ -1098,20 +1101,27 @@
                     otherPlayerCardsDiv.style.display = "block";
                     seeCardsBtn.textContent = "Hide Opponent Cards";
                     continueBtn.disabled = false;
-
+                    // seeCardsBtn.disabled = true; // disable after seeing
                     // notify server
+                    // change the button to normal color green
+                    continueBtn.style.background = "#4caf50"; // green
+                     // make the button clickable
+                    continueBtn.style.cursor = "pointer";
                     socket.send(JSON.stringify({ type: "saw_the_card" }));
-                } else {
+                }
+                else{
                     otherPlayerCardsDiv.style.display = "none";
-                    seeCardsBtn.textContent = "See Opponent Cards";
                     continueBtn.disabled = true;
+                    continueBtn.style.background = "#9ca3af"; // gray
+                    // make the button non clickable
+                    continueBtn.style.cursor = "not-allowed";
+
                 }
             };
 
             // Continue button
             continueBtn.onclick = () => {
                 modal.style.display = "none";
-                // socket.send(JSON.stringify({ type: "get_extra_3_cards" }));
             };
         }
 
@@ -1313,12 +1323,22 @@
                     
 
                 }
-                if(data.type==="saw_the_card_acknowledge"){
-                    console.log("Server acknowledged that you saw the card.");
-                }
-
+                
                 if (data.type==="watching_card_again"){
                     console.log("Server message:", data.message);
+                }
+
+                if (data.type==="saw_card_ack"){
+                    console.log("Saw card ack received");
+                    // update the cardlist of the user
+                    const userCardList = data.extra_cards;
+                    updated_player_cards = data.updated_player_cards || [];
+                    lastCards = updated_player_cards;
+                    connected_dict = data.connected_dict || {};
+                    lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
+                    console.log("Your updated card list:", userCardList);
+                    renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
+                    console.log("Your updated card list after acknowledging:", userCardList);
                 }
 
                 if (data.type === "error") {
