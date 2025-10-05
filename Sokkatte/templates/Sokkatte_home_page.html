@@ -320,6 +320,134 @@
                 transform: translateX(-50%) scale(0.5);
             }
         }
+
+
+        /* card shuffle animation */
+        :root {
+            --card-w: 40px;
+            --card-h: 60px;
+            --stage-w: 320px;
+            --stage-h: 220px;
+            --base-bottom: 20px;
+            --cycle: 2.6s;
+            }
+
+        /* The entire overlay centered with blurred background */
+        #cards-stage {
+            position: fixed;
+            inset: 0; /* fills screen */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px); /* 💥 blur background */
+            background-color: rgba(0, 0, 0, 0.3); /* optional dim overlay */
+            z-index: 9999;
+            pointer-events: none; /* allow clicks to pass through if needed */
+            transition: opacity 0.3s ease;
+        }
+
+        /* Hidden state (for when animation is off) */
+        #cards-stage[hidden] {
+        display: none;
+        }
+
+        /* Container holding the actual cards */
+        .cardsanimation {
+            position: relative;
+            width: var(--stage-w);
+            height: var(--stage-h);
+            perspective: 900px;
+            background: transparent;
+            overflow: visible;
+        }
+
+        /* Base card style */
+        .cardanimation {
+            --delay-mult: calc(var(--i) * 0.08s);
+            position: absolute;
+            bottom: var(--base-bottom);
+            left: 50%;
+            width: var(--card-w);
+            height: var(--card-h);
+            transform: translateX(-50%) translateY(0) rotate(0deg);
+            border-radius: 6px;
+            background: repeating-conic-gradient(from 45deg,
+                #3f06fc 0deg 30deg,
+                #fff7ed 30deg 60deg);
+            background-size: 20px 20px;
+            border: 2px solid #132bce;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+            z-index: 1000;
+            opacity: 0;
+            will-change: transform, opacity;
+            animation: cardFlow var(--cycle) cubic-bezier(.2,.9,.2,1) infinite;
+            animation-delay: calc(var(--delay-mult));
+        }
+
+        /* Shadow under the deck */
+        #cards-stage::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: 6px;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 18px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.22), rgba(0,0,0,0.06));
+            filter: blur(4px);
+            z-index: 10;
+        }
+
+        /* Responsive tweak */
+        @media (max-width: 420px) {
+            :root {
+                --stage-w: 260px;
+                --card-w: 36px;
+                --card-h: 54px;
+            }
+        }
+
+        /* Your card animation keyframes (unchanged) */
+        @keyframes cardFlow {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(0) rotate(0deg) scale(1);
+                z-index: 90;
+            }
+
+            12% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(-8px) rotate(0deg) scale(1.02);
+                z-index: 140;
+            }
+
+            30% {
+                opacity: 1;
+                transform: translate(calc(-50% + var(--tx)), calc(var(--ty))) rotate(var(--rot)) scale(1);
+                z-index: calc(var(--final-z));
+            }
+
+            55% {
+                transform: translate(calc(-50% + var(--tx)), calc(var(--ty))) rotate(var(--rot)) scale(1);
+                opacity: 1;
+            }
+
+            75% {
+                transform: translate(calc(-50% + (var(--tx) * 0.25)), calc(var(--ty) * 0.25 - 28px)) rotate(calc(var(--rot) * 0.25)) scale(1.02);
+                z-index: 200;
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(calc(var(--stackY))) rotate(0deg) scale(1);
+                opacity: 1;
+                z-index: calc(var(--final-z) + 20);
+            }
+        }
+
+
+
+  
     </style>
 </head>
 
@@ -335,6 +463,21 @@
         <div id="deck-pile" style="z-index:1000;"></div>
 
     </div>
+   <div id="cards-stage">
+        <div class="cardsanimation" id="cardsanimation">
+            <div class="cardanimation" style="--i:1;"></div>
+            <div class="cardanimation" style="--i:2;"></div>
+            <div class="cardanimation" style="--i:3;"></div>
+            <div class="cardanimation" style="--i:4;"></div>
+            <div class="cardanimation" style="--i:5;"></div>
+            <div class="cardanimation" style="--i:6;"></div>
+            <div class="cardanimation" style="--i:7;"></div>
+            <div class="cardanimation" style="--i:8;"></div>
+        </div>
+    </div>
+
+
+
 
 
 
@@ -386,6 +529,8 @@
         const roomId = sessionStorage.getItem("room_id");
         const password = sessionStorage.getItem("password");
         let socket;
+
+        let shuffleAnimation_flag=true
 
         function enableTouchDrag(cardElement) {
             let startX, startY, originalX, originalY;
@@ -1125,12 +1270,25 @@
             };
         }
 
-   
-
-
-
-
         //popup for card_problem end
+
+
+      function shuffleAnimation(start = true) {
+        const cardsStage = document.getElementById('cards-stage');
+
+        if (start && shuffleAnimation_flag) {
+          console.log("stat value", start, "in start");
+            cardsStage.style.display = 'block';
+            shuffleAnimation_flag=false
+        } else {
+            console.log("stat value", start, "in ! start");
+            const cards = document.querySelectorAll('.cardanimation');
+            cardsStage.style.display = 'none';        
+        }
+    }
+
+
+        // card shuffle animation end
 
         // gamecompletedplayer feature end
         function initWebSocket() {
@@ -1146,11 +1304,14 @@
 
                     const players = Object.entries(data.connected_dict).map(([username, color]) => ({ username, color }));
                     drawTable(players);
+                    shuffleAnimation(true); // start shuffling animation
                 }
                 if (data.type === "start_card_distribution") {
                     // start animation
                     const players = document.querySelectorAll(".person");
                     if (players.length > 0) {
+                        shuffleAnimation(false); // start shuffling animation
+
                         startDealingAnimation(players);
                     }
                     socket.send(JSON.stringify({ type: "get_my_cards_req" }));
