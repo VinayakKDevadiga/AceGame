@@ -106,6 +106,25 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                     }
                 )
 
+                # send the current_round_cardlist if the current_round_card list is not empty
+                self.current_round_raw_table_update = await self.redis.hget(self.redis_key, "current_round")
+                self.current_round_table_update = json.loads(self.current_round_raw_table_update.decode()) if self.current_round_raw_table_update else {}
+                
+                # get the "next_player" from self.current_round_table_update
+                self.next_player_table_update_raw = await self.redis.hget(self.redis_key, "current_player")
+                self.next_player_table_update = self.next_player_table_update_raw.decode() if self.next_player_table_update_raw else None
+                
+                if self.current_round_table_update:
+                    # send the current_round_table_update to frontend
+                    logger.info("sending current_round_table_update")
+                    await self.send(text_data=json.dumps({
+                        "type": "current_round_table_update",
+                        "current_round": self.current_round_table_update,
+                        "player": self.username,
+                        "next_player":self.next_player_table_update , # self.winner_dict["winner"],
+                        "player_color_dict": self.connected_dict
+                    }))
+
                 await asyncio.sleep(random.uniform(2, 5.3))  # Optional delay
                 all_connected = all(player in self.connected_dict for player in players)
                 if all_connected:
@@ -308,7 +327,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             distributed_card_dict = {}
             for player in players_connected:
                 distributed_card_dict[player] = []
-                for _ in range(1):
+                for _ in range(10):
                     if not card_list:
                         break
                     card = random.choice(card_list)
@@ -371,6 +390,17 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
     async def get_starting_player(self):
         try:
+            # if current_player exists then give teh current_player
+            self.start_player_rejoin_raw = await self.redis.hget(self.redis_key, "current_player")
+            self.start_player_rejoin = self.start_player_rejoin_raw.decode() if self.start_player_rejoin_raw else None
+
+            if self.start_player_rejoin:
+                logger.info(f"Starting player selected start_player_rejoin: {self.start_player_rejoin}")
+                await self.send(text_data=json.dumps({
+                    "type": "starting_player",
+                    "starting_player": self.start_player_rejoin
+                }))
+                return
             # Add retry logic or small wait if needed
             for attempt in range(3):
                 self.starting_player_data = await self.redis.hget(self.redis_key, "starting_player")
@@ -1103,6 +1133,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
             elif msg_type=="get_starting_player":
                 logger.info("calling get starting player")
+               
                 await self.get_starting_player()
 
             elif msg_type == "playing_card":
@@ -1121,6 +1152,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             elif msg_type == "get_extra_card_from_deck":
                 if await self.handle_extra_card_request_validation():
                     logger.info("Extra card request validation failed.")
+                    self.send_dynamic_message("error", "You Aleady have card of reuired suit")
                     return  # stop further processing
                 # Proceed to give extra card
                 await self.handle_extra_card_request()

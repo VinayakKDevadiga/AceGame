@@ -445,9 +445,44 @@
             }
         }
 
-
-
   
+        /* for error message  */
+        /* 🔹 Message bar container */
+        .message-bar {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: #ef4444;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            z-index: 2000;
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+
+        /* ✅ Different message types */
+        .message-bar.success {
+        background: #22c55e;
+        }
+        .message-bar.warning {
+        background: #f59e0b;
+        }
+        .message-bar.info {
+        background: #3b82f6;
+        }
+
+        /* 🔄 Slide in animation */
+        .message-bar.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+        }
+
     </style>
 </head>
 
@@ -455,6 +490,8 @@
 
     <h2>Round Table Seating</h2>
     <div id="turn-indicator">Waiting for game to start...</div>
+    <!-- Smooth fading message bar -->
+    <div id="error-message-bar" class="message-bar"></div>
 
     <div id="table">
         <div id="played-cards"
@@ -463,6 +500,7 @@
         <div id="deck-pile" style="z-index:1000;"></div>
 
     </div>
+
    <div id="cards-stage">
         <div class="cardsanimation" id="cardsanimation">
             <div class="cardanimation" style="--i:1;"></div>
@@ -475,10 +513,6 @@
             <div class="cardanimation" style="--i:8;"></div>
         </div>
     </div>
-
-
-
-
 
 
     <div id="suit-filters" style="margin-bottom: 10px; text-align: center;">
@@ -826,7 +860,7 @@
             lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
 
             renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
-
+            
             socket.send(JSON.stringify({ type: "get_starting_player" }));
 
             // Wait for next tick so players divs exist
@@ -1277,18 +1311,122 @@
         const cardsStage = document.getElementById('cards-stage');
 
         if (start && shuffleAnimation_flag) {
-          console.log("stat value", start, "in start");
+            console.log("stat value", start, "in start",'shuffleAnimation_flag',shuffleAnimation_flag);
+
+            // Show stage
             cardsStage.style.display = 'block';
-            shuffleAnimation_flag=false
+
+            // // Start animation for all cards
+            // const cards = document.querySelectorAll('#cards-stage .cardanimation');
+            // cards.forEach(card => {
+            // card.style.animation = `cardFlow var(--cycle) cubic-bezier(.2,.9,.2,1) infinite`;
+            // card.style.opacity = 1;
+            // });
+
+            shuffleAnimation_flag = false;
         } else {
-            console.log("stat value", start, "in ! start");
-            const cards = document.querySelectorAll('.cardanimation');
-            cardsStage.style.display = 'none';        
+            console.log("stat value", start, "in !start",'shuffleAnimation_flag',shuffleAnimation_flag);
+
+            const cards = document.querySelectorAll('#cards-stage .cardanimation');
+            // cards.forEach(card => {
+            //     card.style.animation = ''; // Stop animation
+            //     card.style.opacity = 0;    // Hide them
+            // });
+
+            // Hide and clean up
+            cardsStage.style.display = 'none';
         }
-    }
+        }
+
+        // Optional: stop animation when page reloads
+        // window.addEventListener('beforeunload', () => {
+        // shuffleAnimation(false);
+        // });
 
 
         // card shuffle animation end
+
+
+        function card_played_table_update(data){
+            const player_color_dict = data.player_color_dict || {};
+            const playedCardsDiv = document.getElementById('played-cards');
+            playedCardsDiv.innerHTML = '';
+
+            const current_round = data.current_round;
+
+            current_round.played_cards.forEach(entry => {
+                const playerName = Object.keys(entry)[0];
+                const card = entry[playerName];
+
+                const cardDiv = document.createElement('div');
+                cardDiv.classList.add('card');
+                cardDiv.style.border = `3px solid ${player_color_dict[playerName] || 'gray'}`;
+                cardDiv.style.width = '80px';
+                cardDiv.style.height = '120px';
+                cardDiv.style.marginLeft = playedCardsDiv.children.length === 0 ? '0' : '-32px';
+                cardDiv.style.position = 'relative';
+                cardDiv.style.background = '#fff';
+                cardDiv.style.borderRadius = '12px';
+                cardDiv.style.display = 'inline-flex';
+                cardDiv.style.flexDirection = 'column';
+                cardDiv.style.justifyContent = 'center';
+                cardDiv.style.alignItems = 'center';
+                cardDiv.style.fontWeight = 'bold';
+                cardDiv.style.fontSize = '1rem';
+                cardDiv.style.zIndex = 100;
+
+                let symbol = "";
+                if (card.startsWith("D")) symbol = "♦️";
+                else if (card.startsWith("F")) symbol = "♣️";
+                else if (card.startsWith("S")) symbol = "♠️";
+                else if (card.startsWith("H")) symbol = "♥️";
+
+                const valueSpan = document.createElement('span');
+                valueSpan.textContent = card.substring(1);
+                valueSpan.style.fontSize = '1.2rem';
+                valueSpan.style.marginBottom = '5px';
+
+                const symbolSpan = document.createElement('span');
+                symbolSpan.textContent = symbol;
+                symbolSpan.style.fontSize = '2rem';
+
+                cardDiv.appendChild(symbolSpan);
+                cardDiv.appendChild(valueSpan);
+
+                playedCardsDiv.appendChild(cardDiv);
+
+                if (playerName === username) {
+                    lastCards = lastCards.filter(c => c !== card);
+                }
+            });
+
+            currentTurnPlayer = data.next_player;
+            console.log("next player", data.next_player);
+            updateTurnUI(data.next_player);
+        }        
+
+
+
+        // error message start
+        function showMessage(message, type = "error", duration = 2500) {
+            const bar = document.getElementById("error-message-bar");
+            bar.textContent = message;
+
+            // Reset classes
+            bar.className = "message-bar " + type;
+
+            // Show animation
+            requestAnimationFrame(() => {
+                bar.classList.add("show");
+            });
+
+            // Auto hide
+            setTimeout(() => {
+                bar.classList.remove("show");
+            }, duration);
+        }
+
+        // error message end
 
         // gamecompletedplayer feature end
         function initWebSocket() {
@@ -1304,6 +1442,7 @@
 
                     const players = Object.entries(data.connected_dict).map(([username, color]) => ({ username, color }));
                     drawTable(players);
+                    
                     shuffleAnimation(true); // start shuffling animation
                 }
                 if (data.type === "start_card_distribution") {
@@ -1330,68 +1469,16 @@
                         const remaining = 52 - data.player_cards.length * players.length;
                         createDeckPile(remaining);
                     }
+
                 }
 
                 if (data.type === "starting_player") {
                     currentTurnPlayer = data.starting_player;
                     updateTurnUI(data.starting_player);
+                    shuffleAnimation(false)
                 }
                 if (data.type === "card_played") {
-                    const player_color_dict = data.player_color_dict || {};
-                    const playedCardsDiv = document.getElementById('played-cards');
-                    playedCardsDiv.innerHTML = '';
-
-                    const current_round = data.current_round;
-
-                    current_round.played_cards.forEach(entry => {
-                        const playerName = Object.keys(entry)[0];
-                        const card = entry[playerName];
-
-                        const cardDiv = document.createElement('div');
-                        cardDiv.classList.add('card');
-                        cardDiv.style.border = `3px solid ${player_color_dict[playerName] || 'gray'}`;
-                        cardDiv.style.width = '80px';
-                        cardDiv.style.height = '120px';
-                        cardDiv.style.marginLeft = playedCardsDiv.children.length === 0 ? '0' : '-32px';
-                        cardDiv.style.position = 'relative';
-                        cardDiv.style.background = '#fff';
-                        cardDiv.style.borderRadius = '12px';
-                        cardDiv.style.display = 'inline-flex';
-                        cardDiv.style.flexDirection = 'column';
-                        cardDiv.style.justifyContent = 'center';
-                        cardDiv.style.alignItems = 'center';
-                        cardDiv.style.fontWeight = 'bold';
-                        cardDiv.style.fontSize = '1rem';
-                        cardDiv.style.zIndex = 100;
-
-                        let symbol = "";
-                        if (card.startsWith("D")) symbol = "♦️";
-                        else if (card.startsWith("F")) symbol = "♣️";
-                        else if (card.startsWith("S")) symbol = "♠️";
-                        else if (card.startsWith("H")) symbol = "♥️";
-
-                        const valueSpan = document.createElement('span');
-                        valueSpan.textContent = card.substring(1);
-                        valueSpan.style.fontSize = '1.2rem';
-                        valueSpan.style.marginBottom = '5px';
-
-                        const symbolSpan = document.createElement('span');
-                        symbolSpan.textContent = symbol;
-                        symbolSpan.style.fontSize = '2rem';
-
-                        cardDiv.appendChild(symbolSpan);
-                        cardDiv.appendChild(valueSpan);
-
-                        playedCardsDiv.appendChild(cardDiv);
-
-                        if (playerName === username) {
-                            lastCards = lastCards.filter(c => c !== card);
-                        }
-                    });
-
-                    currentTurnPlayer = data.next_player;
-                    console.log("next player", data.next_player);
-                    updateTurnUI(data.next_player);
+                    card_played_table_update(data)
                 }
                 if (data.type == "clear_round") {
                     console.log("winner", data.next_player);
@@ -1502,11 +1589,19 @@
                     console.log("Your updated card list after acknowledging:", userCardList);
                 }
 
-                if (data.type === "error") {
-                    // alert(data.message);
-                    console.log(data.players);
-                    console.log(data.other_player_card_list);
-                    console.log(data.connected_dict);                    
+                if (data.type=="current_round_table_update"){
+                    console.log("current_round_table_update recieved by client");
+                    shuffleAnimation(false); // start shuffling animation
+                    card_played_table_update(data)
+                    console.log("current_round_table_update recieved by client completed");
+                    
+
+
+                }
+
+                if (data.type === "error") {    
+                    showMessage(data.message, "error");
+               
     
                 }
             };
