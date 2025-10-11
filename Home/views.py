@@ -175,6 +175,8 @@ def Game_Over(request):
         game_completed_player_list = json.loads(completed_json) if completed_json else []
     except Exception:
         game_completed_player_list = []
+
+    logger.info(f"in Game Over view: game_completed_player_list: {game_completed_player_list} and looser :{looser}")
     response = render(request, 'winner_page.html', {
         'looser': looser,
         'game_completed_player_list': game_completed_player_list,

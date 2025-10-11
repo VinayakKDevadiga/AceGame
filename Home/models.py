@@ -15,6 +15,7 @@ class PlayerStats(models.Model):
     username = models.CharField(max_length=100)
     number_of_games_played = models.IntegerField(default=0)
     number_of_games_won = models.IntegerField(default=0)
+    number_of_games_lost = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.username} - Played: {self.number_of_games_played}, Won: {self.number_of_games_won}"
@@ -24,7 +25,7 @@ from django.utils import timezone
 from django.contrib.postgres.fields import ArrayField, JSONField  # Use JSONField for complex data
 
 class CompletedGame(models.Model):
-    game_id = models.CharField(max_length=100, unique=True)
+    room_id = models.CharField(max_length=100)
     selected_game = models.CharField(max_length=100)
     owner = models.CharField(max_length=100)
     players = ArrayField(models.CharField(max_length=100), default=list)
@@ -50,4 +51,4 @@ class CompletedGame(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"{self.selected_game} ({self.game_id})"
+        return f"{self.selected_game} ({self.room_id})"

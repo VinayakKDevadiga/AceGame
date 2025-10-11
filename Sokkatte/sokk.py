@@ -14,6 +14,9 @@ from redis.asyncio.lock import Lock
 from redis.exceptions import LockError, LockNotOwnedError
 import time
 
+from Home.models import CompletedGame, PlayerStats
+from asgiref.sync import sync_to_async
+import json
 
 COLOR_CODES = [
     "#e6194b", "#3cb44b", "#ffe119", "#0082c8", "#f58231", "#911eb4", "#46f0f0", "#f032e6",
@@ -245,25 +248,17 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         }))
     
     async def game_over(self, event):
-        logger.info(f"Game over, looser is: {event.get('looser')}")
+        logger.info(f" msg sender Game over, looser is: {event.get('looser')}")
+        logger.info(f"game_completed_player_list: {event.get('game_completed_player_list', [])}")
         await self.send(text_data=json.dumps({
             "type": "game_over",
             "looser": event.get("looser"),
             "game_completed_player_list": event.get("game_completed_player_list", []),
         }))
-
-        #check the data inserted if not then only insert
-        self.inserted_to_db=await self.redis.hget(self.redis_key, "inserted_to_db")
-        logger.info(f"came to next stage:{self.inserted_to_db}")
-        if self.inserted_to_db=="b'False'":
-            data_dict = await self.redis.hgetall(f"gamedata:{self.redis_key}")
-            logger.info(f"data:{data_dict}")
-            
-            if not data_dict:
-                logger.info(f"No data found for key: gamedata:{data_dict}")
-                
-            
-
+        await self.update_gamedata_to_db()
+        # empty the redis key
+        await self.redis.delete(self.redis_key)
+        logger.info("Deleted gamedata from Redis after game over.")
         
 
     async def card_problem(self, event):
@@ -495,7 +490,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             await self.start_next_round()
             self.game_over_flag=await self.check_gamecompletion_of_players()
             if self.game_over_flag=="GAME_OVER":
-                            return  # stop further processing as game is over
+                return  # stop further processing as game is over
             # send the empty current_round and clear the cards in frontend
             logger.info(f"Round winner: {self.winner_dict}")
 
@@ -556,16 +551,23 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         self.cardList = json.loads(self.cardList_raw.decode()) if self.cardList_raw else []
         self.game_completed_player_list_raw = await self.redis.hget(self.redis_key, "game_completed_players_list")
         self.game_completed_player_list = json.loads(self.cardList_raw.decode()) if self.game_completed_player_list_raw else []
+        self.current_round_data_raw=await self.redis.hget(self.redis_key, "current_round")
+        self.current_round_data = json.loads(self.current_round_data_raw.decode()) if self.current_round_data_raw else {}
 
         # Collect players who have finished
         self.completed_players=[]
         for player, player_card_list in self.players_card_list.items():
             # If hand is empty (✅ you can drop `and not self.cardList` if you want completion
             # to be only when deck is also empty, keep it)
+            # if the players card_in the current_round then , he is not completed the game
+            player_check_in_current_round = any(
+                player in entry for entry in self.current_round_data.get("played_cards", [])
+            )
             if not player_card_list and not self.cardList:
-                if player not in self.game_completed_player_list:
-                    self.completed_players.append(player) 
+                if player not in self.game_completed_player_list and not player_check_in_current_round:
+                    self.completed_players.append(player)
                     self.game_completed_player_list.append(player)
+                    logger.info(f"Player '{player}' has completed the game. completed_players: {self.completed_players} and game_completed_player_list: {self.game_completed_player_list}")
 
         # Remove completed players safely
         # for player in self.completed_players:
@@ -610,9 +612,9 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 await self.redis.hset(self.redis_key, "game_completed_players_list", json.dumps(self.game_completed_player_list))
                 return "GAME_OVER"
 
-            if len(self.players_list_updated)==1 and self.game_completed_player_list: #if player_list_updated is 1 and teh completed_player is not empty.list is n-1 then the last player is looser
+            if len(self.players_list_updated)==1 and self.game_completed_player_list: #if player_list_updated is 1 and the completed_player is not empty.list is n-1 then the last player is looser
                 logger.info(f"Game over. Looser is: {self.players_list_updated[0]} and game_completed_player_list: {self.game_completed_player_list}")
-                self.game_completed_player_list.append(self.username)
+                self.game_completed_player_list.append(self.players_list_updated[0])
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
@@ -698,6 +700,27 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                     #if current player has only three cards and other player has no cards then let the other player has to trigger red day to give one card to other player who dropped his card player.
                     return False
                 
+                if total_number_of_cards==4:
+                    logger.info("total_number_of_cards is 4")
+                    if (len(self.players_card_list_p[self.current_player]))==2 and len(self.players_card_list_p[self.other_player])==2:
+                        #if each players have 2 cards and then if anyone has same suit 2 cards of same suit with him then he will have winning posibility so return false
+                        # check for current_player
+                        suit_check={"player1": {}, "player2": {}}
+                        for card in self.player1_card:
+                            if card[0] in suit_check["player1"]:
+                                suit_check["player1"][card[0]] += 1
+                                if suit_check["player1"][card[0]]==2:
+                                    return False
+                            else:
+                                suit_check["player1"][card[0]] = 1
+                        for card in self.player2_card:
+                            if card[0] in suit_check["player2"]:
+                                suit_check["player2"][card[0]] += 1
+                                if suit_check["player2"][card[0]]==2:
+                                    return False
+                            else:
+                                suit_check["player2"][card[0]] = 1
+                            
                 #for 3 card scenario handle
                 #no need to handle because its a card_problem handled below by giving extra cards.
 
@@ -745,6 +768,68 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             self.next_player=self.players_list[(self.current_player_index+1)%len(self.players_list)]
             await self.redis.hset(self.redis_key, "current_player", self.next_player)
         
+    async def update_gamedata_to_db(self):
+        inserted_to_db = await self.redis.hget(self.redis_key, "inserted_to_db")
+        if inserted_to_db == b"True":
+            logger.info("Game data already inserted to DB. Skipping duplicate insertion.")
+            return
+
+        
+
+        async def parse_json(value):
+            try:
+                decoded_value = value.decode() if isinstance(value, bytes) else value
+                logger.info(f"value:{decoded_value} json.loads(decoded_value){json.loads(decoded_value)}")
+                return json.loads(decoded_value)
+            except Exception:
+                return decoded_value
+
+        # ✅ Properly decode keys and values
+        raw_data = await self.redis.hgetall(self.redis_key)
+        clean_data = {k.decode(): await parse_json(v) for k, v in raw_data.items()}
+
+        await sync_to_async(CompletedGame.objects.create)(
+            room_id=self.redis_key.split(":")[1],
+            selected_game=clean_data.get("selected_game", ""),
+            owner=clean_data.get("owner", ""),
+            players=clean_data.get("players", []),
+            players_connected_list=clean_data.get("players_connected_list", {}),
+            players_card_list=clean_data.get("players_card_list", {}),
+            played_card_list=clean_data.get("played_card_list", []),
+            game_completed_players_list=clean_data.get("game_completed_players_list", []),
+            starting_player=clean_data.get("starting_player", ""),
+            current_player=clean_data.get("current_player", ""),
+            status=clean_data.get("status", ""),
+            card_distributed_flag=bool(int(clean_data.get("card_distributed_flag", 0))),
+            duplicate_owner_login=bool(int(clean_data.get("duplicate_owner_login", 0))),
+            card_problem=clean_data.get("card_problem", {}),
+            current_round=clean_data.get("current_round", {}),
+            cardList=clean_data.get("cardList", []),
+            gamelist=clean_data.get("gamelist", []),
+        )
+
+        await self.redis.hset(self.redis_key, "inserted_to_db", "True")
+        logger.info(f"✅ Game data for {self.redis_key} successfully saved to DB.")
+        
+        # get the list of players who completed the game
+        completed_players = clean_data.get("game_completed_players_list", [])
+        players = clean_data.get("players", [])
+
+        for username in completed_players:
+            # Use sync_to_async to work with Django ORM in async function
+            async def update_stats():
+                stats, created = await sync_to_async(PlayerStats.objects.get_or_create)(username=username)
+                stats.number_of_games_played += 1
+                if username in players:
+                    stats.number_of_games_lost += 1  # assuming the last player in completed list lost
+                else:
+                    stats.number_of_games_won += 1  # assuming all completed players won
+                await sync_to_async(stats.save)()
+                logger.info(f"Updated PlayerStats: {username} - Played: {stats.number_of_games_played}, Won: {stats.number_of_games_won}")
+
+            await update_stats()
+
+        logger.info("✅ PlayerStats updated for completed players.")
 
     async def drop_play_card_to_table(self,card):
         self.next_player=None
@@ -890,6 +975,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         # check whether smashed player has card if not then next player beside him is the next round starter
                         self.game_over_flag=await self.check_gamecompletion_of_players() 
                         if self.game_over_flag=="GAME_OVER":
+                            # add looser to the game_completed player
+                            logger.info("Game over after RED DAY. Saving game data to DB...")
                             return  # stop further processing as game is over
                         
                         # 6. Broadcast RED DAY to all
