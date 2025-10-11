@@ -185,3 +185,21 @@ def Game_Over(request):
     # if token:
         # response.set_cookie('jwt', token, path='/', samesite='Lax')
     return response
+
+
+
+# views.py
+from Home.models import PlayerStats
+
+def player_stats_view(request):
+    token = request.COOKIES.get('jwt')
+    username = None
+    logger.info(f"token in view of sokkatte : {token}")
+    if token:
+        payload = decode_jwt(token)
+        if payload:
+            username = payload.get('username')
+            logger.info(f" Home  request{username}")
+            players = PlayerStats.objects.filter(username=username)
+            return render(request, 'player_stats.html', {'players': players})
+    return redirect('home')  # Redirect to home if no valid token

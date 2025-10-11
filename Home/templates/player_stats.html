@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AceGame Player Statistics</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #6a11cb, #2575fc); /* page gradient */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: #fff;
+  }
+
+  .stats-card {
+    background: linear-gradient(145deg, #1f1f1f, #3a3a3a); /* dark gradient for visibility */
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    padding: 35px 25px;
+    width: 360px;
+    text-align: center;
+    border: 2px solid #ffeb3b; /* accent border to make it pop */
+  }
+
+  .stats-card h2 {
+    margin-bottom: 25px;
+    font-size: 26px;
+    color: #ffeb3b; /* bright heading color */
+  }
+
+  .stat {
+    margin: 15px 0;
+    font-size: 18px;
+    color: #fff;
+  }
+
+  .stat span {
+    font-weight: bold;
+    font-size: 22px;
+    color: #ffeb3b; /* accent color for numbers */
+}
+
+    .stat .win {
+        color: #4caf50; /* green for wins */
+    }
+    .stat .lost {
+        color: #f44336; /* red for losses */
+    }
+</style>
+</head>
+<body>
+
+<div class="stats-card">
+  {% for player in players %}
+  <h2>{{ player.username }}'s Stats</h2>
+  <div class="stat">Matches Played: <span class="counter" data-target="{{ player.number_of_games_played }}">0</span></div>
+  <div class="stat">Wins: <span class="counter win" data-target="{{ player.number_of_games_won }}">0</span></div>
+  <div class="stat">Lost: <span class="counter lost" data-target="{{ player.number_of_games_lost }}">0</span></div>
+  <div class="stat">Win %: <span class="counter win" data-target="{{ player.win_percentage }}">0</span>%</div>
+  <div class="stat">Lost %: <span class="counter lost" data-target="{{ player.lost_percentage }}">0</span>%</div>
+  {% empty %}
+  <div>No stats found for you.</div>
+  {% endfor %}
+</div>
+
+<script>
+const counters = document.querySelectorAll('.counter');
+counters.forEach(counter => {
+  const target = +counter.getAttribute('data-target');
+  let start = 0;
+  const duration = 1500;
+  const stepTime = Math.max(Math.floor(duration / target), 20);
+  const updateCounter = () => {
+    start += 1;
+    counter.textContent = start;
+    if (start < target) {
+      setTimeout(updateCounter, stepTime);
+    } else {
+      counter.textContent = target;
+    }
+  };
+  updateCounter();
+});
+</script>
+
+</body>
+</html>

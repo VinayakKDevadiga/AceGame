@@ -6,43 +6,70 @@
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f9f9f9;
+            /* Gradient background like the stats page */
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
             text-align: center;
             padding: 40px;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
         }
+
         .results-box {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px #ccc;
+            /* Dark gradient card with frosted look */
+            background: linear-gradient(145deg, #1f1f1f, #3a3a3a);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             display: inline-block;
-            padding: 32px 48px;
-            margin-bottom: 32px;
+            padding: 40px 50px;
+            max-width: 400px;
+            width: 100%;
+            border: 2px solid #ffeb3b;
         }
+
+        .results-box h2 {
+            margin-bottom: 30px;
+            font-size: 26px;
+            color: #ffeb3b;
+        }
+
         .rank-list {
             margin: 0 auto 24px auto;
             padding: 0;
             list-style: none;
             max-width: 350px;
         }
+
         .rank-list li {
-            background: #e6beff;
-            margin: 8px 0;
-            padding: 10px 18px;
-            border-radius: 8px;
+            background: #3a3a3a;
+            margin: 10px 0;
+            padding: 12px 20px;
+            border-radius: 10px;
             font-size: 1.1em;
             font-weight: 500;
+            color: #fff;
+            border: 1px solid #ffeb3b;
         }
+
         .looser {
-            color: #e6194b;
+            color: #ff4b5c;
             font-weight: bold;
+            background: #5a1f1f;
+            border: 1px solid #ff4b5c;
         }
+
         .message {
-            font-size: 1.2em;
-            margin-bottom: 24px;
+            font-size: 1.1em;
+            margin: 8px 0;
         }
+
         .btn-group {
             margin-top: 24px;
         }
+
         .btn {
             text-decoration: none;
             background: #3cb44b;
@@ -51,17 +78,51 @@
             border-radius: 6px;
             padding: 12px 28px;
             font-size: 1em;
-            margin: 0 12px;
+            margin: 0 8px;
             cursor: pointer;
             transition: background 0.2s;
         }
+
         .btn.home {
             background: #0082c8;
         }
+
         .btn:hover {
             background: #911eb4;
         }
-    </style>
+
+
+    .btn-group {
+        margin-top: 24px;
+        display: flex;
+        justify-content: center; /* center buttons horizontally */
+        flex-wrap: wrap;         /* wrap to next line on small screens */
+        gap: 12px;               /* spacing between buttons */
+    }
+
+    .btn {
+        text-decoration: none;
+        background: #3cb44b;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 12px 20px;      /* slightly smaller to fit better */
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.2s;
+        min-width: 100px;        /* ensure buttons have similar width */
+        text-align: center;
+    }
+
+    .btn.home {
+        background: #0082c8;
+    }
+
+    .btn:hover {
+        background: #911eb4;
+    }
+</style>
+
 </head>
 <body>
     <div class="results-box">
@@ -81,6 +142,7 @@
         <div class="btn-group">
             <a href="{% url 'playgame' %}" class="btn">Play Again</a>
             <a href="{% url 'home' %}" class="btn home">Home</a>
+            <a href="{% url 'player-stats' %}" class="btn home">Player Stats</a>
         </div>
     </div>
 </body>

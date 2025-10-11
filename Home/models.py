@@ -16,6 +16,22 @@ class PlayerStats(models.Model):
     number_of_games_played = models.IntegerField(default=0)
     number_of_games_won = models.IntegerField(default=0)
     number_of_games_lost = models.IntegerField(default=0)
+    
+    def number_of_games_won_(self):
+        return self.number_of_games_won
+
+    def number_of_games_lost_(self):
+        return self.number_of_games_lost
+
+    def win_percentage(self):
+        if self.number_of_games_played == 0:
+            return 0
+        return round((self.number_of_games_won_() / self.number_of_games_played) * 100, 2)
+
+    def lost_percentage(self):
+        if self.number_of_games_played == 0:
+            return 0
+        return round((self.number_of_games_lost_() / self.number_of_games_played) * 100, 2)
 
     def __str__(self):
         return f"{self.username} - Played: {self.number_of_games_played}, Won: {self.number_of_games_won}"
