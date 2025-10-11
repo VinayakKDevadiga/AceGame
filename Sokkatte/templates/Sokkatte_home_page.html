@@ -487,6 +487,7 @@
 </head>
 
 <body>
+  <button id="exit-button">Full Screen</button>
 
     <h2>Round Table Seating</h2>
     <div id="turn-indicator">Waiting for game to start...</div>
@@ -555,6 +556,17 @@
     </div>
 
     <script>
+        document.getElementById("exit-button").addEventListener("click", () => {
+        const elem = document.documentElement; // full page
+        if (!document.fullscreenElement) {
+            elem.requestFullscreen(); // Enter fullscreen
+            document.getElementById("exit-button").innerText="Exit"
+        } else {
+            document.exitFullscreen(); // Exit fullscreen
+            document.getElementById("exit-button").innerText="Full Screen"
+        }
+        });
+
         let lastCards = [];
         let lastBorderColor = "gray";
         let currentSuitFilter = "ALL";

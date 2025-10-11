@@ -252,6 +252,20 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "game_completed_player_list": event.get("game_completed_player_list", []),
         }))
 
+        #check the data inserted if not then only insert
+        self.inserted_to_db=await self.redis.hget(self.redis_key, "inserted_to_db")
+        logger.info(f"came to next stage:{self.inserted_to_db}")
+        if self.inserted_to_db=="b'False'":
+            data_dict = await self.redis.hgetall(f"gamedata:{self.redis_key}")
+            logger.info(f"data:{data_dict}")
+            
+            if not data_dict:
+                logger.info(f"No data found for key: gamedata:{data_dict}")
+                
+            
+
+        
+
     async def card_problem(self, event):
         logger.info(f"Card problem detected")
         await self.send(text_data=json.dumps({
@@ -653,7 +667,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             self.player1_card=self.players_card_list_p[self.players_list_p[0]]
             self.player2_card=self.players_card_list_p[self.players_list_p[1]]
             total_number_of_cards=len(self.player1_card)+len(self.player2_card)
-    
+            
+            
             if total_number_of_cards==3 or total_number_of_cards==4:
                 self.player1_suits = {card[0] for card in self.player1_card}
                 self.player2_suits = {card[0] for card in self.player2_card}
@@ -666,9 +681,10 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 self.other_player_card_list=self.players_card_list_p[self.other_player]
 
 
-                # if the card_dropped is present in other players cards_list then return False:
-                if card_dropped in self.other_player_card_list:
-                    return False
+                # if the card_dropped suit is present in other players cards_list then return False:
+                for card in self.other_player_card_list:
+                    if card_dropped[0] == card[0]:
+                        return False
 
                 if len(self.other_player_card_list)==1 : #if other player has only one card then no need to check the suit problem he will smash this current_player and win
                     return False
@@ -677,8 +693,11 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 if (len(self.players_card_list_p[self.current_player]))==1 and len(self.players_card_list_p[self.other_player])==3:
                     #if current player has only one card and other player has 3 cards then let the other player has to trigger red day to give one card to current player.
                     return False
-                
 
+                if len(self.players_card_list_p[self.current_player])==3 and len(self.players_card_list_p[self.other_player])==0:
+                    #if current player has only three cards and other player has no cards then let the other player has to trigger red day to give one card to other player who dropped his card player.
+                    return False
+                
                 #for 3 card scenario handle
                 #no need to handle because its a card_problem handled below by giving extra cards.
 

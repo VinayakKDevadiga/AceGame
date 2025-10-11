@@ -93,7 +93,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     "players_connected_list": json.dumps({}),
                     "played_card_list": json.dumps([]),
                     "game_completed_players_list":json.dumps([]),
-                    "card_problem": json.dumps({"card_problem": False})
+                    "card_problem": json.dumps({"card_problem": False}),
+                    "inserted_to_db":"False"
                 }
                 logger.info(f"IN NOT STATUS PART and {initial_data}")
                 await self.redis.hset("test_key", mapping={"foo": "bar"})
