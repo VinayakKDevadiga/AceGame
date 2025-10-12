@@ -1,32 +1,4 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Wait for Players</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'waitforplayers/waitforplayers.css' %}">
-</head>
-
-<body>
-    <div class="container">
-        <h1>Waiting Room</h1>
-        <p style="text-align: center;">Room ID: <span id="roomIdDisplay"></span></p>
-        <h2>Players in Room</h2>
-        <h1 id="error"></h1>
-        <ul id="playerList"></ul>
-        <h2>Select Your Game</h2>
-        <div id="gameListContainer" class="game-cards-container"></div>
-        <button id="startGameBtn"
-            style="display: none; margin-top: 20px; padding: 10px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">
-            Start</button>
-
-        <h2 id="countdown"
-            style="display: none; text-align: center; font-size: 28px; color: #4CAF50; margin-top: 20px;"></h2>
-    </div>
-    <script >
-         
+ 
         window.addEventListener("pageshow", function (event) {
             if (event.persisted) window.location.reload();
         });
@@ -261,8 +233,3 @@
                 });
             }
         }
-    </script>
-
-</body>
-
-</html>

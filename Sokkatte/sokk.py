@@ -226,6 +226,29 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "message": message
         }))
 
+    async def send_group_message(self, event):
+        message_type = event["message_type"]
+        message = event["message"]
+        await self.send(text_data=json.dumps({
+            "type": "error",
+            "message": message
+        }))
+        
+    async def send_dynamic_group_message(self, message_type, message):
+        """
+        Send a message with dynamic type and content to the client.
+        :param message_type: The type of the message (string)
+        :param message: The actual message (string or dict)
+        """
+        await self.channel_layer.group_send(
+            self.group_name,
+            {
+                "type": "send_group_message",   # this must match a handler method
+                "message_type": message_type,
+                "message": message
+            }
+        )
+        
     async def card_played(self, event):
         logger.info(f"Card played: {event.get('card')}, next player: {event.get('next_player')}")
         await self.send(text_data=json.dumps({
@@ -336,7 +359,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             distributed_card_dict = {}
             for player in players_connected:
                 distributed_card_dict[player] = []
-                for _ in range(10):
+                for _ in range(5):
                     if not card_list:
                         break
                     card = random.choice(card_list)
@@ -1154,7 +1177,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "new_cards": self.drawn_cards,
             "full_cards": self.player_cards
         }))
-
+        await self.send_dynamic_group_message( "error", f"Player {self.username} got {len(self.drawn_cards)} extra cards from deck")
         return False  # continue processing if needed
 
 

@@ -1,0 +1,93 @@
+    /* --- Your Styles (unchanged) --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            color: #333;
+            padding: 30px 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h2,
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #222;
+            font-size: 24px;
+        }
+
+        h1#error {
+            color: red;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        ul#playerList {
+            list-style: none;
+            padding-left: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 0;
+        }
+
+        ul#playerList li {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: #222;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        ul#playerList li:hover {
+            transform: scale(1.03);
+        }
+
+        .game-cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .game-card {
+            background: linear-gradient(to right, #ffecd2, #fcb69f);
+            color: #222;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            border: 2px solid transparent;
+        }
+
+        .game-card:hover {
+            transform: scale(1.05);
+        }
+
+        .game-card.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }

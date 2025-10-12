@@ -313,7 +313,17 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                 if redis_owner and redis_owner.decode() == self.username:
                     logger.info(f"Game started by owner: {self.username}")
                     await self.redis.hset(self.redis_key, "status", "started")
-
+                    
+                    # if only one player then dont start the game
+                    players=self.redis.hget(self.redis_key, "players")
+                    players=json.loads((await players).decode()) if players else []
+                    if len(players)<2:
+                        await self.redis.hset(self.redis_key, "status", "waiting")
+                        await self.send(text_data=json.dumps({
+                            "error": "At least 2 players are required to start the game."
+                        }))
+                        return
+                    
                     # Notify all players to start game
                     await self.channel_layer.group_send(
                         self.group_name,

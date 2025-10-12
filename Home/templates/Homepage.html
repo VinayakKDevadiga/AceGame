@@ -7,12 +7,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Ace Game</title>
     <link rel="stylesheet" href="{% static 'Home/homepage.css' %}">
+    <style>
+        /* === Header & Popup Menu Styling === */
+        header {
+            position: relative;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #005eff, #00aaff);
+            color: #fff;
+        }
+
+        .logo {
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-size: 1.6rem;
+        }
+
+        .menu-btn {
+            font-size: 1.8rem; /* slightly bigger */
+            cursor: pointer;
+            color: #fff;
+            user-select: none;
+        }
+
+        .popup-menu {
+            display: none;
+            position: absolute;
+            top: 60px; /* below menu button */
+            right: 40px; /* aligned with header padding */
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 15px 0;
+            width: 220px;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+            z-index: 1000;
+        }
+
+        .popup-menu a {
+            display: block;
+            padding: 12px 25px;
+            font-size: 1.1rem; /* larger and readable */
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .popup-menu a:hover {
+            background: whitesmoke;
+            color: #000;
+            border-radius: 5%;
+        }
+    </style>
 </head>
 
 <body>
 
+    <!-- Header with Hamburger Menu -->
     <header>
-        Ace Game 🎴
+        <div class="logo">Ace Game 🎴</div>
+        <nav>
+            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+            <div class="popup-menu" id="popupMenu">
+                <a href="{% url 'About' %}">About Us</a>
+                <a href="{% url 'privacy-policy' %}">Privacy Policy</a>
+                <a href="{% url 'sokkate-rules' %}">Rules → Sokkatte</a>
+                <a href="{% url 'player-stats' %}">Player Stats</a>
+            </div>
+        </nav>
     </header>
 
     <main>
@@ -23,8 +89,11 @@
             <!-- Dynamic buttons will be rendered by JS -->
         </div>
 
-        <div id="data-urls" data-playgame-url="{% url 'playgame' %}" data-login-url="{% url 'account:login' %}"
-            data-logout-url="{% url 'account:logout' %}" data-signup-url="{% url 'account:signup' %}"
+        <div id="data-urls"
+            data-playgame-url="{% url 'playgame' %}"
+            data-login-url="{% url 'account:login' %}"
+            data-logout-url="{% url 'account:logout' %}"
+            data-signup-url="{% url 'account:signup' %}"
             data-current-user-url="{% url 'current_user' %}">
         </div>
     </main>
@@ -34,6 +103,22 @@
     </footer>
 
     <script>
+        // === Toggle Popup Menu ===
+        function toggleMenu() {
+            const menu = document.getElementById("popupMenu");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        }
+
+        // Close menu if clicked outside
+        window.addEventListener("click", function (e) {
+            const menu = document.getElementById("popupMenu");
+            const btn = document.querySelector(".menu-btn");
+            if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.style.display = "none";
+            }
+        });
+
+        // === JWT Authentication ===
         const usernameText = document.getElementById("username-text");
         const btnGroup = document.getElementById("btn-group");
         const urls = document.getElementById("data-urls").dataset;
@@ -42,11 +127,7 @@
             const cookies = document.cookie.split(';');
             for (let cookie of cookies) {
                 const [key, value] = cookie.trim().split('=');
-                if (key === 'jwt') {
-                    console.log('jwt found', key);
-
-                    return decodeURIComponent(value);
-                }
+                if (key === 'jwt') return decodeURIComponent(value);
             }
             return null;
         }
@@ -61,10 +142,7 @@
 
         async function checkAuth() {
             const token = getJWTToken();
-            if (!token) {
-                console.log("JWT not found in cookies.");
-                return showGuestOptions();
-            }
+            if (!token) return showGuestOptions();
 
             try {
                 const response = await fetch(urls.currentUserUrl, {
@@ -83,7 +161,6 @@
                         <a href="#" class="btn" onclick="logout()">Logout</a>
                     `;
                 } else {
-                    console.warn("Token invalid or expired");
                     showGuestOptions();
                 }
             } catch (error) {
@@ -100,9 +177,6 @@
             }
             location.reload();
         }
-
-        // Debugging: show cookies
-        console.log("Available cookies:", document.cookie);
 
         checkAuth();
     </script>

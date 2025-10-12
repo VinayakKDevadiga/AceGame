@@ -13,6 +13,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
+from Home.models import PlayerStats
+import json
+
+
 User = get_user_model()
 import logging
 logger = logging.getLogger('myapp')  # must match logger name in settings
@@ -49,9 +53,6 @@ def get_user(request):
         return JsonResponse({'detail': 'Invalid token', 'error': str(e)}, status=401)
 
 
-import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 
 
 @jwt_required
@@ -188,9 +189,7 @@ def Game_Over(request):
 
 
 
-# views.py
-from Home.models import PlayerStats
-
+@jwt_required
 def player_stats_view(request):
     token = request.COOKIES.get('jwt')
     username = None
@@ -203,3 +202,14 @@ def player_stats_view(request):
             players = PlayerStats.objects.filter(username=username)
             return render(request, 'player_stats.html', {'players': players})
     return redirect('home')  # Redirect to home if no valid token
+
+
+
+def Privacy_Policy(request):
+    return render(request, 'privacy_policy.html')
+
+def About(request):
+    return render(request, 'about_us.html')
+
+def Sokkate_Rules(request):
+    return render(request, 'sokkatte_rules.html')
