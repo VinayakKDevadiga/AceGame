@@ -242,7 +242,7 @@ def Login(request):
         else:
             return JsonResponse({"detail": "Invalid username or password."}, status=401)
 
-    return render(request, 'login/login.html', {'form': AuthenticationForm()})
+    return render(request, 'login/Login.html', {'form': AuthenticationForm()})
 
 
 # def Logout(request):

@@ -21,3 +21,4 @@ def StartGame(request):
     # if token:
         # response.set_cookie('jwt', token, path='/', samesite='Lax')
     return response
+
