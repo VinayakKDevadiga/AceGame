@@ -4,53 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AceGame Player Statistics</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #6a11cb, #2575fc); /* page gradient */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    color: #fff;
-  }
-
-  .stats-card {
-    background: linear-gradient(145deg, #1f1f1f, #3a3a3a); /* dark gradient for visibility */
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    padding: 35px 25px;
-    width: 360px;
-    text-align: center;
-    border: 2px solid #ffeb3b; /* accent border to make it pop */
-  }
-
-  .stats-card h2 {
-    margin-bottom: 25px;
-    font-size: 26px;
-    color: #ffeb3b; /* bright heading color */
-  }
-
-  .stat {
-    margin: 15px 0;
-    font-size: 18px;
-    color: #fff;
-  }
-
-  .stat span {
-    font-weight: bold;
-    font-size: 22px;
-    color: #ffeb3b; /* accent color for numbers */
-}
-
-    .stat .win {
-        color: #4caf50; /* green for wins */
-    }
-    .stat .lost {
-        color: #f44336; /* red for losses */
-    }
-</style>
+<link rel="stylesheet" href="{% static 'player_stats/player_stats.css' %}">
 </head>
 <body>
 

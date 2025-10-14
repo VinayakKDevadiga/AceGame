@@ -44,19 +44,11 @@ def SignUp(request):
             if User.objects.filter(email=email).exists():
                 form.add_error('email', "Email is already in use.")
                 return render(request, 'signup/Signup.html', {'form': form})
-
+            
+            # Create the user object but don't save yet
             user = form.save(commit=False)
             user.is_active = False
             user.save()
-
-            # initializing the room table entry for user
-            RoomTable.objects.create(
-                username=user.username,
-                email=user.email,
-                room_id=generate_unique_room_id(user.username),  # You can use a function or UUID here
-            )
-
-
 
             # Generate token and UID for verification link
             token = default_token_generator.make_token(user)
@@ -81,9 +73,19 @@ def SignUp(request):
                 )
 
                 if success:
-                    messages.success(request, "User created! A verification email has been sent.")
-                    return redirect('login')
+                    # initializing the room table entry for user
+                    RoomTable.objects.create(
+                        username=user.username,
+                        email=user.email,
+                        room_id=generate_unique_room_id(user.username),  # You can use a function or UUID here
+                    )
+                    messages.success(request, f"User created! A verification email has been sent to {user.email}. Please verify your email to activate your account.")
+                    # return redirect('account:login')
+                    return render(request, 'signup/Signup.html',{'form': form})
+                
                 else:
+                    # Delete user if email sending failed
+                    user.delete()
                     messages.error(request, "Failed to send verification email. Please try again later.")
                     return render(request, 'signup/Signup.html', {'form': form})
             except Exception as e:
@@ -102,16 +104,26 @@ def verify_email(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = User.objects.get(pk=uid)
+
+        # If user already active, stop early
+        if user.is_active:
+            messages.info(request, "Your account is already verified.")
+            return render(request, 'account/verify_email_page.html')
+
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
             messages.success(request, "Your account has been activated successfully!")
-            return redirect('login')
+            return render(request, 'account/verify_email_page.html')  # don't pass 'messages'
+
         else:
             messages.error(request, "Invalid or expired activation link.")
+            return render(request, 'account/verify_email_page.html')
+
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         messages.error(request, "Invalid activation link.")
-    return redirect('signup')
+        return render(request, 'account/verify_email_page.html')
+
 
 
 def send_verification_code(request):
@@ -134,7 +146,7 @@ def send_verification_code(request):
 
                 if success:
                     messages.success(request, 'Verification code sent to your email.')
-                    return redirect('verify_code')
+                    return redirect('account:verify_code')
                 else:
                     messages.error(request, 'Failed to send verification code. Please try again later.')
             except User.DoesNotExist:
@@ -147,7 +159,7 @@ def verify_code(request):
         code = request.POST.get('code')
         session_code = request.session.get('password_reset_code')
         if code == session_code:
-            return redirect('reset_password')
+            return redirect('account:reset_password')
         else:
             messages.error(request, 'Invalid verification code.')
     return render(request, 'verify_code.html')
@@ -165,7 +177,7 @@ def reset_password(request):
             request.session.pop('password_reset_email', None)
             request.session.pop('password_reset_code', None)
             messages.success(request, 'Password reset successfully.')
-            return redirect('login')
+            return redirect('account:login')
         except User.DoesNotExist:
             messages.error(request, 'Error resetting password.')
     return render(request, 'reset_password.html')
@@ -245,14 +257,8 @@ def Login(request):
     return render(request, 'login/Login.html', {'form': AuthenticationForm()})
 
 
-# def Logout(request):
-#     # logout(request)
-#     response = HttpResponseRedirect('/login')  # Or use redirect('login') + delete cookie
-#     response.delete_cookie('jwt')
-#     messages.success(request, "Logged out successfully!")
-#     return redirect('login')  # Redirect to your login page after logout
 
 def Logout(request):
-    response = redirect('login')
+    response = redirect('account:login')
     response.delete_cookie('jwt')   # Or 'access' — use the correct cookie name
     return response
