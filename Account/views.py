@@ -1,3 +1,4 @@
+from urllib import request
 from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import render, redirect
@@ -11,6 +12,8 @@ from .forms import CustomUserCreationForm
 import random
 from django.contrib.auth import logout
 from .utils import send_email_with_fallback  # Import your fallback function
+from django.core.cache import cache
+import time
 
 User = get_user_model()
 
@@ -25,6 +28,14 @@ from django.http import JsonResponse
 # jwt
 from django.http import JsonResponse,HttpResponseRedirect
 from .utils import decode_jwt
+
+# login
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import login
+import json
+import logging
+
+logger = logging.getLogger('Account')  # must match logger name in settings
 
 
 def generate_unique_room_id(username):
@@ -43,7 +54,7 @@ def SignUp(request):
             email = form.cleaned_data.get('email')
             if User.objects.filter(email=email).exists():
                 form.add_error('email', "Email is already in use.")
-                return render(request, 'signup/Signup.html', {'form': form})
+                return render(request, 'signup/Signup.html', {'form': form, 'debug': settings.DEBUG})
             
             # Create the user object but don't save yet
             user = form.save(commit=False)
@@ -59,7 +70,7 @@ def SignUp(request):
             email_subject = 'Verify Your Email Address'
             email_body = render_to_string('account/verification_email.html', {
                 'user': user,
-                'verification_link': verification_link,
+                'verification_link': verification_link, 
             })
 
             try:
@@ -81,23 +92,23 @@ def SignUp(request):
                     )
                     messages.success(request, f"User created! A verification email has been sent to {user.email}. Please verify your email to activate your account.")
                     # return redirect('account:login')
-                    return render(request, 'signup/Signup.html',{'form': form})
+                    return render(request, 'signup/Signup.html',{'form': form,'debug': settings.DEBUG})
                 
                 else:
                     # Delete user if email sending failed
                     user.delete()
                     messages.error(request, "Failed to send verification email. Please try again later.")
-                    return render(request, 'signup/Signup.html', {'form': form})
+                    return render(request, 'signup/Signup.html', {'form': form, 'debug': settings.DEBUG})
             except Exception as e:
                 print(f"Email sending error: {e}")
                 messages.error(request, "Failed to send verification email.")
-                return render(request, 'signup/Signup.html', {'form': form})
+                return render(request, 'signup/Signup.html', {'form': form, 'debug': settings.DEBUG})
 
         else:
-            return render(request, 'signup/Signup.html', {'form': form})
+            return render(request, 'signup/Signup.html', {'form': form, 'debug': settings.DEBUG})
     else:
         form = CustomUserCreationForm()
-    return render(request, 'signup/Signup.html', {'form': form})
+    return render(request, 'signup/Signup.html', {'form': form, 'debug': settings.DEBUG})
 
 
 def verify_email(request, uidb64, token):
@@ -108,36 +119,42 @@ def verify_email(request, uidb64, token):
         # If user already active, stop early
         if user.is_active:
             messages.info(request, "Your account is already verified.")
-            return render(request, 'account/verify_email_page.html')
+            return render(request, 'account/verify_email_page.html', {'debug': settings.DEBUG})
 
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
             messages.success(request, "Your account has been activated successfully!")
-            return render(request, 'account/verify_email_page.html')  # don't pass 'messages'
+            return render(request, 'account/verify_email_page.html', {'debug': settings.DEBUG})
 
         else:
             messages.error(request, "Invalid or expired activation link.")
-            return render(request, 'account/verify_email_page.html')
+            return render(request, 'account/verify_email_page.html', {'debug': settings.DEBUG})
 
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         messages.error(request, "Invalid activation link.")
-        return render(request, 'account/verify_email_page.html')
+        return render(request, 'account/verify_email_page.html', {'debug': settings.DEBUG})
+
 
 
 
 def send_verification_code(request):
     if request.method == 'POST':
         email = request.POST.get('email')
-        user = User.objects.get(email=email)
-        if user !=None:
+        if email:
+            # Check cooldown
+            last_sent = cache.get(f'password_reset_{email}')
+            if last_sent and time.time() - last_sent < 5 * 60:  # 5 minutes cooldown
+                messages.error(request, 'Please wait 5 minutes before requesting another code.')
+                return render(request, 'password_reset_request.html', {'debug': settings.DEBUG})
+
             try:
                 user = User.objects.get(email=email)
                 code = str(random.randint(1000, 9999))
                 request.session['password_reset_email'] = email
                 request.session['password_reset_code'] = code
+                request.session.set_expiry(600)  # 10 minutes
 
-                # Send the code using the fallback function
                 success = send_email_with_fallback(
                     subject='Your Verification Code',
                     message=f'Your verification code is: {code}',
@@ -145,13 +162,16 @@ def send_verification_code(request):
                 )
 
                 if success:
-                    messages.success(request, 'Verification code sent to your email.')
+                    cache.set(f'password_reset_{email}', time.time(), timeout=300)  # 5 min cooldown
+                    messages.success(request, 'If this email exists, a verification code has been sent.')
                     return redirect('account:verify_code')
-                else:
-                    messages.error(request, 'Failed to send verification code. Please try again later.')
+
             except User.DoesNotExist:
-                messages.error(request, 'No user with this email.')
-    return render(request, 'password_reset_request.html')
+                # Generic message for security
+                messages.success(request, 'Email does not exist, check your mail id: Hint-check account  activation mail sent earlier')
+
+    return render(request, 'password_reset_request.html', {'debug': settings.DEBUG})
+
 
 
 def verify_code(request):
@@ -162,7 +182,7 @@ def verify_code(request):
             return redirect('account:reset_password')
         else:
             messages.error(request, 'Invalid verification code.')
-    return render(request, 'verify_code.html')
+    return render(request, 'verify_code.html', {'debug': settings.DEBUG})
 
 
 def reset_password(request):
@@ -180,16 +200,9 @@ def reset_password(request):
             return redirect('account:login')
         except User.DoesNotExist:
             messages.error(request, 'Error resetting password.')
-    return render(request, 'reset_password.html')
+    return render(request, 'reset_password.html', {'debug': settings.DEBUG})
 
 
-# login
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import login
-from datetime import datetime, timedelta
-import json
-import logging
-logger = logging.getLogger('myapp')  # must match logger name in settings
 
 def Login(request):
     if request.method == "POST":
@@ -254,7 +267,7 @@ def Login(request):
         else:
             return JsonResponse({"detail": "Invalid username or password."}, status=401)
 
-    return render(request, 'login/Login.html', {'form': AuthenticationForm()})
+    return render(request, 'login/Login.html', {'form': AuthenticationForm(),'debug': settings.DEBUG})
 
 
 

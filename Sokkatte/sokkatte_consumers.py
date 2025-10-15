@@ -9,7 +9,7 @@ from asgiref.sync import sync_to_async
 from Account.models import RoomTable
 from redis.asyncio.lock import Lock
 import asyncio
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Sokkatte")
 from redis.asyncio.lock import Lock
 from redis.exceptions import LockError, LockNotOwnedError
 

@@ -3,6 +3,18 @@
 <html lang="en">
 
 <head>
+    {% if not debug %}
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-85PG4VK6WJ"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-85PG4VK6WJ');
+        </script>
+    {% endif %}
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Round Table</title>
@@ -725,7 +737,7 @@
         // popup for card_problem start
        
 
-        function showCardProblemPopup(cardsByPlayer) {
+        function showCardProblemPopup(cardsByPlayer,msg) {
             const modal = document.getElementById("cardProblemModal");
             const cardsContainer = document.getElementById("cardsContainer");
             const otherPlayerCardsDiv = document.getElementById("otherPlayerCards");
@@ -744,7 +756,7 @@
             seeCardsBtn.textContent = "See Opponent Cards";
             seeCardsBtn.disabled = false;
 
-            messagePara.textContent = "Card problem detected! Click below to reveal opponent cards.";
+            messagePara.textContent = msg || "Card suit problem detected. Choose an option:";
 
             // Heading
             const heading = document.createElement("h4");

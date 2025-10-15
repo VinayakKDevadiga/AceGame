@@ -1,7 +1,20 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+    {% if not debug %}
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-85PG4VK6WJ"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-85PG4VK6WJ');
+        </script>
+    {% endif %}
+
     <meta charset="UTF-8">
     <title>Create Room</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

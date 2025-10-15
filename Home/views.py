@@ -15,11 +15,12 @@ from django.urls import reverse
 
 from Home.models import PlayerStats
 import json
+from AceGame import settings
 
 
 User = get_user_model()
 import logging
-logger = logging.getLogger('myapp')  # must match logger name in settings
+logger = logging.getLogger('Home')  # must match logger name in settings
 
 def Home(request):
 
@@ -31,7 +32,7 @@ def Home(request):
             username = payload.get('username')
             logger.info(f" Home  request{username}")
 
-    return render(request, 'Homepage.html', {'username': username})
+    return render(request, 'Homepage.html', {'username': username,'debug': settings.DEBUG})
 
 
 @csrf_exempt
@@ -84,8 +85,8 @@ def CreateRoom(request):
 
     return render(request, 'Room/createroom.html', {
         'room_id': room.room_id,
-        'password': room.password
-    })
+        'password': room.password,
+        'debug': settings.DEBUG})
 
 @jwt_required
 def Waitforplayers(request):
@@ -97,7 +98,7 @@ def Waitforplayers(request):
 
         response = HttpResponseRedirect(game_page_url)
         return response
-    return render(request, 'Room/waitforplayers.html')
+    return render(request, 'Room/waitforplayers.html', {'debug': settings.DEBUG})
 
 
 
@@ -117,15 +118,15 @@ def Join_room(request):
         except RoomTable.DoesNotExist:
             messages.error(request, "Room does not exist.")
     
-    return render(request, 'Room/joinroom.html')
+    return render(request, 'Room/joinroom.html', {'debug': settings.DEBUG})
 
 @jwt_required
 def Gamepage(request):
-    return render(request, 'Room/gamepage.html')
+    return render(request, 'Room/gamepage.html', {'debug': settings.DEBUG})
     
 @jwt_required
 def Rulepage(request):
-    return render(request, 'Room/rules.html')
+    return render(request, 'Room/rules.html', {'debug': settings.DEBUG})
     
 import json
 from django_redis import get_redis_connection
@@ -146,7 +147,7 @@ def get_player_cards(room_id, player):
     
 @jwt_required
 def Playgame(request):
-    return render(request, 'playgame.html')
+    return render(request, 'playgame.html', {'debug': settings.DEBUG})
 
 def get_all_players_in_room(room_id):
     redis_conn = get_redis_connection("default")
@@ -182,7 +183,7 @@ def Game_Over(request):
         'looser': looser,
         'game_completed_player_list': game_completed_player_list,
         'username': username,  # Use the JWT username variable here
-    })
+    'debug': settings.DEBUG})
     # if token:
         # response.set_cookie('jwt', token, path='/', samesite='Lax')
     return response
@@ -200,16 +201,16 @@ def player_stats_view(request):
             username = payload.get('username')
             logger.info(f" Home  request{username}")
             players = PlayerStats.objects.filter(username=username)
-            return render(request, 'player_stats.html', {'players': players})
+            return render(request, 'player_stats.html', {'players': players, 'debug': settings.DEBUG})
     return redirect('home')  # Redirect to home if no valid token
 
 
 
 def Privacy_Policy(request):
-    return render(request, 'privacy_policy.html')
+    return render(request, 'privacy_policy.html', {'debug': settings.DEBUG})
 
 def About(request):
-    return render(request, 'about_us.html')
+    return render(request, 'about_us.html', {'debug': settings.DEBUG})
 
 def Sokkate_Rules(request):
-    return render(request, 'sokkatte_rules.html')
+    return render(request, 'sokkatte_rules.html', {'debug': settings.DEBUG})

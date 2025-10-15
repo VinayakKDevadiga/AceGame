@@ -4,12 +4,12 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
 import redis.asyncio as redis
 from Account.models import RoomTable
-from .models import GameTable
+from .models import GameTable,ComingSoonGame
 from asgiref.sync import sync_to_async
 from AceGame.game_routes import GAME_ROUTES
 from django.conf import settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Home")  # must match logger name in settings
 logger.debug("WebSocket connected")
 
 
@@ -78,11 +78,13 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
                     return
                 # else
                 self.gameslist = await sync_to_async(list)(GameTable.objects.values_list('gamename', flat=True))
+                self.coming_soon_gamelist = await sync_to_async(list)(ComingSoonGame.objects.values_list('gamename', flat=True))
                 logger.info(f"IN Above STATUS PART and ")
 
                 initial_data = {
                     "status": "waiting",
                     "gamelist": json.dumps(self.gameslist),
+                    "coming_soon_gamelist": json.dumps(self.coming_soon_gamelist),
                     "selected_game": "",
                     "owner": self.username,
                     "duplicate_owner_login":0,
@@ -268,6 +270,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
         
         self.gamelist_json = await self.redis.hget(self.redis_key, "gamelist")
         self.gamelist = json.loads(self.gamelist_json.decode()) if self.gamelist_json else []
+        self.coming_soon_gamelist_json = await self.redis.hget(self.redis_key, "coming_soon_gamelist")
+        self.coming_soon_gamelist = json.loads(self.coming_soon_gamelist_json.decode()) if self.coming_soon_gamelist_json else []
 
         selected_game_raw = await self.redis.hget(self.redis_key, "selected_game")
         self.selected_game = selected_game_raw.decode().strip() if selected_game_raw else None
@@ -282,7 +286,8 @@ class WaitRoomConsumer(AsyncWebsocketConsumer):
             "players": self.players,
             "owner": self.owner,
             "gamelist":self.gamelist,
-            "selected_game":self.selected_game
+            "selected_game":self.selected_game,
+            "coming_soon_gamelist":self.coming_soon_gamelist
         }))
 
 

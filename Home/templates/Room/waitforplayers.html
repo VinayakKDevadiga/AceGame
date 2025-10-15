@@ -3,6 +3,19 @@
 <html lang="en">
 
 <head>
+
+    {% if not debug %}
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-85PG4VK6WJ"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-85PG4VK6WJ');
+        </script>
+    {% endif %}
+
     <meta charset="UTF-8">
     <title>Wait for Players</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,6 +31,8 @@
         <ul id="playerList"></ul>
         <h2>Select Your Game</h2>
         <div id="gameListContainer" class="game-cards-container"></div>
+        <h2>Coming soon</h2>
+        <div id="gameListContainer-coming-soon" class="game-cards-container"></div>
         <button id="startGameBtn"
             style="display: none; margin-top: 20px; padding: 10px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">
             Start</button>
@@ -180,6 +195,25 @@
                     });
                 }
 
+                // update coming soon game list:
+                const gameListContainer_coming_soon = document.getElementById("gameListContainer-coming-soon");
+
+                function updateComingSoonGameList(games) {
+                    gameListContainer_coming_soon.innerHTML = "";
+                    const owner = sessionStorage.getItem("owner");
+
+                    games.forEach(game => {
+                        const card = document.createElement("div");
+                        card.classList.add("game-card");
+                        card.textContent = game;
+                        // make the element non clickable
+                        card.style.pointerEvents = "none";
+                        card.style.opacity = "0.5";
+
+                        gameListContainer_coming_soon.appendChild(card);
+                    });
+                }
+
                 socket.onmessage = function (event) {
                     const data = JSON.parse(event.data);
 
@@ -227,6 +261,9 @@
                         updateGameList(data.gamelist);
                         if (data.owner === username && !isadminpage_updated) {
                             isadminpage_updated = true;
+                        }
+                        if (data.coming_soon_gamelist) {
+                            updateComingSoonGameList(data.coming_soon_gamelist);
                         }
                     }
 

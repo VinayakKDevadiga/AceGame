@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from Account.utils import jwt_required, decode_jwt
 import logging
-logger = logging.getLogger(__name__)
+from AceGame import settings
+
+logger = logging.getLogger("Sokkatte")  # must match logger name in settings
 logger.debug("WebSocket connected")
 
 
@@ -17,7 +19,7 @@ def StartGame(request):
         if payload:
             username = payload.get('username')
             logger.info(f" Home  request{username}")
-    response = render(request, 'Sokkatte_home_page.html', {'name': username})
+    response = render(request, 'Sokkatte_home_page.html', {'name': username, 'debug': settings.DEBUG})
     # if token:
         # response.set_cookie('jwt', token, path='/', samesite='Lax')
     return response

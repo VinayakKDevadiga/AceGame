@@ -9,7 +9,7 @@ from asgiref.sync import sync_to_async
 from Account.models import RoomTable
 from redis.asyncio.lock import Lock
 import asyncio
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Sokkatte")  # must match logger name in settings
 from redis.asyncio.lock import Lock
 from redis.exceptions import LockError, LockNotOwnedError
 import time
@@ -288,7 +288,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         logger.info(f"Card problem detected")
         await self.send(text_data=json.dumps({
             "type": "card_problem",
-            "message": event.get("message", "Card suit problem detected."),
+            "message": event.get("message", "You both have different Suits of cards So,Game will not be finished.Please click on see opponent cards and continue the game"),
             "players": event.get("players"),
             "other_player_card_list": event.get("other_player_card_list", []),
             "connected_dict": self.connected_dict
@@ -770,7 +770,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         self.group_name,
                         {
                             "type": "card_problem",
-                            "message":"You both have different Suits of cards So,Game will not be finished.Please click on get extra cards to continue the game",
+                            "message":"You both have different Suits of cards So,Game will not be finished.Please click on see opponent cards and continue the game",
                             "players": self.players_list_p,
                             "other_player_card_list": self.players_card_list_p
                         }
