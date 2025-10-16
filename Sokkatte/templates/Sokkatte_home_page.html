@@ -1089,9 +1089,12 @@
 
                         drawTable(players);
                     }
-                    handleCompletedGame(data, data.players_completed_now);
+                    handleCompletedGame(data, data.players_completed);
                     // 🏆 Update completed players list on top
-                    updateCompletedPlayers(data.players_completed_now);
+                    const length = data.players_completed?.length || 0;
+                    if (length > 0) {
+                        updateCompletedPlayers(data.players_completed);
+                    }
                 }
 
                 if (data.type === "game_over") {

@@ -60,93 +60,123 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
         players = json.loads(players_raw.decode())
         logger.debug(f"Players in room {self.room_id}: {players}")
-
+        self.completed_players_raw = await self.redis.hget(self.redis_key, "game_completed_players_list")
+        self.completed_players = json.loads(self.completed_players_raw.decode()) if self.completed_players_raw else []     
+            
         if self.username not in players:
-            logger.warning(f"Unauthorized connection attempt by '{self.username}' in room {self.room_id}")
-            await self.send(text_data=json.dumps({
-                "error": f"Unknown user '{self.username}' — not allowed in this room."
-            }))
-            await self.close(code=4003)
-            return
+            # check in game completed player list: if there then allow else dont allow
+            if self.username in self.completed_players:
+                logger.info(f"User '{self.username}' is rejoining after game completion in room {self.room_id}")
+                
+            else:
+                logger.warning(f"Unauthorized connection attempt by '{self.username}' in room {self.room_id}")
+                await self.send(text_data=json.dumps({
+                    "error": f"Unknown user '{self.username}' — not allowed in this room."
+                }))
+                await self.close(code=4003)
+                return
 
         await self.accept()
+        
         logger.info("Accepted the websocket conection")
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         logger.info(f"User '{self.username}' connected successfully to room '{self.room_id}'")
 
-
-        try: 
-            self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
-            self.connected_dict = json.loads(self.connected_raw.decode()) if self.connected_raw else {}
-            if self.username not in self.connected_dict:
-                # check whether the card distributed player is refreshed the page or not.
-                self.card_distributed_flag = await self.redis.hget(self.redis_key, "card_distributed_flag")
-                if self.card_distributed_flag.decode() == "1":
-                    logger.info(f"User '{self.username}' has already been connected and cards distributed.but refreshed the page")
-                    
-                else:
-                    logger.info(f"User '{self.username}' is a new connection.")
-
-                assigned_colors = set(self.connected_dict.values())
-                available_colors = [c for c in COLOR_CODES if c not in assigned_colors]
-
-                if not available_colors:
-                    await self.send(text_data=json.dumps({
-                        "error": "All player slots are full — try again later."
-                    }))
-                    await self.close(code=4004)
-                    return
-
-                assigned_color = available_colors[0]
-                self.connected_dict[self.username] = assigned_color
-                await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(self.connected_dict))
-                logger.info(f"User '{self.username}' connected with color {assigned_color}")   # Broadcast to all in the group
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {
-                        "type": "players_update",
-                        "connected_dict": self.connected_dict
-                    }
-                )
-
-                # send the current_round_cardlist if the current_round_card list is not empty
-                self.current_round_raw_table_update = await self.redis.hget(self.redis_key, "current_round")
-                self.current_round_table_update = json.loads(self.current_round_raw_table_update.decode()) if self.current_round_raw_table_update else {}
-                
-                # get the "next_player" from self.current_round_table_update
-                self.next_player_table_update_raw = await self.redis.hget(self.redis_key, "current_player")
-                self.next_player_table_update = self.next_player_table_update_raw.decode() if self.next_player_table_update_raw else None
-                
-                if self.current_round_table_update:
-                    # send the current_round_table_update to frontend
-                    logger.info("sending current_round_table_update")
-                    await self.send(text_data=json.dumps({
-                        "type": "current_round_table_update",
-                        "current_round": self.current_round_table_update,
-                        "player": self.username,
-                        "next_player":self.next_player_table_update , # self.winner_dict["winner"],
-                        "player_color_dict": self.connected_dict
-                    }))
-
-                await asyncio.sleep(random.uniform(2, 5.3))  # Optional delay
-                all_connected = all(player in self.connected_dict for player in players)
-                if all_connected:
+        # If Game Completed player rejoins to spectate:
+        if self.username in self.completed_players:
+            await self.get_player_card()
+            await self.get_starting_player()
+            
+        else:
+            try: 
+                self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+                self.connected_dict = json.loads(self.connected_raw.decode()) if self.connected_raw else {}
+                if self.username not in self.connected_dict:
+                    # check whether the card distributed player is refreshed the page or not.
+                    self.card_distributed_flag = await self.redis.hget(self.redis_key, "card_distributed_flag")
                     if self.card_distributed_flag.decode() == "1":
-                        logger.info(f"All players connected and cards already distributed for room {self.room_id}")
-                        await self.get_player_card()
+                        logger.info(f"User '{self.username}' has already been connected and cards distributed.but refreshed the page")
+                        
                     else:
-                        await self.channel_layer.group_send(
-                            self.group_name,
-                            {"type": "everyone_joined"}
-                        )
-                        await self.distribute_cards()
-        except Exception as e:
-            logger.error(f"Error in connection lock logic: {e}", exc_info=True)
-            await self.send(text_data=json.dumps({
-                "type": "send_error_message",
-                "message": "Server encountered an error during setup."
-            }))
-            await self.close(code=1011)
+                        logger.info(f"User '{self.username}' is a new connection.")
+
+                    assigned_colors = set(self.connected_dict.values())
+                    available_colors = [c for c in COLOR_CODES if c not in assigned_colors]
+
+                    if not available_colors:
+                        await self.send(text_data=json.dumps({
+                            "error": "All player slots are full — try again later."
+                        }))
+                        await self.close(code=4004)
+                        return
+
+                    assigned_color = available_colors[0]
+                    self.connected_dict[self.username] = assigned_color
+                    await self.redis.hset(self.redis_key, "players_connected_list", json.dumps(self.connected_dict))
+                    logger.info(f"User '{self.username}' connected with color {assigned_color}")   # Broadcast to all in the group
+                    await self.channel_layer.group_send(
+                        self.group_name,
+                        {
+                            "type": "players_update",
+                            "connected_dict": self.connected_dict
+                        }
+                    )
+
+                    # send the current_round_cardlist if the current_round_card list is not empty
+                    self.current_round_raw_table_update = await self.redis.hget(self.redis_key, "current_round")
+                    self.current_round_table_update = json.loads(self.current_round_raw_table_update.decode()) if self.current_round_raw_table_update else {}
+                    
+                    # get the "next_player" from self.current_round_table_update
+                    self.next_player_table_update_raw = await self.redis.hget(self.redis_key, "current_player")
+                    self.next_player_table_update = self.next_player_table_update_raw.decode() if self.next_player_table_update_raw else None
+                    
+                    if self.current_round_table_update:
+                        # send the current_round_table_update to frontend
+                        logger.info("sending current_round_table_update")
+                        await self.send(text_data=json.dumps({
+                            "type": "current_round_table_update",
+                            "current_round": self.current_round_table_update,
+                            "player": self.username,
+                            "next_player":self.next_player_table_update , # self.winner_dict["winner"],
+                            "player_color_dict": self.connected_dict
+                        }))
+
+                    await asyncio.sleep(random.uniform(2, 5.3))  # Optional delay
+                    all_connected = all(player in self.connected_dict for player in players)
+                    if all_connected:
+                        if self.card_distributed_flag.decode() == "1":
+                            logger.info(f"All players connected and cards already distributed for room {self.room_id}")
+                            await self.get_player_card()
+                        else:
+                            await self.channel_layer.group_send(
+                                self.group_name,
+                                {"type": "everyone_joined"}
+                            )
+                            await self.distribute_cards()
+            except Exception as e:
+                logger.error(f"Error in connection lock logic: {e}", exc_info=True)
+                await self.send(text_data=json.dumps({
+                    "type": "send_error_message",
+                    "message": "Server encountered an error during setup."
+                }))
+                await self.close(code=1011)
+        await self.send_game_completed_msg()
+
+    async def send_game_completed_msg(self):
+        self.players_raw = await self.redis.hget(self.redis_key, "players")
+        self.players = json.loads(self.players_raw.decode()) if self.players_raw else []
+        # get connected_dct
+        self.connected_dict_rejoin_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+        self.connected_dict_rejoin = json.loads(self.connected_dict_rejoin_raw.decode()) if self.connected_dict_rejoin_raw else {}
+        logger.info(f"sending the game completed message after complted player rejoin{self.completed_players}")
+        
+        await self.send(text_data=json.dumps({
+            "type": "completed_game",
+            "players_still_in": self.players,
+            "players_completed": self.completed_players,
+            "players_completed_now": [],
+            'connected_dict':self.connected_dict_rejoin ,
+        }))
 
 
     async def send_error_message(self, event):
@@ -359,7 +389,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             distributed_card_dict = {}
             for player in players_connected:
                 distributed_card_dict[player] = []
-                for _ in range(5):
+                for _ in range(2):
                     if not card_list:
                         break
                     card = random.choice(card_list)
@@ -1185,6 +1215,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         logger.info("Handling saw_the_card request")
         self.card_problem_handle_saw_raw = await self.redis.hget(self.redis_key, "card_problem")
         self.card_problem_handle_saw = json.loads(self.card_problem_handle_saw_raw.decode()) if self.card_problem_handle_saw_raw else {}
+        
         if self.card_problem_handle_saw["players"][self.username]["watched_card"]:
             await self.send_dynamic_message( "watching_card_again", "Alreday resolved the card problem, no need to watch again")
             return
