@@ -85,7 +85,28 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         # If Game Completed player rejoins to spectate:
         if self.username in self.completed_players:
             await self.get_player_card()
+            
             await self.get_starting_player()
+            # send the current_round_cardlist if the current_round_card list is not empty
+            self.connected_raw = await self.redis.hget(self.redis_key, "players_connected_list")
+            self.connected_dict = json.loads(self.connected_raw.decode()) if self.connected_raw else {}
+            self.current_round_raw_table_update = await self.redis.hget(self.redis_key, "current_round")
+            self.current_round_table_update = json.loads(self.current_round_raw_table_update.decode()) if self.current_round_raw_table_update else {}
+            
+            # get the "next_player" from self.current_round_table_update
+            self.next_player_table_update_raw = await self.redis.hget(self.redis_key, "current_player")
+            self.next_player_table_update = self.next_player_table_update_raw.decode() if self.next_player_table_update_raw else None
+            
+            if self.current_round_table_update:
+                # send the current_round_table_update to frontend
+                logger.info("sending current_round_table_update")
+                await self.send(text_data=json.dumps({
+                    "type": "current_round_table_update",
+                    "current_round": self.current_round_table_update,
+                    "player": self.username,
+                    "next_player":self.next_player_table_update , # self.winner_dict["winner"],
+                    "player_color_dict": self.connected_dict
+                }))
             
         else:
             try: 
@@ -206,6 +227,15 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         "connected_dict": self.connected_dict
                     }
                 )
+                if len(self.connected_dict)==0:
+                    # if no players are connected then delete the redis key
+                    await self.redis.delete(self.redis_key)
+                    # mark the game as completed and save the game
+                    await self.redis.hset(self.redis_key, "status", "completed")
+                    await self.update_gamedata_to_db()
+                    await self.redis.delete(self.redis_key)
+                    logger.info(f"Deleted Redis key {self.redis_key} as no players are connected.")
+
 
 
     async def players_update(self, event):
@@ -308,6 +338,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "looser": event.get("looser"),
             "game_completed_player_list": event.get("game_completed_player_list", []),
         }))
+        logger.info("Updating game completion in redis")
+        await self.hset(self.redis_key,"status","completed")
         await self.update_gamedata_to_db()
         # empty the redis key
         await self.redis.delete(self.redis_key)

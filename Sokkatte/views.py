@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from Account.utils import jwt_required, decode_jwt
 import logging
 from AceGame import settings
@@ -12,6 +12,9 @@ logger.debug("WebSocket connected")
 def StartGame(request):
     logger.info(f"logged in and request object is : {request}")
     token = request.COOKIES.get('jwt')
+    if not token:
+        return redirect('account:login')
+    # get the Completed games from the view which is in 
     username = None
     logger.info(f"token in view of sokkatte : {token}")
     if token:

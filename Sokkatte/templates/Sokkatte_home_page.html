@@ -992,6 +992,7 @@
                     drawTable(players);
                     
                     shuffleAnimation(true); // start shuffling animation
+                    
                 }
                 if (data.type === "start_card_distribution") {
                     // start animation
@@ -1156,30 +1157,39 @@
     
                 }
             };
+        
+        let retries = 1;  // total retries allowed
+        let delay = 1;     // seconds
 
-            // for retry logic
             socket.onopen = () => {
-                console.log("WebSocket connected!");
-                retries = 0; // reset retries on success
+                console.log("✅ WebSocket connected!");
+                retries = 1; // reset after a successful connection
             };
-            socket.onerror = err => {
-                console.error("WebSocket error:", err);
-                socket.close(); // triggers retry
+
+            socket.onerror = (err) => {
+                console.error("❌ WebSocket error:", err);
+                socket.close(); // triggers onclose
+                retries=retries-1
             };
 
             socket.onclose = () => {
                 if (retries > 0) {
-                    console.warn(`WebSocket closed. Retrying in ${delay / 1000}s... (${retries} left)`);
-                    setTimeout(() => initWebSocket(retries - 1, delay), delay);
+                    console.warn(`⚠️ WebSocket closed. Retrying in ${delay}s... (${retries} retries left)`);
+                    retries--;
+                    setTimeout(initWebSocket, delay * 1000);
                 } else {
-                    console.error("Max retries reached. Could not connect WebSocket.");
+                    console.error("🚫 Max retries reached. Could not reconnect WebSocket.");
+                    alert("Game room is closed or all users left the game.");
+                    if (confirm("Go back to the home screen?")) {
+                        window.location.href = "{% url 'playgame' %}";
+                    }
                 }
             };
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if (document.cookie.includes("jwt")) checkAuthAndInit();
-            document.querySelectorAll('.suit-btn').forEach(btn => {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.cookie.includes("jwt")) checkAuthAndInit();
+        document.querySelectorAll('.suit-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     currentSuitFilter = btn.getAttribute('data-suit');
                     renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username);
