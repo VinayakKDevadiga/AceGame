@@ -319,3 +319,9 @@ LOGIN_REDIRECT_URL = 'home'  # this should match a named URL pattern
 
 
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://acegame.games',
+    'http://www.acegame.games',
+    'https://acegame.games',
+    'https://www.acegame.games',
+]
