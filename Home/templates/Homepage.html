@@ -3,66 +3,23 @@
 <html lang="en">
 
 <head>
+    {% if not debug %}
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-85PG4VK6WJ"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-85PG4VK6WJ');
+        </script>
+    {% endif %}
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Ace Game</title>
     <link rel="stylesheet" href="{% static 'Home/homepage.css' %}">
-    <style>
-        /* === Header & Popup Menu Styling === */
-        header {
-            position: relative;
-            padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(135deg, #005eff, #00aaff);
-            color: #fff;
-        }
-
-        .logo {
-            font-weight: bold;
-            letter-spacing: 1px;
-            font-size: 1.6rem;
-        }
-
-        .menu-btn {
-            font-size: 1.8rem; /* slightly bigger */
-            cursor: pointer;
-            color: #fff;
-            user-select: none;
-        }
-
-        .popup-menu {
-            display: none;
-            position: absolute;
-            top: 60px; /* below menu button */
-            right: 40px; /* aligned with header padding */
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 15px 0;
-            width: 220px;
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
-            z-index: 1000;
-        }
-
-        .popup-menu a {
-            display: block;
-            padding: 12px 25px;
-            font-size: 1.1rem; /* larger and readable */
-            text-decoration: none;
-            color: #fff;
-            transition: all 0.3s ease;
-        }
-
-        .popup-menu a:hover {
-            background: whitesmoke;
-            color: #000;
-            border-radius: 5%;
-        }
-    </style>
+    
 </head>
 
 <body>

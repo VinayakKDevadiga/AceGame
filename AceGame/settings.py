@@ -207,6 +207,11 @@ STATIC_URL = '/static/'
 # }
 
 
+from logging.handlers import TimedRotatingFileHandler
+
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -223,37 +228,60 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',  # Use 'simple' if you prefer less detail
+            'formatter': 'verbose',
+        },
+        'daily_file': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': LOG_DIR / 'app.log',  # base log file
+            'when': 'midnight',               # rotate every day at midnight
+            'backupCount': 30,                # keep last 30 days
+            'encoding': 'utf-8',
         },
     },
     'root': {
-        'handlers': ['console'],
-        'level': 'DEBUG',  # Show everything from DEBUG level and above
+        'handlers': ['console', 'daily_file'],
+        'level': 'DEBUG',
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['console', 'daily_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'channels': {
-            'handlers': ['console'],
+            'handlers': ['console', 'daily_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'daphne': {
-            'handlers': ['console'],
+            'handlers': ['console', 'daily_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        # Optional: If you use logging in your own code (__main__ or other modules)
         '__main__': {
-            'handlers': ['console'],
+            'handlers': ['console', 'daily_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'Account': {
+            'handlers': ['console', 'daily_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'Home': {
+            'handlers': ['console', 'daily_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'Sokkatte': {
+            'handlers': ['console', 'daily_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
+
 
 
 # Login session expiry time (default is 2 weeks)
@@ -288,3 +316,12 @@ SIMPLE_JWT = {
 
 # settings.py
 LOGIN_REDIRECT_URL = 'home'  # this should match a named URL pattern
+
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://acegame.games',
+    'http://www.acegame.games',
+    'https://acegame.games',
+    'https://www.acegame.games',
+]

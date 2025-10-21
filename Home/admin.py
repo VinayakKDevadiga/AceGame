@@ -1,8 +1,13 @@
 from django.contrib import admin
-from .models import GameTable, CompletedGame, PlayerStats
+from .models import GameTable,ComingSoonGame, CompletedGame, PlayerStats
 
 @admin.register(GameTable)
-class RoomTableAdmin(admin.ModelAdmin):
+class GameTableAdmin(admin.ModelAdmin):
+    list_display = ('gamename','created_at','updated_at')
+    search_fields = ('gamename','created_at')
+
+@admin.register(ComingSoonGame)
+class ComingSoonGameAdmin(admin.ModelAdmin):
     list_display = ('gamename','created_at','updated_at')
     search_fields = ('gamename','created_at')
 

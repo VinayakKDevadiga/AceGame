@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,4 +26,10 @@ urlpatterns = [
 
     path('', include('Home.urls')),
     path('Sokkatte/', include(('Sokkatte.urls', 'sokkatte_app'), namespace='sokkatte')),
+
+    # For devtools
+    # This stops Django from trying to resolve it via your regular templates
+    path(".well-known/appspecific/com.chrome.devtools.json", lambda request: HttpResponse("{}")),
+    
 ]
+

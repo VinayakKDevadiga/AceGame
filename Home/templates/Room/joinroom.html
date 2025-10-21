@@ -1,106 +1,25 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
+    {% if not debug %}
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-85PG4VK6WJ"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-85PG4VK6WJ');
+        </script>
+    {% endif %}
+
     <meta charset="UTF-8">
     <title>Join Room</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            background-color: #ffffff;
-            color: #333;
-            padding: 30px 25px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 400px;
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #222;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            margin: 10px 0 5px;
-            font-weight: bold;
-        }
-
-        .field-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            width: 100%;
-        }
-
-        button {
-            padding: 10px 12px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #2980b9;
-        }
-
-        ul {
-            padding-left: 20px;
-            color: red;
-        }
-
-        @media screen and (max-width: 480px) {
-            .container {
-                padding: 20px 15px;
-            }
-
-            button {
-                font-size: 14px;
-                padding: 8px;
-            }
-
-            input[type="text"],
-            input[type="password"] {
-                font-size: 15px;
-            }
-
-            .field-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
-        }
-    </style>
+        <link rel="stylesheet" href="{% static 'room/join_room.css' %}">
 </head>
 
 <body>

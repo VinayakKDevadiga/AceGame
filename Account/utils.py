@@ -5,7 +5,7 @@ import jwt
 from django.shortcuts import redirect
 from datetime import datetime, timedelta
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Account")
 logger.debug("WebSocket connected")
 
 def send_email_with_fallback(subject, message, recipient_list, html_message=None):
@@ -31,7 +31,7 @@ def send_email_with_fallback(subject, message, recipient_list, html_message=None
         )
         return True
     except Exception as e:
-        print(f"Primary email failed: {e}")
+        logger.info(f"Primary email failed: {e}")
 
     # Try secondary account
     try:
@@ -53,7 +53,7 @@ def send_email_with_fallback(subject, message, recipient_list, html_message=None
         )
         return True
     except Exception as e:
-        print(f"Secondary email failed: {e}")
+        logger.info(f"Secondary email failed: {e}")
 
     return False
 

@@ -1,113 +1,25 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+    {% if not debug %}
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-85PG4VK6WJ"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-85PG4VK6WJ');
+        </script>
+    {% endif %}
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy - Ace Game</title>
-  <style>
-    /* ===== Page Base ===== */
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #0072ff, #00c6ff); /* Blue gradient background */
-      color: #fff;
-      line-height: 1.8;
-      margin: 0;
-      padding: 50px 15px;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      background-attachment: fixed;
-    }
+      <link rel="stylesheet" href="{% static 'privacy_policy.css' %}">
 
-    /* ===== Privacy Policy Container ===== */
-    .container {
-      max-width: 900px;
-      background: rgba(0, 0, 0, 0.75); /* Transparent black for glass look */
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 45px;
-      border-radius: 16px;
-      box-shadow: 0 0 25px rgba(0, 0, 0, 0.4),
-                  0 0 40px rgba(0, 255, 150, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      text-align: left;
-      animation: fadeIn 0.8s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ===== Headings ===== */
-    h1 {
-      text-align: center;
-      font-size: 2.4rem;
-      background: linear-gradient(90deg, #ffee00, #00ff88);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 15px;
-      letter-spacing: 1px;
-    }
-
-    h2 {
-      color: #00ff88; /* Neon green headings */
-      border-left: 4px solid #ffee00;
-      padding-left: 12px;
-      margin-top: 40px;
-      font-size: 1.4rem;
-      letter-spacing: 0.5px;
-    }
-
-    /* ===== Text and Lists ===== */
-    p, li {
-      font-size: 16px;
-      color: #f5f5f5;
-    }
-
-    strong {
-      color: #ffee00; /* Highlight keywords in yellow */
-    }
-
-    ul {
-      margin-left: 25px;
-    }
-
-    /* ===== Highlight Box ===== */
-    .highlight {
-      background: rgba(255, 255, 255, 0.06);
-      border-left: 5px solid #00ff88;
-      padding: 18px 20px;
-      border-radius: 12px;
-      margin: 25px 0;
-      color: #ffffff;
-      box-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
-    }
-
-    /* ===== Links ===== */
-    a {
-      color: #ffee00;
-      text-decoration: none;
-      transition: 0.3s ease;
-      font-weight: 600;
-    }
-
-    a:hover {
-      color: #00ff88;
-      text-shadow: 0 0 8px #00ff88;
-    }
-
-    /* ===== Footer ===== */
-    .footer {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 14px;
-      color: #aaa;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding-top: 20px;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
@@ -148,11 +60,11 @@
 
     <h2>6. Children’s Privacy</h2>
     <p><strong>Ace Game is not directed to children under 13 years of age.</strong> We do not knowingly collect data from minors. By playing, you confirm you are 13 or older (or have parental consent).</p>
-    <p>Parents who believe their child has shared personal info can contact <a href="mailto:support@acegame.com">support@acegame.com</a> to request deletion.</p>
+    <p>Parents who believe their child has shared personal info can contact <a href="mailto:support@gmail.com">support@gmail.com</a> to request deletion.</p>
 
     <h2>7. Your Rights</h2>
     <ul>
-      <li>Request access or deletion of your data via <a href="mailto:support@acegame.com">support@acegame.com</a></li>
+      <li>Request access or deletion of your data via <a href="mailto:acegamenoreply@gmail.com">acegamenoreply@gmail.com</a></li>
       <li>Request correction of inaccurate information.</li>
       <li>Opt out of optional analytics where available.</li>
     </ul>
@@ -161,7 +73,7 @@
     <p>We may update this policy over time. The latest version will always be available within the game or on our website. Continued use means you accept the changes.</p>
 
     <h2>9. Contact Us</h2>
-    <p>If you have questions or concerns, contact us at <a href="mailto:support@acegame.com">support@acegame.com</a>.</p>
+    <p>If you have questions or concerns, contact us at <a href="mailto:acegamenoreply@gmail.com">acegamenoreply@gmail.com</a>.</p>
 
     <div class="footer">
       &copy; 2025 Ace Game. All rights reserved.

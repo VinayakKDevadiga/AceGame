@@ -3,6 +3,19 @@
 <html lang="en">
 
 <head>
+
+    {% if not debug %}
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-85PG4VK6WJ"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-85PG4VK6WJ');
+        </script>
+    {% endif %}
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Code</title>
@@ -12,6 +25,17 @@
 <body>
     <div class="container">
         <h1>Verify Code</h1>
+
+        <!-- Display Django messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+
         <form method="post">
             {% csrf_token %}
             <label for="code">Enter 4-digit code:</label>
@@ -20,5 +44,6 @@
         </form>
     </div>
 </body>
+
 
 </html>
