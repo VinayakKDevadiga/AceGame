@@ -339,7 +339,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "game_completed_player_list": event.get("game_completed_player_list", []),
         }))
         logger.info("Updating game completion in redis")
-        await self.hset(self.redis_key,"status","completed")
+        await self.redis.hset(self.redis_key,"status","completed")
         await self.update_gamedata_to_db()
         # empty the redis key
         await self.redis.delete(self.redis_key)
