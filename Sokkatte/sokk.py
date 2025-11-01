@@ -1187,7 +1187,6 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
         return False  # safe to allow borrowing
 
-
     async def handle_extra_card_request(self):
         """
         Handles 'get_extra_card_from_deck' request:
