@@ -774,7 +774,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 self.other_player = self.players_list_p[1] if self.current_player == self.players_list_p[0] else self.players_list_p[0]
                 self.other_player_card_list=self.players_card_list_p[self.other_player]
 
-                # if any player doe not have cards then return False
+                # if any player does not have cards then return False
                 if len(self.players_card_list_p[self.current_player])==0 or len(self.players_card_list_p[self.other_player])==0:
                     logger.info("one of the player doe not have any card")
                     return False
@@ -786,6 +786,10 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
                 if len(self.other_player_card_list)==1 : #if other player has only one card then no need to check the suit problem he will smash this current_player and win
                     logger.info("other player has only one card so no suit problem")
+                    return False
+
+                if len(self.players_card_list_p[self.current_player])==1 : #if current_player has only one card then no need to check the suit problem he will smash the other player and win
+                    logger.info("current player has only one card so no suit problem")
                     return False
                
                 #for 4 card scenario handle
@@ -1296,8 +1300,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             self.players_card_raw_handle_card_problem = await self.redis.hget(self.redis_key, "players_card_list")
             # {"User3": ["F5", "F8", "HK", "F3", "D8"], "Billabigbull": []}
             self.players_card_dict_handle = json.loads(self.players_card_raw_handle_card_problem.decode()) if self.players_card_raw_handle_card_problem else {}
-            for player_info in self.players_card_dict_handle.values():
-                existing_cards.extend(player_info.get("cards", []))
+            for each_player_cardList in self.players_card_dict_handle.values():
+                existing_cards.extend(each_player_cardList)
 
             # for player_info in self.card_problem_handle_saw["players"].values():
             #     existing_cards.extend(player_info.get("cards", []))
