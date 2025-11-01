@@ -459,6 +459,16 @@
 
         // card deck drop animation end 
 
+        // update deckpile numbers start
+        function updateDeckPileCount(remainingCards) {
+            const deckPile = document.getElementById('deck-pile');
+            const countSpan = deckPile.querySelector('span');
+            if (countSpan) {
+                countSpan.textContent = remainingCards;
+            }
+        }
+        // update deckpile numbers end
+
         // clear round animation start
         function animateRoundWinner(winnerPlayer, winnerCard, player_color_dict) {
             if (!winnerCard) return; // safety check
@@ -1041,8 +1051,9 @@
                     const newlyDrawnCards = data.new_cards; // cards just drawn
                     lastCards = data.full_cards; // full hand
                     lastBorderColor = sessionStorage.getItem(`player_color_${username}`) || "gray";
-
+            
                     renderCards(lastCards, lastBorderColor, currentSuitFilter, currentTurnPlayer === username, newlyDrawnCards);
+                   
                 }
 
                 if (data.type === "red_day_triggered") {
@@ -1150,6 +1161,13 @@
 
 
                 }
+
+                if (data.type == "deck_pile_count") {
+                    console.log("deck_pile_count received by client");
+                    console.log(data.message);
+                    updateDeckPileCount(data.message);
+                }
+
 
                 if (data.type === "error") {    
                     showMessage(data.message, "error");

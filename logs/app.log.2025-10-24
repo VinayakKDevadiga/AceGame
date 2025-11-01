@@ -1,0 +1,665 @@
+[DEBUG] 2025-10-24 20:59:55,952 Account WebSocket connected
+[DEBUG] 2025-10-24 20:59:56,039 Home WebSocket connected
+[DEBUG] 2025-10-24 20:59:56,064 django.request Asynchronous handler adapted for middleware whitenoise.middleware.WhiteNoiseMiddleware.
+[INFO] 2025-10-24 20:59:56,073 daphne.cli Starting server at tcp:port=8000:interface=127.0.0.1
+[INFO] 2025-10-24 20:59:56,073 daphne.server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2025-10-24 20:59:56,074 daphne.server Configuring endpoint tcp:port=8000:interface=127.0.0.1
+[INFO] 2025-10-24 20:59:56,075 daphne.server Listening on TCP address 127.0.0.1:8000
+[DEBUG] 2025-10-24 21:00:00,758 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,183 Sokkatte WebSocket connected
+[DEBUG] 2025-10-24 21:00:01,224 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,224 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,225 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,251 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,260 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,262 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,262 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,725 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,747 django.template Exception while resolving variable 'name' in template 'unknown'.
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/asgiref/sync.py", line 489, in thread_handler
+    raise exc_info[1]
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 235, in _get_response_async
+    callback, callback_args, callback_kwargs = self.resolve_request(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 313, in resolve_request
+    resolver_match = resolver.resolve(request.path_info)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/urls/resolvers.py", line 705, in resolve
+    raise Resolver404({"tried": tried, "path": new_path})
+django.urls.exceptions.Resolver404: {'tried': [[<URLResolver <URLPattern list> (admin:admin) 'admin/'>], [<URLResolver <module 'Account.urls' from '/home/vinayak/Project/Ace/AceGame/./Account/urls.py'> (account_app:account) 'account/'>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern '' [name='home']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'playgame/' [name='playgame']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'createroom/' [name='createroom']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'joinroom/' [name='join_room']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'waitforplayers/' [name='waitforplayers']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'gamepage/' [name='gamepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'rulepage/' [name='rulepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'winner_page/' [name='winner_page']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'player-stats/' [name='player-stats']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'privacy-policy/' [name='privacy-policy']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'sokkate-rules/' [name='sokkate-rules']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'About/' [name='About']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'getuser/' [name='current_user']>], [<URLResolver <module 'Sokkatte.urls' from '/home/vinayak/Project/Ace/AceGame/./Sokkatte/urls.py'> (sokkatte_app:sokkatte) 'Sokkatte/'>], [<URLPattern '.well-known/appspecific/com.chrome.devtools.json'>]], 'path': 'favicon.ico'}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'URLResolver' object has no attribute 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+django.template.base.VariableDoesNotExist: Failed lookup for key [name] in <URLResolver <URLPattern list> (admin:admin) 'admin/'>
+[DEBUG] 2025-10-24 21:00:01,752 django.template Exception while resolving variable 'name' in template 'unknown'.
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/asgiref/sync.py", line 489, in thread_handler
+    raise exc_info[1]
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 235, in _get_response_async
+    callback, callback_args, callback_kwargs = self.resolve_request(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 313, in resolve_request
+    resolver_match = resolver.resolve(request.path_info)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/urls/resolvers.py", line 705, in resolve
+    raise Resolver404({"tried": tried, "path": new_path})
+django.urls.exceptions.Resolver404: {'tried': [[<URLResolver <URLPattern list> (admin:admin) 'admin/'>], [<URLResolver <module 'Account.urls' from '/home/vinayak/Project/Ace/AceGame/./Account/urls.py'> (account_app:account) 'account/'>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern '' [name='home']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'playgame/' [name='playgame']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'createroom/' [name='createroom']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'joinroom/' [name='join_room']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'waitforplayers/' [name='waitforplayers']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'gamepage/' [name='gamepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'rulepage/' [name='rulepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'winner_page/' [name='winner_page']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'player-stats/' [name='player-stats']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'privacy-policy/' [name='privacy-policy']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'sokkate-rules/' [name='sokkate-rules']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'About/' [name='About']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'getuser/' [name='current_user']>], [<URLResolver <module 'Sokkatte.urls' from '/home/vinayak/Project/Ace/AceGame/./Sokkatte/urls.py'> (sokkatte_app:sokkatte) 'Sokkatte/'>], [<URLPattern '.well-known/appspecific/com.chrome.devtools.json'>]], 'path': 'favicon.ico'}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'URLResolver' object has no attribute 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+django.template.base.VariableDoesNotExist: Failed lookup for key [name] in <URLResolver <module 'Account.urls' from '/home/vinayak/Project/Ace/AceGame/./Account/urls.py'> (account_app:account) 'account/'>
+[DEBUG] 2025-10-24 21:00:01,756 django.template Exception while resolving variable 'name' in template 'unknown'.
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/asgiref/sync.py", line 489, in thread_handler
+    raise exc_info[1]
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 235, in _get_response_async
+    callback, callback_args, callback_kwargs = self.resolve_request(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 313, in resolve_request
+    resolver_match = resolver.resolve(request.path_info)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/urls/resolvers.py", line 705, in resolve
+    raise Resolver404({"tried": tried, "path": new_path})
+django.urls.exceptions.Resolver404: {'tried': [[<URLResolver <URLPattern list> (admin:admin) 'admin/'>], [<URLResolver <module 'Account.urls' from '/home/vinayak/Project/Ace/AceGame/./Account/urls.py'> (account_app:account) 'account/'>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern '' [name='home']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'playgame/' [name='playgame']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'createroom/' [name='createroom']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'joinroom/' [name='join_room']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'waitforplayers/' [name='waitforplayers']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'gamepage/' [name='gamepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'rulepage/' [name='rulepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'winner_page/' [name='winner_page']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'player-stats/' [name='player-stats']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'privacy-policy/' [name='privacy-policy']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'sokkate-rules/' [name='sokkate-rules']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'About/' [name='About']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'getuser/' [name='current_user']>], [<URLResolver <module 'Sokkatte.urls' from '/home/vinayak/Project/Ace/AceGame/./Sokkatte/urls.py'> (sokkatte_app:sokkatte) 'Sokkatte/'>], [<URLPattern '.well-known/appspecific/com.chrome.devtools.json'>]], 'path': 'favicon.ico'}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'URLResolver' object has no attribute 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+django.template.base.VariableDoesNotExist: Failed lookup for key [name] in <URLResolver <module 'Sokkatte.urls' from '/home/vinayak/Project/Ace/AceGame/./Sokkatte/urls.py'> (sokkatte_app:sokkatte) 'Sokkatte/'>
+[WARNING] 2025-10-24 21:00:01,761 django.request Not Found: /favicon.ico
+[DEBUG] 2025-10-24 21:00:01,762 daphne.http_protocol HTTP 404 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,762 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:01,762 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:04,154 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:04,204 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:04,205 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:04,205 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:04,509 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:04,515 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:04,516 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:04,516 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:33,365 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:33,433 django.db.backends (0.014) SELECT 1 AS "a" FROM "auth_user" WHERE UPPER("auth_user"."username"::text) = UPPER('Vinayak') LIMIT 1; args=(1, 'Vinayak'); alias=default
+[DEBUG] 2025-10-24 21:00:33,492 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:33,493 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:33,493 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:33,514 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:33,518 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:33,519 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:33,520 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:53,341 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:53,402 django.db.backends (0.002) SELECT 1 AS "a" FROM "auth_user" WHERE UPPER("auth_user"."username"::text) = UPPER('Vinayak2') LIMIT 1; args=(1, 'Vinayak2'); alias=default
+[DEBUG] 2025-10-24 21:00:53,416 django.db.backends (0.011) SELECT 1 AS "a" FROM "auth_user" WHERE "auth_user"."username" = 'Vinayak2' LIMIT 1; args=(1, 'Vinayak2'); alias=default
+[DEBUG] 2025-10-24 21:00:53,420 django.db.backends (0.002) SELECT 1 AS "a" FROM "auth_user" WHERE "auth_user"."email" = 'acegamenoreply@gmail.com' LIMIT 1; args=(1, 'acegamenoreply@gmail.com'); alias=default
+[DEBUG] 2025-10-24 21:00:54,364 django.db.backends (0.011) INSERT INTO "auth_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "email", "is_staff", "is_active", "date_joined") VALUES ('pbkdf2_sha256$1000000$svSvnUXeUAWT66QrV78MNi$ZW5zHC1Pe7vg2ztK04MGMdNEFGE4n4Za+Qtfu3StEmU=', NULL, false, 'Vinayak2', '', '', 'acegamenoreply@gmail.com', false, false, '2025-10-24T21:00:53.348920+00:00'::timestamptz) RETURNING "auth_user"."id"; args=('pbkdf2_sha256$1000000$svSvnUXeUAWT66QrV78MNi$ZW5zHC1Pe7vg2ztK04MGMdNEFGE4n4Za+Qtfu3StEmU=', None, False, 'Vinayak2', '', '', 'acegamenoreply@gmail.com', False, False, datetime.datetime(2025, 10, 24, 21, 0, 53, 348920, tzinfo=datetime.timezone.utc)); alias=default
+[INFO] 2025-10-24 21:00:54,460 Account Primary email failed: [Errno 111] Connection refused
+[DEBUG] 2025-10-24 21:00:59,569 django.db.backends (0.011) SELECT 1 AS "a" FROM "Account_roomtable" WHERE "Account_roomtable"."room_id" = 'vinayPFDR' LIMIT 1; args=(1, 'vinayPFDR'); alias=default
+[DEBUG] 2025-10-24 21:00:59,575 django.db.backends (0.003) INSERT INTO "Account_roomtable" ("username", "email", "room_id", "password", "created_at", "passowrd_updated_at") VALUES ('Vinayak2', 'acegamenoreply@gmail.com', 'vinayPFDR', 'ILOVEACE', '2025-10-24T21:00:59.572318+00:00'::timestamptz, '2025-10-24T21:00:59.572365+00:00'::timestamptz) RETURNING "Account_roomtable"."id"; args=('Vinayak2', 'acegamenoreply@gmail.com', 'vinayPFDR', 'ILOVEACE', datetime.datetime(2025, 10, 24, 21, 0, 59, 572318, tzinfo=datetime.timezone.utc), datetime.datetime(2025, 10, 24, 21, 0, 59, 572365, tzinfo=datetime.timezone.utc)); alias=default
+[DEBUG] 2025-10-24 21:00:59,588 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:59,588 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:59,589 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:59,623 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:59,626 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:59,627 daphne.http_protocol HTTP close for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:00:59,627 daphne.http_protocol HTTP response complete for ['127.0.0.1', 57456]
+[DEBUG] 2025-10-24 21:11:38,279 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:38,289 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:38,290 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:38,291 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:38,343 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:38,347 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:38,350 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:38,350 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:41,846 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:41,922 daphne.http_protocol HTTP 302 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:41,923 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:41,923 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:41,927 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:41,965 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:41,965 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:41,966 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:42,005 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:42,013 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:42,016 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:42,016 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:42,017 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:42,019 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:42,027 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:42,029 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:42,030 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:42,031 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:42,031 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:42,034 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:42,035 daphne.http_protocol HTTP close for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:42,035 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:42,042 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:42,043 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:42,044 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:42,044 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:42,045 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:42,045 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:42,046 daphne.http_protocol HTTP close for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:42,046 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:42,047 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:42,047 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:42,047 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:42,047 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:42,058 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:42,062 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:42,062 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:42,063 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:49,355 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:49,482 django.db.backends (0.014) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."username" = 'Vinayak' LIMIT 21; args=('Vinayak',); alias=default
+[DEBUG] 2025-10-24 21:11:50,445 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:50,446 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:50,446 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:50,470 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:50,474 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:50,475 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:50,477 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:50,479 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:50,480 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:50,485 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:50,492 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:50,493 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:50,494 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:50,494 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:50,495 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:50,496 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:50,497 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:50,498 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:50,498 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:50,499 daphne.http_protocol HTTP close for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:50,499 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:50,501 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:50,502 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:50,502 daphne.http_protocol HTTP close for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:50,503 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:50,503 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:50,504 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:50,513 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:50,516 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:50,517 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:50,517 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:56,038 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:56,138 django.db.backends (0.003) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."username" = 'admin' LIMIT 21; args=('admin',); alias=default
+[DEBUG] 2025-10-24 21:11:57,064 django.db.backends (0.009) SELECT 1 AS "a" FROM "django_session" WHERE "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9' LIMIT 1; args=(1, 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:11:57,065 django.db.backends (0.000) BEGIN; args=None; alias=default
+[DEBUG] 2025-10-24 21:11:57,066 django.db.backends (0.001) INSERT INTO "django_session" ("session_key", "session_data", "expire_date") VALUES ('rcjmr74362zh377kj21mz714ao7am9w9', 'e30:1vCP4n:-aeblZ3c8p2yQYV-oQbCb6xGn0paN4QFgf5mdoKTis0', '2025-10-25T21:11:57.064817+00:00'::timestamptz); args=('rcjmr74362zh377kj21mz714ao7am9w9', 'e30:1vCP4n:-aeblZ3c8p2yQYV-oQbCb6xGn0paN4QFgf5mdoKTis0', datetime.datetime(2025, 10, 25, 21, 11, 57, 64817, tzinfo=datetime.timezone.utc)); alias=default
+[DEBUG] 2025-10-24 21:11:57,068 django.db.backends (0.001) COMMIT; args=None; alias=default
+[DEBUG] 2025-10-24 21:11:57,072 django.db.backends (0.003) UPDATE "auth_user" SET "last_login" = '2025-10-24T21:11:57.068853+00:00'::timestamptz WHERE "auth_user"."id" = 1; args=(datetime.datetime(2025, 10, 24, 21, 11, 57, 68853, tzinfo=datetime.timezone.utc), 1); alias=default
+[DEBUG] 2025-10-24 21:11:57,074 django.db.backends (0.000) BEGIN; args=None; alias=default
+[DEBUG] 2025-10-24 21:11:57,075 django.db.backends (0.001) UPDATE "django_session" SET "session_data" = '.eJxVjEEOgjAQRe_StWlop3SKS_eegUynM4IaSCisjHdXEha6_e-9_zI9bevQb1WWfizmbJw5_W6Z-CHTDsqdpttseZ7WZcx2V-xBq73ORZ6Xw_07GKgO39qLdxTAKyBpCxFSE6MrFFiVEyPnNhQVhJAUGsQOvUdqOxaJGTSY9wfcKjfh:1vCP4n:orqNqGUUclxXzscdvmMbw2yTvRLU9kLez92NfpcXoFk', "expire_date" = '2025-10-25T21:11:57.073923+00:00'::timestamptz WHERE "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9'; args=('.eJxVjEEOgjAQRe_StWlop3SKS_eegUynM4IaSCisjHdXEha6_e-9_zI9bevQb1WWfizmbJw5_W6Z-CHTDsqdpttseZ7WZcx2V-xBq73ORZ6Xw_07GKgO39qLdxTAKyBpCxFSE6MrFFiVEyPnNhQVhJAUGsQOvUdqOxaJGTSY9wfcKjfh:1vCP4n:orqNqGUUclxXzscdvmMbw2yTvRLU9kLez92NfpcXoFk', datetime.datetime(2025, 10, 25, 21, 11, 57, 73923, tzinfo=datetime.timezone.utc), 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:11:57,076 django.db.backends (0.001) COMMIT; args=None; alias=default
+[DEBUG] 2025-10-24 21:11:57,077 daphne.http_protocol HTTP 302 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,077 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,078 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,082 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,105 django.db.backends (0.002) SELECT "django_session"."session_key", "django_session"."session_data", "django_session"."expire_date" FROM "django_session" WHERE ("django_session"."expire_date" > '2025-10-24T21:11:57.086369+00:00'::timestamptz AND "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9') LIMIT 21; args=(datetime.datetime(2025, 10, 24, 21, 11, 57, 86369, tzinfo=datetime.timezone.utc), 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:11:57,107 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" = 1 LIMIT 21; args=(1,); alias=default
+[DEBUG] 2025-10-24 21:11:57,134 django.db.backends (0.006) SELECT "django_admin_log"."id", "django_admin_log"."action_time", "django_admin_log"."user_id", "django_admin_log"."content_type_id", "django_admin_log"."object_id", "django_admin_log"."object_repr", "django_admin_log"."action_flag", "django_admin_log"."change_message", "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined", "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_admin_log" INNER JOIN "auth_user" ON ("django_admin_log"."user_id" = "auth_user"."id") LEFT OUTER JOIN "django_content_type" ON ("django_admin_log"."content_type_id" = "django_content_type"."id") WHERE "django_admin_log"."user_id" = 1 ORDER BY "django_admin_log"."action_time" DESC LIMIT 10; args=(1,); alias=default
+[DEBUG] 2025-10-24 21:11:57,138 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,138 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,139 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,162 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,165 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:57,166 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:57,167 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:57,167 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:57,169 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:57,182 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:57,183 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:57,185 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:57,186 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:57,187 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:11:57,187 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:57,188 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:57,188 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,189 daphne.http_protocol HTTP close for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:57,190 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:11:57,191 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:57,192 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:57,193 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:57,194 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:57,195 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,196 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,197 daphne.http_protocol HTTP close for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:57,197 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:57,208 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:57,214 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:57,215 daphne.http_protocol HTTP close for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:57,216 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:11:57,219 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,220 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:57,221 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:57,229 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:57,231 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,232 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:57,233 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:57,233 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:11:57,234 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,234 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:11:57,237 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:11:57,237 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,307 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,348 django.db.backends (0.001) SELECT "django_session"."session_key", "django_session"."session_data", "django_session"."expire_date" FROM "django_session" WHERE ("django_session"."expire_date" > '2025-10-24T21:12:01.315463+00:00'::timestamptz AND "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9') LIMIT 21; args=(datetime.datetime(2025, 10, 24, 21, 12, 1, 315463, tzinfo=datetime.timezone.utc), 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:12:01,350 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" = 1 LIMIT 21; args=(1,); alias=default
+[DEBUG] 2025-10-24 21:12:01,361 django.db.backends (0.009) SELECT "auth_group"."id", "auth_group"."name" FROM "auth_group" ORDER BY "auth_group"."name" ASC; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:01,366 django.db.backends (0.002) SELECT COUNT(*) AS "__count" FROM "auth_user"; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:01,367 django.db.backends (0.000) SELECT COUNT(*) AS "__count" FROM "auth_user"; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:01,372 django.db.backends (0.000) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" ORDER BY "auth_user"."username" ASC; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:01,418 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,418 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,419 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,448 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,449 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,450 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,452 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,453 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,453 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,467 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,468 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,469 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,469 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,470 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,471 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,472 daphne.http_protocol HTTP close for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,473 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,474 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,474 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,474 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,476 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,476 daphne.http_protocol HTTP close for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,476 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,477 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,477 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,478 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,478 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,478 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,479 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,480 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,482 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,482 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,482 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,482 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,483 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,483 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,483 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,485 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,485 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,495 django.db.backends (0.004) SELECT "django_session"."session_key", "django_session"."session_data", "django_session"."expire_date" FROM "django_session" WHERE ("django_session"."expire_date" > '2025-10-24T21:12:01.463080+00:00'::timestamptz AND "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9') LIMIT 21; args=(datetime.datetime(2025, 10, 24, 21, 12, 1, 463080, tzinfo=datetime.timezone.utc), 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:12:01,497 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,502 django.db.backends (0.003) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" = 1 LIMIT 21; args=(1,); alias=default
+[DEBUG] 2025-10-24 21:12:01,507 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,512 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,521 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,522 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,523 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,527 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,528 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,528 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,529 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,530 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,531 daphne.http_protocol HTTP close for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,532 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,534 daphne.http_protocol HTTP close for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,534 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,535 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,535 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,536 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,537 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,539 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,542 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,545 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,546 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,551 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,552 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,554 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,557 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,567 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,568 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,570 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,571 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,571 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,572 daphne.http_protocol HTTP close for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,573 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55938]
+[DEBUG] 2025-10-24 21:12:01,573 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,574 daphne.http_protocol HTTP close for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,575 daphne.http_protocol HTTP response complete for ['127.0.0.1', 60398]
+[DEBUG] 2025-10-24 21:12:01,576 daphne.http_protocol HTTP close for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,576 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55952]
+[DEBUG] 2025-10-24 21:12:01,579 daphne.http_protocol HTTP close for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,579 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,580 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,580 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,582 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,583 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,605 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,608 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,611 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,611 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,612 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,619 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,620 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,620 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,635 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,639 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,640 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,640 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,647 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,651 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,652 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,659 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,660 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,662 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,665 daphne.http_protocol HTTP close for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,667 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55926]
+[DEBUG] 2025-10-24 21:12:01,667 daphne.http_protocol HTTP close for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,668 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55924]
+[DEBUG] 2025-10-24 21:12:01,670 daphne.http_protocol HTTP close for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:01,671 daphne.http_protocol HTTP response complete for ['127.0.0.1', 55940]
+[DEBUG] 2025-10-24 21:12:13,716 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,757 django.db.backends (0.002) SELECT "django_session"."session_key", "django_session"."session_data", "django_session"."expire_date" FROM "django_session" WHERE ("django_session"."expire_date" > '2025-10-24T21:12:13.725407+00:00'::timestamptz AND "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9') LIMIT 21; args=(datetime.datetime(2025, 10, 24, 21, 12, 13, 725407, tzinfo=datetime.timezone.utc), 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:12:13,759 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" = 1 LIMIT 21; args=(1,); alias=default
+[DEBUG] 2025-10-24 21:12:13,762 django.db.backends (0.001) SELECT "auth_group"."id", "auth_group"."name" FROM "auth_group" ORDER BY "auth_group"."name" ASC; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:13,763 django.db.backends (0.001) SELECT COUNT(*) AS "__count" FROM "auth_user"; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:13,764 django.db.backends (0.000) SELECT COUNT(*) AS "__count" FROM "auth_user"; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:13,768 django.db.backends (0.001) SELECT "auth_group"."id", "auth_group"."name" FROM "auth_group" ORDER BY "auth_group"."name" ASC; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:13,771 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" IN (19) ORDER BY "auth_user"."username" ASC LIMIT 1; args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:13,772 django.db.backends (0.000) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" IN (19) ORDER BY "auth_user"."username" ASC; args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:13,775 django.db.backends (0.001) SELECT "django_admin_log"."id", "django_admin_log"."action_time", "django_admin_log"."user_id", "django_admin_log"."content_type_id", "django_admin_log"."object_id", "django_admin_log"."object_repr", "django_admin_log"."action_flag", "django_admin_log"."change_message", "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "django_admin_log" INNER JOIN "auth_user" ON ("django_admin_log"."user_id" = "auth_user"."id") WHERE "django_admin_log"."user_id" IN (19) ORDER BY "django_admin_log"."action_time" DESC; args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:13,779 django.db.backends (0.002) SELECT "auth_user_groups"."id", "auth_user_groups"."user_id", "auth_user_groups"."group_id", "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user_groups" INNER JOIN "auth_user" ON ("auth_user_groups"."user_id" = "auth_user"."id") WHERE "auth_user_groups"."user_id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:13,785 django.db.backends (0.003) SELECT "auth_user_user_permissions"."id", "auth_user_user_permissions"."user_id", "auth_user_user_permissions"."permission_id", "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user_user_permissions" INNER JOIN "auth_user" ON ("auth_user_user_permissions"."user_id" = "auth_user"."id") WHERE "auth_user_user_permissions"."user_id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:13,803 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,804 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,804 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,831 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,833 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:13,836 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,837 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:13,838 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:13,839 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:13,849 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:13,851 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:13,852 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,852 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:13,853 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:13,853 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,854 daphne.http_protocol HTTP close for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:13,854 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:13,855 daphne.http_protocol HTTP close for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:13,855 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:13,856 daphne.http_protocol HTTP close for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,856 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,857 daphne.http_protocol HTTP close for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:13,858 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:13,859 daphne.http_protocol HTTP close for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:13,860 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:13,861 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,861 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,869 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:13,870 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:13,871 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,872 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:13,873 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:13,873 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,883 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,885 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:13,886 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:13,887 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:13,887 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:13,888 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,889 daphne.http_protocol HTTP close for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,889 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,889 daphne.http_protocol HTTP close for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:13,890 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:13,891 daphne.http_protocol HTTP close for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:13,892 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:13,892 daphne.http_protocol HTTP close for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:13,893 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:13,894 daphne.http_protocol HTTP close for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:13,895 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:13,895 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,896 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,899 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,911 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,912 daphne.http_protocol HTTP close for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,912 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:13,914 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,920 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,921 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,921 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,928 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,934 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,935 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:13,935 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,310 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,388 django.db.backends (0.003) SELECT "django_session"."session_key", "django_session"."session_data", "django_session"."expire_date" FROM "django_session" WHERE ("django_session"."expire_date" > '2025-10-24T21:12:15.320556+00:00'::timestamptz AND "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9') LIMIT 21; args=(datetime.datetime(2025, 10, 24, 21, 12, 15, 320556, tzinfo=datetime.timezone.utc), 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:12:15,393 django.db.backends (0.002) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" = 1 LIMIT 21; args=(1,); alias=default
+[DEBUG] 2025-10-24 21:12:15,399 django.db.backends (0.001) SELECT "auth_group"."id", "auth_group"."name" FROM "auth_group" ORDER BY "auth_group"."name" ASC; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:15,402 django.db.backends (0.001) SELECT COUNT(*) AS "__count" FROM "auth_user"; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:15,404 django.db.backends (0.001) SELECT COUNT(*) AS "__count" FROM "auth_user"; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:15,407 django.db.backends (0.001) SELECT "auth_group"."id", "auth_group"."name" FROM "auth_group" ORDER BY "auth_group"."name" ASC; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:15,412 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" IN (19) ORDER BY "auth_user"."username" ASC LIMIT 1; args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,415 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" IN (19) ORDER BY "auth_user"."username" ASC; args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,421 django.db.backends (0.002) SELECT "django_admin_log"."id", "django_admin_log"."action_time", "django_admin_log"."user_id", "django_admin_log"."content_type_id", "django_admin_log"."object_id", "django_admin_log"."object_repr", "django_admin_log"."action_flag", "django_admin_log"."change_message", "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "django_admin_log" INNER JOIN "auth_user" ON ("django_admin_log"."user_id" = "auth_user"."id") WHERE "django_admin_log"."user_id" IN (19) ORDER BY "django_admin_log"."action_time" DESC; args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,425 django.db.backends (0.001) SELECT "auth_user_groups"."id", "auth_user_groups"."user_id", "auth_user_groups"."group_id", "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user_groups" INNER JOIN "auth_user" ON ("auth_user_groups"."user_id" = "auth_user"."id") WHERE "auth_user_groups"."user_id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,428 django.db.backends (0.001) SELECT "auth_user_user_permissions"."id", "auth_user_user_permissions"."user_id", "auth_user_user_permissions"."permission_id", "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user_user_permissions" INNER JOIN "auth_user" ON ("auth_user_user_permissions"."user_id" = "auth_user"."id") WHERE "auth_user_user_permissions"."user_id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,431 django.db.backends (0.001) SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'auth' AND "django_content_type"."model" = 'user') LIMIT 21; args=('auth', 'user'); alias=default
+[DEBUG] 2025-10-24 21:12:15,442 django.db.backends (0.010) INSERT INTO "django_admin_log" ("action_time", "user_id", "content_type_id", "object_id", "object_repr", "action_flag", "change_message") VALUES ('2025-10-24T21:12:15.432187+00:00'::timestamptz, 1, 4, '19', 'Vinayak2', 3, '') RETURNING "django_admin_log"."id"; args=(datetime.datetime(2025, 10, 24, 21, 12, 15, 432187, tzinfo=datetime.timezone.utc), 1, 4, '19', 'Vinayak2', 3, ''); alias=default
+[DEBUG] 2025-10-24 21:12:15,443 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,445 django.db.backends (0.000) BEGIN; args=None; alias=default
+[DEBUG] 2025-10-24 21:12:15,447 django.db.backends (0.001) DELETE FROM "django_admin_log" WHERE "django_admin_log"."user_id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,448 django.db.backends (0.000) DELETE FROM "auth_user_groups" WHERE "auth_user_groups"."user_id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,449 django.db.backends (0.000) DELETE FROM "auth_user_user_permissions" WHERE "auth_user_user_permissions"."user_id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,450 django.db.backends (0.000) DELETE FROM "auth_user" WHERE "auth_user"."id" IN (19); args=(19,); alias=default
+[DEBUG] 2025-10-24 21:12:15,452 django.db.backends (0.002) COMMIT; args=None; alias=default
+[DEBUG] 2025-10-24 21:12:15,454 daphne.http_protocol HTTP 302 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,454 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,455 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,459 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,484 django.db.backends (0.002) SELECT "django_session"."session_key", "django_session"."session_data", "django_session"."expire_date" FROM "django_session" WHERE ("django_session"."expire_date" > '2025-10-24T21:12:15.464167+00:00'::timestamptz AND "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9') LIMIT 21; args=(datetime.datetime(2025, 10, 24, 21, 12, 15, 464167, tzinfo=datetime.timezone.utc), 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:12:15,486 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" = 1 LIMIT 21; args=(1,); alias=default
+[DEBUG] 2025-10-24 21:12:15,488 django.db.backends (0.001) SELECT "auth_group"."id", "auth_group"."name" FROM "auth_group" ORDER BY "auth_group"."name" ASC; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:15,490 django.db.backends (0.001) SELECT COUNT(*) AS "__count" FROM "auth_user"; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:15,491 django.db.backends (0.000) SELECT COUNT(*) AS "__count" FROM "auth_user"; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:15,495 django.db.backends (0.001) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" ORDER BY "auth_user"."username" ASC; args=(); alias=default
+[DEBUG] 2025-10-24 21:12:15,516 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,517 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,517 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,549 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,550 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,550 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,551 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,551 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,552 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,560 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,563 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,564 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,566 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,567 daphne.http_protocol HTTP close for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,567 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,569 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,570 daphne.http_protocol HTTP close for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,571 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,572 daphne.http_protocol HTTP close for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,572 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,572 daphne.http_protocol HTTP close for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,573 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,573 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,577 daphne.http_protocol HTTP close for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,578 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,581 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,582 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,583 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,585 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,589 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,594 daphne.http_protocol HTTP close for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,594 django.db.backends (0.004) SELECT "django_session"."session_key", "django_session"."session_data", "django_session"."expire_date" FROM "django_session" WHERE ("django_session"."expire_date" > '2025-10-24T21:12:15.565021+00:00'::timestamptz AND "django_session"."session_key" = 'rcjmr74362zh377kj21mz714ao7am9w9') LIMIT 21; args=(datetime.datetime(2025, 10, 24, 21, 12, 15, 565021, tzinfo=datetime.timezone.utc), 'rcjmr74362zh377kj21mz714ao7am9w9'); alias=default
+[DEBUG] 2025-10-24 21:12:15,595 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,600 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,600 django.db.backends (0.003) SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."id" = 1 LIMIT 21; args=(1,); alias=default
+[DEBUG] 2025-10-24 21:12:15,601 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,602 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,606 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,607 daphne.http_protocol HTTP close for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,608 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,609 daphne.http_protocol HTTP close for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,609 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,609 daphne.http_protocol HTTP close for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,610 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,611 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,615 daphne.http_protocol HTTP close for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,617 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,622 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,623 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,624 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,637 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,640 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,644 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,647 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,650 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,658 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,660 daphne.http_protocol HTTP close for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,660 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48490]
+[DEBUG] 2025-10-24 21:12:15,668 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,669 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,669 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,670 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,670 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,671 daphne.http_protocol HTTP close for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,672 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48504]
+[DEBUG] 2025-10-24 21:12:15,672 daphne.http_protocol HTTP close for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,673 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48468]
+[DEBUG] 2025-10-24 21:12:15,673 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,673 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,674 daphne.http_protocol HTTP close for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,674 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,675 daphne.http_protocol HTTP close for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,677 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,686 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,690 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,693 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,694 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,697 daphne.http_protocol HTTP close for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,698 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48454]
+[DEBUG] 2025-10-24 21:12:15,700 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,703 daphne.http_protocol HTTP close for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,704 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48474]
+[DEBUG] 2025-10-24 21:12:15,705 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,708 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:15,709 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:33,637 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 48450]
+[WARNING] 2025-10-24 21:12:33,650 django.security.csrf Forbidden (CSRF token from POST incorrect.): /account/signup/
+[DEBUG] 2025-10-24 21:12:33,652 daphne.http_protocol HTTP 403 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:33,653 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:33,653 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:42,943 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 48450]
+[WARNING] 2025-10-24 21:12:42,952 django.security.csrf Forbidden (CSRF token from POST incorrect.): /account/signup/
+[DEBUG] 2025-10-24 21:12:42,956 daphne.http_protocol HTTP 403 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:42,957 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:42,957 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:47,376 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:47,394 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:47,395 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:47,396 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:47,427 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:47,433 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:47,434 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:47,435 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:57,603 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:12:57,666 django.db.backends (0.002) SELECT 1 AS "a" FROM "auth_user" WHERE UPPER("auth_user"."username"::text) = UPPER('Vinayak1') LIMIT 1; args=(1, 'Vinayak1'); alias=default
+[DEBUG] 2025-10-24 21:12:57,669 django.db.backends (0.001) SELECT 1 AS "a" FROM "auth_user" WHERE "auth_user"."username" = 'Vinayak1' LIMIT 1; args=(1, 'Vinayak1'); alias=default
+[DEBUG] 2025-10-24 21:12:57,671 django.db.backends (0.000) SELECT 1 AS "a" FROM "auth_user" WHERE "auth_user"."email" = 'aegamenoreply@gmail.com' LIMIT 1; args=(1, 'aegamenoreply@gmail.com'); alias=default
+[DEBUG] 2025-10-24 21:12:58,619 django.db.backends (0.008) INSERT INTO "auth_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "email", "is_staff", "is_active", "date_joined") VALUES ('pbkdf2_sha256$1000000$oSTrztypANOgNBLtaGUGvd$3ZEY5mw18Y+EKTh4K5sVMHXB/54mMLx0onbXC9zlGGA=', NULL, false, 'Vinayak1', '', '', 'aegamenoreply@gmail.com', false, false, '2025-10-24T21:12:57.612938+00:00'::timestamptz) RETURNING "auth_user"."id"; args=('pbkdf2_sha256$1000000$oSTrztypANOgNBLtaGUGvd$3ZEY5mw18Y+EKTh4K5sVMHXB/54mMLx0onbXC9zlGGA=', None, False, 'Vinayak1', '', '', 'aegamenoreply@gmail.com', False, False, datetime.datetime(2025, 10, 24, 21, 12, 57, 612938, tzinfo=datetime.timezone.utc)); alias=default
+[INFO] 2025-10-24 21:13:01,364 Account Primary email failed: Connection unexpectedly closed
+[DEBUG] 2025-10-24 21:13:05,975 django.db.backends (0.002) SELECT 1 AS "a" FROM "Account_roomtable" WHERE "Account_roomtable"."room_id" = 'vinay2NBV' LIMIT 1; args=(1, 'vinay2NBV'); alias=default
+[DEBUG] 2025-10-24 21:13:05,986 django.db.backends (0.009) INSERT INTO "Account_roomtable" ("username", "email", "room_id", "password", "created_at", "passowrd_updated_at") VALUES ('Vinayak1', 'aegamenoreply@gmail.com', 'vinay2NBV', 'ILOVEACE', '2025-10-24T21:13:05.977392+00:00'::timestamptz, '2025-10-24T21:13:05.977464+00:00'::timestamptz) RETURNING "Account_roomtable"."id"; args=('Vinayak1', 'aegamenoreply@gmail.com', 'vinay2NBV', 'ILOVEACE', datetime.datetime(2025, 10, 24, 21, 13, 5, 977392, tzinfo=datetime.timezone.utc), datetime.datetime(2025, 10, 24, 21, 13, 5, 977464, tzinfo=datetime.timezone.utc)); alias=default
+[DEBUG] 2025-10-24 21:13:06,000 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:13:06,001 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:13:06,002 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:13:06,038 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:13:06,043 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:13:06,044 daphne.http_protocol HTTP close for ['127.0.0.1', 48450]
+[DEBUG] 2025-10-24 21:13:06,045 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48450]
+[INFO] 2025-10-24 21:13:16,707 daphne.server Killed 0 pending application instances
+[DEBUG] 2025-10-24 21:14:55,198 Account WebSocket connected
+[DEBUG] 2025-10-24 21:14:55,258 Home WebSocket connected
+[DEBUG] 2025-10-24 21:14:55,266 django.request Asynchronous handler adapted for middleware whitenoise.middleware.WhiteNoiseMiddleware.
+[INFO] 2025-10-24 21:14:55,270 daphne.cli Starting server at tcp:port=8000:interface=127.0.0.1
+[INFO] 2025-10-24 21:14:55,271 daphne.server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2025-10-24 21:14:55,271 daphne.server Configuring endpoint tcp:port=8000:interface=127.0.0.1
+[INFO] 2025-10-24 21:14:55,272 daphne.server Listening on TCP address 127.0.0.1:8000
+[INFO] 2025-10-24 21:14:56,757 daphne.server Killed 0 pending application instances

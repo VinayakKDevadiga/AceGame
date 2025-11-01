@@ -294,6 +294,13 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "message": message
         }))
         
+    async def deck_pile_count(self, event):
+        message = event["cardListLength"]
+        await self.send(text_data=json.dumps({
+            "type": "deck_pile_count",
+            "message": message
+        }))
+
     async def send_dynamic_group_message(self, message_type, message):
         """
         Send a message with dynamic type and content to the client.
@@ -767,6 +774,10 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 self.other_player = self.players_list_p[1] if self.current_player == self.players_list_p[0] else self.players_list_p[0]
                 self.other_player_card_list=self.players_card_list_p[self.other_player]
 
+                # if any player doe not have cards then return False
+                if len(self.players_card_list_p[self.current_player])==0 or len(self.players_card_list_p[self.other_player])==0:
+                    logger.info("one of the player doe not have any card")
+                    return False
 
                 # if the card_dropped suit is present in other players cards_list then return False:
                 for card in self.other_player_card_list:
@@ -774,16 +785,17 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                         return False
 
                 if len(self.other_player_card_list)==1 : #if other player has only one card then no need to check the suit problem he will smash this current_player and win
+                    logger.info("other player has only one card so no suit problem")
                     return False
                
                 #for 4 card scenario handle
                 if (len(self.players_card_list_p[self.current_player]))==1 and len(self.players_card_list_p[self.other_player])==3:
                     #if current player has only one card and other player has 3 cards then let the other player has to trigger red day to give one card to current player.
                     return False
-
-                if len(self.players_card_list_p[self.current_player])==3 and len(self.players_card_list_p[self.other_player])==0:
-                    #if current player has only three cards and other player has no cards then let the other player has to trigger red day to give one card to other player who dropped his card player.
-                    return False
+                
+                # if len(self.players_card_list_p[self.current_player])==3 and len(self.players_card_list_p[self.other_player])==0:
+                #     #if current player has only three cards and other player has no cards then let the other player has to trigger red day to give one card to other player who dropped his card player.
+                #     return False
                 
                 if total_number_of_cards==4:
                     logger.info("total_number_of_cards is 4")
@@ -1176,9 +1188,6 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
         return False  # safe to allow borrowing
 
 
-
-
-
     async def handle_extra_card_request(self):
         """
         Handles 'get_extra_card_from_deck' request:
@@ -1239,7 +1248,21 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             "new_cards": self.drawn_cards,
             "full_cards": self.player_cards
         }))
+        # add delay
+        await asyncio.sleep(0.1)
+        # send the cardList length
+        await self.channel_layer.group_send(
+            self.group_name,
+            {
+                "type": "deck_pile_count",
+                "cardListLength": len(self.card_list),               
+            }
+        )
+        await asyncio.sleep(0.1)
+
         await self.send_dynamic_group_message( "error", f"Player {self.username} got {len(self.drawn_cards)} extra cards from deck")
+        
+        
         return False  # continue processing if needed
 
 
@@ -1269,8 +1292,16 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
             RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
             FULL_DECK = [f"{suit}{rank}" for suit in SUITS for rank in RANKS]
             existing_cards = []
-            for player_info in self.card_problem_handle_saw["players"].values():
-                existing_cards.extend(player_info.get("cards", []))                
+
+            # get the cards from the both players and put it in existing_cards from played_card_list
+            self.players_card_raw_handle_card_problem = await self.redis.hget(self.redis_key, "players_card_list")
+            # {"User3": ["F5", "F8", "HK", "F3", "D8"], "Billabigbull": []}
+            self.players_card_dict_handle = json.loads(self.players_card_raw_handle_card_problem.decode()) if self.players_card_raw_handle_card_problem else {}
+            for player_info in self.players_card_dict_handle.values():
+                existing_cards.extend(player_info.get("cards", []))
+
+            # for player_info in self.card_problem_handle_saw["players"].values():
+            #     existing_cards.extend(player_info.get("cards", []))
             available_cards = [card for card in FULL_DECK if card not in existing_cards]
             random.shuffle(available_cards)       
 

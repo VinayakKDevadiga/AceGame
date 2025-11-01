@@ -1,0 +1,172 @@
+[DEBUG] 2025-10-21 08:05:07,821 Account WebSocket connected
+[DEBUG] 2025-10-21 08:05:08,074 Home WebSocket connected
+[DEBUG] 2025-10-21 08:05:08,160 django.request Asynchronous handler adapted for middleware whitenoise.middleware.WhiteNoiseMiddleware.
+[INFO] 2025-10-21 08:05:08,180 daphne.cli Starting server at tcp:port=8000:interface=127.0.0.1
+[INFO] 2025-10-21 08:05:08,181 daphne.server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2025-10-21 08:05:08,182 daphne.server Configuring endpoint tcp:port=8000:interface=127.0.0.1
+[INFO] 2025-10-21 08:05:08,184 daphne.server Listening on TCP address 127.0.0.1:8000
+[DEBUG] 2025-10-21 08:05:12,923 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:13,806 Sokkatte WebSocket connected
+[DEBUG] 2025-10-21 08:05:13,912 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:13,913 daphne.http_protocol HTTP close for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:13,914 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:13,997 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,022 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,026 daphne.http_protocol HTTP response chunk for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,026 daphne.http_protocol HTTP close for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,028 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,380 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48426]
+[WARNING] 2025-10-21 08:05:14,401 django.request Unauthorized: /getuser/
+[DEBUG] 2025-10-21 08:05:14,403 daphne.http_protocol HTTP 401 response started for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,404 daphne.http_protocol HTTP close for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,405 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,670 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,713 django.template Exception while resolving variable 'name' in template 'unknown'.
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/asgiref/sync.py", line 489, in thread_handler
+    raise exc_info[1]
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 235, in _get_response_async
+    callback, callback_args, callback_kwargs = self.resolve_request(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 313, in resolve_request
+    resolver_match = resolver.resolve(request.path_info)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/urls/resolvers.py", line 705, in resolve
+    raise Resolver404({"tried": tried, "path": new_path})
+django.urls.exceptions.Resolver404: {'tried': [[<URLResolver <URLPattern list> (admin:admin) 'admin/'>], [<URLResolver <module 'Account.urls' from '/home/vinayak/Project/Ace/AceGame/./Account/urls.py'> (account_app:account) 'account/'>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern '' [name='home']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'playgame/' [name='playgame']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'createroom/' [name='createroom']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'joinroom/' [name='join_room']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'waitforplayers/' [name='waitforplayers']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'gamepage/' [name='gamepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'rulepage/' [name='rulepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'winner_page/' [name='winner_page']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'player-stats/' [name='player-stats']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'privacy-policy/' [name='privacy-policy']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'sokkate-rules/' [name='sokkate-rules']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'About/' [name='About']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'getuser/' [name='current_user']>], [<URLResolver <module 'Sokkatte.urls' from '/home/vinayak/Project/Ace/AceGame/./Sokkatte/urls.py'> (sokkatte_app:sokkatte) 'Sokkatte/'>], [<URLPattern '.well-known/appspecific/com.chrome.devtools.json'>]], 'path': 'favicon.ico'}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'URLResolver' object has no attribute 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+django.template.base.VariableDoesNotExist: Failed lookup for key [name] in <URLResolver <URLPattern list> (admin:admin) 'admin/'>
+[DEBUG] 2025-10-21 08:05:14,724 django.template Exception while resolving variable 'name' in template 'unknown'.
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/asgiref/sync.py", line 489, in thread_handler
+    raise exc_info[1]
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 235, in _get_response_async
+    callback, callback_args, callback_kwargs = self.resolve_request(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 313, in resolve_request
+    resolver_match = resolver.resolve(request.path_info)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/urls/resolvers.py", line 705, in resolve
+    raise Resolver404({"tried": tried, "path": new_path})
+django.urls.exceptions.Resolver404: {'tried': [[<URLResolver <URLPattern list> (admin:admin) 'admin/'>], [<URLResolver <module 'Account.urls' from '/home/vinayak/Project/Ace/AceGame/./Account/urls.py'> (account_app:account) 'account/'>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern '' [name='home']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'playgame/' [name='playgame']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'createroom/' [name='createroom']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'joinroom/' [name='join_room']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'waitforplayers/' [name='waitforplayers']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'gamepage/' [name='gamepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'rulepage/' [name='rulepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'winner_page/' [name='winner_page']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'player-stats/' [name='player-stats']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'privacy-policy/' [name='privacy-policy']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'sokkate-rules/' [name='sokkate-rules']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'About/' [name='About']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'getuser/' [name='current_user']>], [<URLResolver <module 'Sokkatte.urls' from '/home/vinayak/Project/Ace/AceGame/./Sokkatte/urls.py'> (sokkatte_app:sokkatte) 'Sokkatte/'>], [<URLPattern '.well-known/appspecific/com.chrome.devtools.json'>]], 'path': 'favicon.ico'}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'URLResolver' object has no attribute 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+django.template.base.VariableDoesNotExist: Failed lookup for key [name] in <URLResolver <module 'Account.urls' from '/home/vinayak/Project/Ace/AceGame/./Account/urls.py'> (account_app:account) 'account/'>
+[DEBUG] 2025-10-21 08:05:14,730 django.template Exception while resolving variable 'name' in template 'unknown'.
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/asgiref/sync.py", line 489, in thread_handler
+    raise exc_info[1]
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 235, in _get_response_async
+    callback, callback_args, callback_kwargs = self.resolve_request(request)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/core/handlers/base.py", line 313, in resolve_request
+    resolver_match = resolver.resolve(request.path_info)
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/urls/resolvers.py", line 705, in resolve
+    raise Resolver404({"tried": tried, "path": new_path})
+django.urls.exceptions.Resolver404: {'tried': [[<URLResolver <URLPattern list> (admin:admin) 'admin/'>], [<URLResolver <module 'Account.urls' from '/home/vinayak/Project/Ace/AceGame/./Account/urls.py'> (account_app:account) 'account/'>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern '' [name='home']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'playgame/' [name='playgame']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'createroom/' [name='createroom']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'joinroom/' [name='join_room']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'waitforplayers/' [name='waitforplayers']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'gamepage/' [name='gamepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'rulepage/' [name='rulepage']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'winner_page/' [name='winner_page']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'player-stats/' [name='player-stats']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'privacy-policy/' [name='privacy-policy']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'sokkate-rules/' [name='sokkate-rules']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'About/' [name='About']>], [<URLResolver <module 'Home.urls' from '/home/vinayak/Project/Ace/AceGame/./Home/urls.py'> (None:None) ''>, <URLPattern 'getuser/' [name='current_user']>], [<URLResolver <module 'Sokkatte.urls' from '/home/vinayak/Project/Ace/AceGame/./Sokkatte/urls.py'> (sokkatte_app:sokkatte) 'Sokkatte/'>], [<URLPattern '.well-known/appspecific/com.chrome.devtools.json'>]], 'path': 'favicon.ico'}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'URLResolver' object has no attribute 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vinayak/Project/Ace/requirements/lib/python3.10/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+django.template.base.VariableDoesNotExist: Failed lookup for key [name] in <URLResolver <module 'Sokkatte.urls' from '/home/vinayak/Project/Ace/AceGame/./Sokkatte/urls.py'> (sokkatte_app:sokkatte) 'Sokkatte/'>
+[WARNING] 2025-10-21 08:05:14,736 django.request Not Found: /favicon.ico
+[DEBUG] 2025-10-21 08:05:14,738 daphne.http_protocol HTTP 404 response started for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,739 daphne.http_protocol HTTP close for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:14,740 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:16,418 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:16,516 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:16,517 daphne.http_protocol HTTP close for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:16,518 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:16,711 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:16,723 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:16,729 daphne.http_protocol HTTP close for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:16,731 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:38,964 daphne.http_protocol HTTP b'POST' request for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:39,145 django.db.backends (0.033) SELECT 1 AS "a" FROM "auth_user" WHERE UPPER("auth_user"."username"::text) = UPPER('leela') LIMIT 1; args=(1, 'leela'); alias=default
+[DEBUG] 2025-10-21 08:05:39,317 django.db.backends (0.007) SELECT 1 AS "a" FROM "auth_user" WHERE "auth_user"."username" = 'leela' LIMIT 1; args=(1, 'leela'); alias=default
+[DEBUG] 2025-10-21 08:05:39,322 django.db.backends (0.001) SELECT 1 AS "a" FROM "auth_user" WHERE "auth_user"."email" = 'leelavatidevadiga44@gmail.com' LIMIT 1; args=(1, 'leelavatidevadiga44@gmail.com'); alias=default
+[DEBUG] 2025-10-21 08:05:42,075 django.db.backends (0.018) INSERT INTO "auth_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "email", "is_staff", "is_active", "date_joined") VALUES ('pbkdf2_sha256$1000000$IGo4fN5MbbU4hNdV5uA8n1$hZgdqf/9WGHckJuLxXiqsFYflvsFSwuPC32+Nr2GcUE=', NULL, false, 'leela', '', '', 'leelavatidevadiga44@gmail.com', false, false, '2025-10-21T08:05:38.972978+00:00'::timestamptz) RETURNING "auth_user"."id"; args=('pbkdf2_sha256$1000000$IGo4fN5MbbU4hNdV5uA8n1$hZgdqf/9WGHckJuLxXiqsFYflvsFSwuPC32+Nr2GcUE=', None, False, 'leela', '', '', 'leelavatidevadiga44@gmail.com', False, False, datetime.datetime(2025, 10, 21, 8, 5, 38, 972978, tzinfo=datetime.timezone.utc)); alias=default
+[DEBUG] 2025-10-21 08:05:47,438 django.db.backends (0.011) SELECT 1 AS "a" FROM "Account_roomtable" WHERE "Account_roomtable"."room_id" = 'leela3DJQ' LIMIT 1; args=(1, 'leela3DJQ'); alias=default
+[DEBUG] 2025-10-21 08:05:47,445 django.db.backends (0.005) INSERT INTO "Account_roomtable" ("username", "email", "room_id", "password", "created_at", "passowrd_updated_at") VALUES ('leela', 'leelavatidevadiga44@gmail.com', 'leela3DJQ', 'ILOVEACE', '2025-10-21T08:05:47.441171+00:00'::timestamptz, '2025-10-21T08:05:47.441217+00:00'::timestamptz) RETURNING "Account_roomtable"."id"; args=('leela', 'leelavatidevadiga44@gmail.com', 'leela3DJQ', 'ILOVEACE', datetime.datetime(2025, 10, 21, 8, 5, 47, 441171, tzinfo=datetime.timezone.utc), datetime.datetime(2025, 10, 21, 8, 5, 47, 441217, tzinfo=datetime.timezone.utc)); alias=default
+[DEBUG] 2025-10-21 08:05:47,458 daphne.http_protocol HTTP 200 response started for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:47,459 daphne.http_protocol HTTP close for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:47,460 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:47,522 daphne.http_protocol HTTP b'GET' request for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:47,529 daphne.http_protocol HTTP 304 response started for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:47,531 daphne.http_protocol HTTP close for ['127.0.0.1', 48426]
+[DEBUG] 2025-10-21 08:05:47,532 daphne.http_protocol HTTP response complete for ['127.0.0.1', 48426]
