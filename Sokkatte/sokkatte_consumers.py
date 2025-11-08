@@ -26,6 +26,16 @@ COLOR_CODES = [
 
 class Sokkatte_consumer(AsyncWebsocketConsumer):
 
+    async def sort_connected_dict(self, connected_dict):
+
+        # Get the player order from Redis
+        players_raw = await self.redis.hget(self.redis_key, "players")
+        players = json.loads(players_raw.decode()) if players_raw else []
+
+        # Sort the connected_dict based on the player order
+        sorted_dict = {player: connected_dict[player] for player in players if player in connected_dict}
+        return sorted_dict
+
     async def connect(self):
         logger.info("Came to this connect for sokkatte websocket")
         self.room_id = self.scope['url_route']['kwargs']['room_id']
@@ -106,6 +116,7 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
 
                     # Broadcast to all in the group
                     logger.info(f"User '{self.username}' connected with color {assigned_color}")
+                    self.connected_dict= await sort_connected_dict(self.connected_dict)
                     await self.channel_layer.group_send(
                         self.group_name,
                         {
@@ -162,6 +173,8 @@ class Sokkatte_consumer(AsyncWebsocketConsumer):
                 logger.info(f"Removed '{self.username}' from players_connected_list")
 
                 # Send unified update to all players
+                self.connected_dict = await sort_connected_dict(self.connected_dict)
+                
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
