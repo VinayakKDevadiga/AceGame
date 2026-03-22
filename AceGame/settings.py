@@ -95,6 +95,18 @@ CHANNEL_LAYERS = {
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+# Use .env for production
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'acegame',
+        'USER': 'aceuser',
+        'PASSWORD': 'acepass',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
