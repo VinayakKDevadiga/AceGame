@@ -12,7 +12,9 @@ AceGame is a real-time multiplayer card game built using Django, WebSockets, and
 🔐 User authentication (Django Auth)<br>
 📡 Live updates for player actions<br>
 📱 Responsive UI (optional if you added frontend)<br>
-🏗️ Tech Stack
+
+
+🏗️ Tech Stack: <br>
 Backend: Django, Django Channels<br>
 Realtime Layer: WebSockets<br>
 Message Broker / Cache: Redis<br>
