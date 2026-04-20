@@ -46,5 +46,5 @@ txaio==23.1.1
 typing-extensions==4.12.2
 urllib3==2.5.0
 whitenoise==6.7.0
-wrapt==1.16.0
+wrapt==2.1.2
 zope.interface==6.4
